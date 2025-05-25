@@ -77,9 +77,27 @@ const HeroSection = () => {
           {/* Spline 3D Scene */}
           <div className="relative">
             <div className="relative z-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl p-8 backdrop-blur-sm border border-white/10">
-              {/* Spline 3D Scene */}
-              <div className="aspect-square rounded-2xl overflow-hidden">
-                <Spline scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode" />
+              {/* Spline 3D Scene với CSS để ẩn logo */}
+              <div className="aspect-square rounded-2xl overflow-hidden relative">
+                <style>
+                  {`
+                    .spline-watermark,
+                    [class*="watermark"],
+                    [id*="watermark"],
+                    iframe[src*="spline"] + div,
+                    canvas + div[style*="position"],
+                    [style*="spline"],
+                    [class*="spline-logo"] {
+                      display: none !important;
+                      visibility: hidden !important;
+                      opacity: 0 !important;
+                    }
+                  `}
+                </style>
+                <Spline 
+                  scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode"
+                  style={{ width: '100%', height: '100%' }}
+                />
               </div>
             </div>
             
