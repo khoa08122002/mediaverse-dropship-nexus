@@ -7,8 +7,16 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
 
+  const handleServicesMouseEnter = () => {
+    setIsServicesOpen(true);
+  };
+
+  const handleServicesMouseLeave = () => {
+    setIsServicesOpen(false);
+  };
+
   return (
-    <header className="fixed top-0 w-full bg-white/95 backdrop-blur-md shadow-sm z-50 border-b border-gray-100">
+    <header className="fixed top-0 w-full bg-black/95 backdrop-blur-md shadow-lg z-50 border-b border-gray-800">
       <nav className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -17,46 +25,50 @@ const Header = () => {
               <span className="text-white font-bold text-xl">M</span>
             </div>
             <div className="hidden md:block">
-              <h1 className="text-xl font-bold text-gray-900">MediaTech</h1>
-              <p className="text-xs text-gray-500">AI Marketing & E-commerce</p>
+              <h1 className="text-xl font-bold text-white">MediaTech</h1>
+              <p className="text-xs text-gray-400">AI Marketing & E-commerce</p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+            <Link to="/" className="text-gray-300 hover:text-white transition-colors font-medium">
               Trang chủ
             </Link>
-            <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+            <Link to="/about" className="text-gray-300 hover:text-white transition-colors font-medium">
               Giới thiệu
             </Link>
-            <div className="relative">
-              <button 
-                className="flex items-center text-gray-700 hover:text-blue-600 transition-colors font-medium"
-                onMouseEnter={() => setIsServicesOpen(true)}
-                onMouseLeave={() => setIsServicesOpen(false)}
-              >
+            <div 
+              className="relative"
+              onMouseEnter={handleServicesMouseEnter}
+              onMouseLeave={handleServicesMouseLeave}
+            >
+              <button className="flex items-center text-gray-300 hover:text-white transition-colors font-medium">
                 Dịch vụ <ChevronDown className="ml-1 w-4 h-4" />
               </button>
               {isServicesOpen && (
-                <div 
-                  className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 py-2"
-                  onMouseEnter={() => setIsServicesOpen(true)}
-                  onMouseLeave={() => setIsServicesOpen(false)}
-                >
-                  <Link to="/media-services" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600">
+                <div className="absolute top-full left-0 mt-2 w-64 bg-gray-900 rounded-lg shadow-xl border border-gray-700 py-2 z-50">
+                  <Link 
+                    to="/media-services" 
+                    className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                    onClick={() => setIsServicesOpen(false)}
+                  >
                     AI Marketing & Truyền thông
                   </Link>
-                  <Link to="/ecommerce" className="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-blue-600">
+                  <Link 
+                    to="/ecommerce" 
+                    className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                    onClick={() => setIsServicesOpen(false)}
+                  >
                     Dropshipping & E-commerce
                   </Link>
                 </div>
               )}
             </div>
-            <Link to="/blog" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+            <Link to="/blog" className="text-gray-300 hover:text-white transition-colors font-medium">
               Blog
             </Link>
-            <Link to="/contact" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+            <Link to="/contact" className="text-gray-300 hover:text-white transition-colors font-medium">
               Liên hệ
             </Link>
           </div>
@@ -73,7 +85,7 @@ const Header = () => {
 
           {/* Mobile Menu Button */}
           <button 
-            className="lg:hidden"
+            className="lg:hidden text-white"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -82,24 +94,24 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 border-t border-gray-100">
+          <div className="lg:hidden mt-4 pb-4 border-t border-gray-800">
             <div className="flex flex-col space-y-3 pt-4">
-              <Link to="/" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+              <Link to="/" className="text-gray-300 hover:text-white transition-colors font-medium">
                 Trang chủ
               </Link>
-              <Link to="/about" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+              <Link to="/about" className="text-gray-300 hover:text-white transition-colors font-medium">
                 Giới thiệu
               </Link>
-              <Link to="/media-services" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+              <Link to="/media-services" className="text-gray-300 hover:text-white transition-colors font-medium">
                 AI Marketing & Truyền thông
               </Link>
-              <Link to="/ecommerce" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+              <Link to="/ecommerce" className="text-gray-300 hover:text-white transition-colors font-medium">
                 Dropshipping & E-commerce
               </Link>
-              <Link to="/blog" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+              <Link to="/blog" className="text-gray-300 hover:text-white transition-colors font-medium">
                 Blog
               </Link>
-              <Link to="/contact" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+              <Link to="/contact" className="text-gray-300 hover:text-white transition-colors font-medium">
                 Liên hệ
               </Link>
               <Link 
