@@ -1,0 +1,104 @@
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+
+const HeroSection = () => {
+  return (
+    <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden">
+      {/* Background Animation */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+      
+      {/* Floating Orbs */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/30 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      
+      <div className="container mx-auto px-4 z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Content */}
+          <div className="text-white space-y-8">
+            <div className="space-y-4">
+              <span className="inline-block px-4 py-2 bg-blue-600/20 rounded-full text-blue-300 text-sm font-medium border border-blue-500/30">
+                🚀 AI Marketing & E-commerce Solutions
+              </span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                Tương lai của
+                <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"> Truyền thông </span>
+                & E-commerce
+              </h1>
+              <p className="text-xl text-gray-300 leading-relaxed">
+                Kết hợp sức mạnh của AI Marketing với giải pháp Dropshipping tiên tiến. 
+                Tạo ra trải nghiệm khách hàng đột phá và tăng trưởng doanh thu bền vững.
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-400">500+</div>
+                <div className="text-sm text-gray-400">Dự án thành công</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-purple-400">99%</div>
+                <div className="text-sm text-gray-400">Khách hàng hài lòng</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-400">24/7</div>
+                <div className="text-sm text-gray-400">Hỗ trợ khách hàng</div>
+              </div>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link 
+                to="/contact" 
+                className="group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold flex items-center justify-center"
+              >
+                Bắt đầu dự án
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link 
+                to="/about" 
+                className="border-2 border-white/20 text-white px-8 py-4 rounded-lg hover:bg-white/10 transition-all duration-300 font-semibold text-center"
+              >
+                Tìm hiểu thêm
+              </Link>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="flex items-center space-x-6 text-sm text-gray-400">
+              <span>✓ Tư vấn miễn phí</span>
+              <span>✓ Cam kết chất lượng</span>
+              <span>✓ Bảo hành dài hạn</span>
+            </div>
+          </div>
+
+          {/* 3D Visual Placeholder - Spline Integration Point */}
+          <div className="relative">
+            <div className="relative z-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl p-8 backdrop-blur-sm border border-white/10">
+              {/* Placeholder for Spline 3D Scene */}
+              <div className="aspect-square bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                <div className="text-center text-white">
+                  <div className="w-24 h-24 mx-auto mb-4 bg-white/20 rounded-2xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl"></div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">AI-Powered Solutions</h3>
+                  <p className="text-blue-100">Interactive 3D Experience</p>
+                  <div className="mt-4 text-xs text-blue-200">
+                    💡 Spline 3D Scene sẽ được tích hợp tại đây
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Floating Elements */}
+            <div className="absolute -top-4 -right-4 w-20 h-20 bg-blue-500/30 rounded-full blur-xl animate-bounce delay-500"></div>
+            <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-purple-500/30 rounded-full blur-xl animate-bounce delay-1000"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default HeroSection;
