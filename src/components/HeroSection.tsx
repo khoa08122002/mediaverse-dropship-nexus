@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import Spline from '@splinetool/react-spline';
 
 const HeroSection = () => {
   return (
@@ -73,21 +74,12 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* 3D Visual Placeholder - Spline Integration Point */}
+          {/* Spline 3D Scene */}
           <div className="relative">
             <div className="relative z-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl p-8 backdrop-blur-sm border border-white/10">
-              {/* Placeholder for Spline 3D Scene */}
-              <div className="aspect-square bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-                <div className="text-center text-white">
-                  <div className="w-24 h-24 mx-auto mb-4 bg-white/20 rounded-2xl flex items-center justify-center">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl"></div>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">AI-Powered Solutions</h3>
-                  <p className="text-blue-100">Interactive 3D Experience</p>
-                  <div className="mt-4 text-xs text-blue-200">
-                    💡 Spline 3D Scene sẽ được tích hợp tại đây
-                  </div>
-                </div>
+              {/* Spline 3D Scene */}
+              <div className="aspect-square rounded-2xl overflow-hidden">
+                <Spline scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode" />
               </div>
             </div>
             
