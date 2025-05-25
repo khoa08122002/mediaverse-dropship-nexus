@@ -35,18 +35,18 @@ const ServicesSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-black">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <span className="inline-block px-4 py-2 bg-blue-100 text-blue-600 rounded-full text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-2 bg-blue-600/20 text-blue-300 rounded-full text-sm font-medium mb-4 border border-blue-500/30">
             🎯 Dịch vụ chuyên nghiệp
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Giải pháp toàn diện cho
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> doanh nghiệp số</span>
+            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"> doanh nghiệp số</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Từ AI Marketing đến Dropshipping, chúng tôi cung cấp hệ sinh thái dịch vụ 
             hoàn chỉnh giúp doanh nghiệp phát triển bền vững trong kỷ nguyên số.
           </p>
@@ -55,18 +55,18 @@ const ServicesSection = () => {
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {services.map((service, index) => (
-            <div key={index} className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100">
+            <div key={index} className="group bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 hover:bg-white/10 transition-all duration-300">
               <div className={`w-16 h-16 bg-gradient-to-r ${service.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
                 <div className="w-8 h-8 bg-white/30 rounded-lg"></div>
               </div>
               
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">{service.title}</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+              <h3 className="text-2xl font-bold text-white mb-4">{service.title}</h3>
+              <p className="text-gray-300 mb-6 leading-relaxed">{service.description}</p>
               
               <ul className="space-y-2 mb-6">
                 {service.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-center text-gray-700">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                  <li key={idx} className="flex items-center text-gray-300">
+                    <span className="w-2 h-2 bg-blue-400 rounded-full mr-3"></span>
                     {feature}
                   </li>
                 ))}

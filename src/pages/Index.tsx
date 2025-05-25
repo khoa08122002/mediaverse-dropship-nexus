@@ -9,7 +9,7 @@ import SubsidiarySection from '../components/SubsidiarySection';
 
 const Index = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-black">
       <Header />
       <main>
         <HeroSection />

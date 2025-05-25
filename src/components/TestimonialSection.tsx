@@ -27,18 +27,18 @@ const TestimonialSection = () => {
   ];
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-black">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <span className="inline-block px-4 py-2 bg-green-100 text-green-600 rounded-full text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-2 bg-green-600/20 text-green-300 rounded-full text-sm font-medium mb-4 border border-green-500/30">
             💬 Khách hàng nói gì về chúng tôi
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Những câu chuyện
-            <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"> thành công</span>
+            <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent"> thành công</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Hơn 500+ doanh nghiệp đã tin tưởng và đạt được kết quả vượt ngoài mong đợi 
             cùng với các giải pháp của MediaTech.
           </p>
@@ -47,7 +47,7 @@ const TestimonialSection = () => {
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="bg-gray-50 rounded-2xl p-8 hover:shadow-lg transition-shadow duration-300">
+            <div key={index} className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 hover:bg-white/10 transition-all duration-300">
               {/* Rating */}
               <div className="flex space-x-1 mb-4">
                 {[...Array(testimonial.rating)].map((_, i) => (
@@ -58,7 +58,7 @@ const TestimonialSection = () => {
               </div>
 
               {/* Content */}
-              <blockquote className="text-gray-700 mb-6 leading-relaxed">
+              <blockquote className="text-gray-300 mb-6 leading-relaxed">
                 "{testimonial.content}"
               </blockquote>
 
@@ -70,8 +70,8 @@ const TestimonialSection = () => {
                   className="w-12 h-12 rounded-full mr-4 object-cover"
                 />
                 <div>
-                  <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                  <div className="text-sm text-gray-600">{testimonial.position}</div>
+                  <div className="font-semibold text-white">{testimonial.name}</div>
+                  <div className="text-sm text-gray-400">{testimonial.position}</div>
                 </div>
               </div>
             </div>
