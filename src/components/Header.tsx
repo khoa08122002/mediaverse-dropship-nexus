@@ -15,12 +15,18 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 w-full bg-black/95 backdrop-blur-md shadow-lg z-50 border-b border-gray-800">
+    <header className="fixed top-0 w-full bg-black/95 backdrop-blur-md shadow-lg z-50">
       <nav className="relative container mx-auto px-4 py-4">
-                  {/* Logo */}
-        <Link to="/" className="absolute left-4 top-1/2 transform -translate-y-1/2 h-28 pb-2">
-          <img src="./src/assets/images/Logo 2.png" alt="PH Group Logo" className="h-full w-auto object-contain" />
-          </Link>
+        {/* Border that excludes logo area */}
+        <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-800 to-gray-800"></div>
+        
+        <Link to="/" className="absolute left-0 top-1/2 transform -translate-y-1/2 h-28 pb-2 z-10">
+          <img 
+            src="./src/assets/images/Logo 2.png" 
+            alt="PH Group Logo" 
+            className="h-full w-auto object-contain" 
+          />
+        </Link>
         <div className="flex items-center justify-between">
           {/* Logo Spacing */}
           <div className="w-24"></div>
