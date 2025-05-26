@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -75,38 +74,19 @@ const HeroSection = () => {
           </div>
 
           {/* Spline 3D Scene */}
-          <div className="relative">
-            <div className="relative z-10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl p-8 backdrop-blur-sm border border-white/10">
               {/* Spline 3D Scene với CSS để ẩn logo */}
               <div className="aspect-square rounded-2xl overflow-hidden relative">
-                <style>
-                  {`
-                    .spline-watermark,
-                    [class*="watermark"],
-                    [id*="watermark"],
-                    iframe[src*="spline"] + div,
-                    canvas + div[style*="position"],
-                    [style*="spline"],
-                    [class*="spline-logo"] {
-                      display: none !important;
-                      visibility: hidden !important;
-                      opacity: 0 !important;
-                    }
-                  `}
-                </style>
-                <Spline 
-                  scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode"
-                  style={{ width: '100%', height: '100%' }}
-                />
-              </div>
+                  <Spline 
+                    scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode"
+                    style={{ width: '100%', height: '100%' }}
+                  />
+              </div>  
             </div>
             
             {/* Floating Elements */}
             <div className="absolute -top-4 -right-4 w-20 h-20 bg-blue-500/30 rounded-full blur-xl animate-bounce delay-500"></div>
             <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-purple-500/30 rounded-full blur-xl animate-bounce delay-1000"></div>
           </div>
-        </div>
-      </div>
     </section>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -17,18 +16,15 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 w-full bg-black/95 backdrop-blur-md shadow-lg z-50 border-b border-gray-800">
-      <nav className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">M</span>
-            </div>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold text-white">MediaTech</h1>
-              <p className="text-xs text-gray-400">AI Marketing & E-commerce</p>
-            </div>
+      <nav className="relative container mx-auto px-4 py-4">
+                  {/* Logo */}
+        <Link to="/" className="absolute left-4 top-1/2 transform -translate-y-1/2 h-28 pb-2">
+          <img src="./src/assets/images/Logo 2.png" alt="PH Group Logo" className="h-full w-auto object-contain" />
           </Link>
+        <div className="flex items-center justify-between">
+          {/* Logo Spacing */}
+          <div className="w-24"></div>
+
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
@@ -38,33 +34,41 @@ const Header = () => {
             <Link to="/about" className="text-gray-300 hover:text-white transition-colors font-medium">
               Giới thiệu
             </Link>
+
+            {/* Dropdown full wrapper */}
             <div 
               className="relative"
-              onMouseEnter={handleServicesMouseEnter}
-              onMouseLeave={handleServicesMouseLeave}
+              onMouseEnter={() => setIsServicesOpen(true)}
+              onMouseLeave={() => setIsServicesOpen(false)}
             >
-              <button className="flex items-center text-gray-300 hover:text-white transition-colors font-medium">
-                Dịch vụ <ChevronDown className="ml-1 w-4 h-4" />
-              </button>
-              {isServicesOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-gray-900 rounded-lg shadow-xl border border-gray-700 py-2 z-50">
-                  <Link 
-                    to="/media-services" 
-                    className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                    onClick={() => setIsServicesOpen(false)}
-                  >
-                    AI Marketing & Truyền thông
-                  </Link>
-                  <Link 
-                    to="/ecommerce" 
-                    className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                    onClick={() => setIsServicesOpen(false)}
-                  >
-                    Dropshipping & E-commerce
-                  </Link>
-                </div>
-              )}
+              <div className="flex flex-col">
+                {/* Trigger button */}
+                <button className="flex items-center text-gray-300 hover:text-white transition-colors font-medium">
+                  Dịch vụ <ChevronDown className="ml-1 w-4 h-4" />
+                </button>
+
+                {/* Dropdown menu */}
+                {isServicesOpen && (
+                  <div className="w-64 bg-gray-900 rounded-lg shadow-xl border border-gray-700 py-2 z-50 absolute top-full left-0">
+                    <Link 
+                      to="/media-services" 
+                      className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                      onClick={() => setIsServicesOpen(false)}
+                    >
+                      AI Marketing & Truyền thông
+                    </Link>
+                    <Link 
+                      to="/ecommerce" 
+                      className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                      onClick={() => setIsServicesOpen(false)}
+                    >
+                      Dropshipping & E-commerce
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
+
             <Link to="/blog" className="text-gray-300 hover:text-white transition-colors font-medium">
               Blog
             </Link>
