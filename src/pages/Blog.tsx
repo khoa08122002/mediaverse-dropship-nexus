@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -13,7 +12,8 @@ const Blog = () => {
     readTime: "8 phút đọc",
     category: "AI Marketing",
     image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
-    tags: ["AI", "Marketing", "Xu hướng 2024", "Machine Learning"]
+    tags: ["AI", "Marketing", "Xu hướng 2024", "Machine Learning"],
+    slug: "tuong-lai-ai-marketing-2024-2025"
   };
 
   const blogPosts = [
@@ -25,7 +25,8 @@ const Blog = () => {
       readTime: "12 phút đọc",
       category: "E-commerce",
       image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop",
-      tags: ["Dropshipping", "AI", "Automation", "E-commerce"]
+      tags: ["Dropshipping", "AI", "Automation", "E-commerce"],
+      slug: "dropshipping-2024-ai-automation"
     },
     {
       title: "Content Marketing với AI: Tạo nội dung viral trong 30 phút",
@@ -35,7 +36,8 @@ const Blog = () => {
       readTime: "6 phút đọc",
       category: "Content Marketing",
       image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&h=250&fit=crop",
-      tags: ["Content Marketing", "AI", "SEO", "Social Media"]
+      tags: ["Content Marketing", "AI", "SEO", "Social Media"],
+      slug: "content-marketing-ai-viral"
     },
     {
       title: "Omnichannel Commerce: Unified Customer Experience Strategy",
@@ -45,7 +47,8 @@ const Blog = () => {
       readTime: "10 phút đọc", 
       category: "E-commerce Strategy",
       image: "https://images.unsplash.com/photo-1556155092-490a1ba16284?w=400&h=250&fit=crop",
-      tags: ["Omnichannel", "CX", "Strategy", "Retail"]
+      tags: ["Omnichannel", "CX", "Strategy", "Retail"],
+      slug: "omnichannel-commerce-strategy"
     },
     {
       title: "Social Media Analytics: Đo lường ROI thực tế với AI",
@@ -55,7 +58,8 @@ const Blog = () => {
       readTime: "8 phút đọc",
       category: "Analytics",
       image: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=250&fit=crop",
-      tags: ["Social Media", "Analytics", "ROI", "AI"]
+      tags: ["Social Media", "Analytics", "ROI", "AI"],
+      slug: "social-media-analytics-roi-ai"
     },
     {
       title: "Supply Chain 4.0: Tối ưu hóa với AI và IoT",
@@ -65,7 +69,8 @@ const Blog = () => {
       readTime: "15 phút đọc",
       category: "Supply Chain",
       image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=250&fit=crop",
-      tags: ["Supply Chain", "AI", "IoT", "Logistics"]
+      tags: ["Supply Chain", "AI", "IoT", "Logistics"],
+      slug: "supply-chain-4-ai-iot"
     },
     {
       title: "Customer Data Platform: Unified View của khách hàng",
@@ -75,7 +80,8 @@ const Blog = () => {
       readTime: "9 phút đọc",
       category: "Data Analytics",
       image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop",
-      tags: ["CDP", "Data", "Personalization", "CRM"]
+      tags: ["CDP", "Data", "Personalization", "CRM"],
+      slug: "customer-data-platform"
     }
   ];
 
@@ -148,12 +154,12 @@ const Blog = () => {
                           </div>
                         </div>
                       </div>
-                      <a 
-                        href="#"
+                      <Link 
+                        to={`/blog/${featuredPost.slug}`}
                         className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
                       >
                         Đọc bài viết
-                      </a>
+                      </Link>
                     </div>
                   </div>
                   
@@ -215,9 +221,9 @@ const Blog = () => {
                     
                     <div className="p-6">
                       <h3 className="text-xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">
-                        <a href="#" className="hover:underline">
+                        <Link to={`/blog/${post.slug}`} className="hover:underline">
                           {post.title}
-                        </a>
+                        </Link>
                       </h3>
                       <p className="text-gray-600 mb-4 leading-relaxed">
                         {post.excerpt}

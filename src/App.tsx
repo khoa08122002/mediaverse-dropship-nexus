@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,6 +11,7 @@ import About from "./pages/About";
 import MediaServices from "./pages/MediaServices";
 import Ecommerce from "./pages/Ecommerce";
 import Blog from "./pages/Blog";
+import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
@@ -21,6 +23,7 @@ const PreloadedAbout = withPreloader(About);
 const PreloadedMediaServices = withPreloader(MediaServices);
 const PreloadedEcommerce = withPreloader(Ecommerce);
 const PreloadedBlog = withPreloader(Blog);
+const PreloadedBlogDetail = withPreloader(BlogDetail);
 const PreloadedContact = withPreloader(Contact);
 const PreloadedNotFound = withPreloader(NotFound);
 
@@ -37,6 +40,7 @@ const App = () => {
             <Route path="/media-services" element={<PreloadedMediaServices />} />
             <Route path="/ecommerce" element={<PreloadedEcommerce />} />
             <Route path="/blog" element={<PreloadedBlog />} />
+            <Route path="/blog/:slug" element={<PreloadedBlogDetail />} />
             <Route path="/contact" element={<PreloadedContact />} />
             <Route path="*" element={<PreloadedNotFound />} />
           </Routes>
