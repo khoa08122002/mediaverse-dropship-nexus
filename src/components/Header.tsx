@@ -22,7 +22,7 @@ const Header = () => {
         
         <Link to="/" className="absolute left-0 top-1/2 transform -translate-y-1/2 h-28 pb-2 z-10">
           <img 
-            src="./src/assets/images/Logo 2.png" 
+            src="./src/assets/images/logo.png" 
             alt="PH Group Logo" 
             className="h-full w-auto object-contain" 
           />

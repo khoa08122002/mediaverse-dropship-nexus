@@ -38,7 +38,7 @@ const Preloader: React.FC<PreloaderProps> = ({ onLoadingComplete }) => {
         <div className="mb-4 flex justify-center">
           <div className="relative">
             <img 
-              src="./src/assets/images/Logo 2.png" 
+              src="./src/assets/images/logo.png" 
               alt="PH Group Logo" 
               className="w-40 h-40 object-contain animate-pulse"
             />

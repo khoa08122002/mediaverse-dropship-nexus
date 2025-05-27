@@ -12,7 +12,7 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
               <div className="h-28">
-                <img src="./src/assets/images/Logo 2.png" alt="PH Group Logo" className="h-full w-auto object-contain" />
+                <img src="./src/assets/images/logo.png" alt="PH Group Logo" className="h-full w-auto object-contain" />
               </div>
               <div>
                 <h4 className="text-xl font-bold text-white">PH Group</h4>
