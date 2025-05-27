@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from '../components/Header';
@@ -15,17 +14,36 @@ const BlogDetail = () => {
       <h2>Giới thiệu về AI Marketing</h2>
       <p>AI Marketing đang thay đổi cách các doanh nghiệp tiếp cận khách hàng. Với sức mạnh của machine learning và data analytics, các chiến lược marketing trở nên cá nhân hóa và hiệu quả hơn bao giờ hết.</p>
       
+      <div class="my-8">
+        <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop" alt="AI Marketing Technology" class="w-full h-64 object-cover rounded-lg shadow-lg" />
+        <p class="text-sm text-gray-600 text-center mt-2 italic">Công nghệ AI đang revolutionize ngành marketing</p>
+      </div>
+      
       <h2>Xu hướng AI Marketing năm 2024</h2>
       <p>Năm 2024 đánh dấu bước ngoặt quan trọng trong việc ứng dụng AI vào marketing. Các xu hướng nổi bật bao gồm:</p>
       
       <h3>1. Personalization ở mức độ siêu chi tiết</h3>
       <p>AI cho phép phân tích hành vi khách hàng ở mức độ cá nhân, tạo ra những trải nghiệm được cá nhân hóa hoàn toàn. Từ nội dung email đến gợi ý sản phẩm, mọi thứ đều được tối ưu hóa cho từng người dùng cụ thể.</p>
       
+      <div class="my-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop" alt="Data Analytics Dashboard" class="w-full h-40 object-cover rounded-lg shadow-md" />
+        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop" alt="Personalized Marketing" class="w-full h-40 object-cover rounded-lg shadow-md" />
+      </div>
+      
       <h3>2. Chatbot và Virtual Assistant thông minh</h3>
       <p>Các chatbot AI hiện đại có thể hiểu ngữ cảnh, cảm xúc và đưa ra phản hồi tự nhiên như con người. Điều này giúp cải thiện đáng kể trải nghiệm khách hàng và tăng tỷ lệ conversion.</p>
       
+      <div class="my-8">
+        <img src="https://images.unsplash.com/photo-1531746790731-6c087fecd65a?w=800&h=400&fit=crop" alt="AI Chatbot Interface" class="w-full h-64 object-cover rounded-lg shadow-lg" />
+        <p class="text-sm text-gray-600 text-center mt-2 italic">Chatbot AI thông minh có thể hiểu và phản hồi tự nhiên</p>
+      </div>
+      
       <h3>3. Predictive Analytics</h3>
       <p>AI có thể dự đoán hành vi khách hàng trong tương lai dựa trên dữ liệu lịch sử, giúp doanh nghiệp đưa ra quyết định marketing chính xác hơn.</p>
+      
+      <div class="my-6">
+        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=300&fit=crop" alt="Predictive Analytics Charts" class="w-full h-48 object-cover rounded-lg shadow-md" />
+      </div>
       
       <h2>Dự báo cho năm 2025</h2>
       <p>Nhìn về năm 2025, chúng ta có thể kỳ vọng những bước tiến đột phá:</p>
@@ -33,11 +51,34 @@ const BlogDetail = () => {
       <h3>Voice Commerce sẽ bùng nổ</h3>
       <p>Với sự phát triển của AI voice recognition, mua sắm bằng giọng nói sẽ trở thành xu hướng chủ đạo.</p>
       
+      <div class="my-6 flex justify-center">
+        <img src="https://images.unsplash.com/photo-1589254065878-42c9da997008?w=500&h=300&fit=crop" alt="Voice Commerce Technology" class="w-3/4 h-48 object-cover rounded-lg shadow-md" />
+      </div>
+      
       <h3>AI-Generated Content</h3>
       <p>Nội dung được tạo ra bởi AI sẽ trở nên tinh vi và khó phân biệt với nội dung do con người tạo ra.</p>
       
+      <div class="my-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=300&h=200&fit=crop" alt="AI Content Creation" class="w-full h-32 object-cover rounded-lg shadow-md" />
+        <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=300&h=200&fit=crop" alt="Creative AI Writing" class="w-full h-32 object-cover rounded-lg shadow-md" />
+        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&h=200&fit=crop" alt="Digital Content Strategy" class="w-full h-32 object-cover rounded-lg shadow-md" />
+      </div>
+      
+      <h2>Case Study: Thành công của AI Marketing</h2>
+      <p>Một ví dụ điển hình về thành công của AI Marketing là cách các công ty e-commerce sử dụng recommendation engines để tăng doanh số bán hàng lên đến 35%.</p>
+      
+      <div class="my-8">
+        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=400&fit=crop" alt="E-commerce Success Story" class="w-full h-64 object-cover rounded-lg shadow-lg" />
+        <p class="text-sm text-gray-600 text-center mt-2 italic">E-commerce platforms thành công nhờ AI recommendation</p>
+      </div>
+      
       <h2>Kết luận</h2>
       <p>AI Marketing không chỉ là xu hướng mà đã trở thành yếu tố quyết định sự thành công của các doanh nghiệp. Những ai nắm bắt và ứng dụng hiệu quả sẽ có lợi thế cạnh tranh vượt trội trong thời đại số.</p>
+      
+      <div class="my-8">
+        <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop" alt="Future of Digital Marketing" class="w-full h-64 object-cover rounded-lg shadow-lg" />
+        <p class="text-sm text-gray-600 text-center mt-2 italic">Tương lai của marketing thuộc về những ai biết kết hợp AI với creativity</p>
+      </div>
     `,
     author: "Nguyễn Minh Đức",
     date: "25/12/2024",
@@ -47,6 +88,7 @@ const BlogDetail = () => {
     tags: ["AI", "Marketing", "Xu hướng 2024", "Machine Learning", "Digital Transformation"]
   };
 
+  // Mock data for blog post (in real app, this would be fetched based on slug)
   const relatedPosts = [
     {
       title: "Dropshipping 2024: Chiến lược thành công với AI Automation",
@@ -147,7 +189,7 @@ const BlogDetail = () => {
                   <article className="prose prose-lg max-w-none">
                     <div 
                       dangerouslySetInnerHTML={{ __html: blogPost.content }}
-                      className="text-gray-700 leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-gray-900 [&>h2]:mt-8 [&>h2]:mb-4 [&>h3]:text-xl [&>h3]:font-semibold [&>h3]:text-gray-900 [&>h3]:mt-6 [&>h3]:mb-3 [&>p]:mb-4 [&>p]:leading-relaxed"
+                      className="text-gray-700 leading-relaxed [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-gray-900 [&>h2]:mt-8 [&>h2]:mb-4 [&>h3]:text-xl [&>h3]:font-semibold [&>h3]:text-gray-900 [&>h3]:mt-6 [&>h3]:mb-3 [&>p]:mb-4 [&>p]:leading-relaxed [&_img]:rounded-lg [&_img]:shadow-md [&_.my-8]:my-8 [&_.my-6]:my-6 [&_.grid]:grid [&_.grid-cols-1]:grid-cols-1 [&_.md\\:grid-cols-2]:md:grid-cols-2 [&_.md\\:grid-cols-3]:md:grid-cols-3 [&_.gap-4]:gap-4 [&_.w-full]:w-full [&_.h-64]:h-64 [&_.h-48]:h-48 [&_.h-40]:h-40 [&_.h-32]:h-32 [&_.object-cover]:object-cover [&_.shadow-lg]:shadow-lg [&_.shadow-md]:shadow-md [&_.text-center]:text-center [&_.text-sm]:text-sm [&_.text-gray-600]:text-gray-600 [&_.italic]:italic [&_.mt-2]:mt-2 [&_.w-3\\/4]:w-3/4 [&_.flex]:flex [&_.justify-center]:justify-center"
                     />
                   </article>
 
