@@ -1,7 +1,7 @@
-
 import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import ApplicationDialog from '../components/ApplicationDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { MapPin, Clock, Users, Briefcase, Mail, Phone } from 'lucide-react';
@@ -177,7 +177,7 @@ const Recruitment = () => {
         </div>
       </section>
 
-      {/* Job Positions */}
+      {/* Job Positions - Updated with ApplicationDialog */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -228,9 +228,11 @@ const Recruitment = () => {
                     </ul>
                   </div>
 
-                  <Button className="w-full">
-                    Ứng tuyển ngay
-                  </Button>
+                  <ApplicationDialog jobTitle={job.title}>
+                    <Button className="w-full">
+                      Ứng tuyển ngay
+                    </Button>
+                  </ApplicationDialog>
                 </CardContent>
               </Card>
             ))}
