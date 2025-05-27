@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Youtube } from 'lucide-react';
@@ -50,7 +51,7 @@ const Footer = () => {
               <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">Giới thiệu</Link></li>
               <li><Link to="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</Link></li>
               <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Liên hệ</Link></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Tuyển dụng</a></li>
+              <li><Link to="/recruitment" className="text-gray-400 hover:text-white transition-colors">Tuyển dụng</Link></li>
               <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Chính sách bảo mật</a></li>
             </ul>
           </div>

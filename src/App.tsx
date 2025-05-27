@@ -13,6 +13,7 @@ import Ecommerce from "./pages/Ecommerce";
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
+import Recruitment from "./pages/Recruitment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const PreloadedEcommerce = withPreloader(Ecommerce);
 const PreloadedBlog = withPreloader(Blog);
 const PreloadedBlogDetail = withPreloader(BlogDetail);
 const PreloadedContact = withPreloader(Contact);
+const PreloadedRecruitment = withPreloader(Recruitment);
 const PreloadedNotFound = withPreloader(NotFound);
 
 const App = () => {
@@ -42,6 +44,7 @@ const App = () => {
             <Route path="/blog" element={<PreloadedBlog />} />
             <Route path="/blog/:slug" element={<PreloadedBlogDetail />} />
             <Route path="/contact" element={<PreloadedContact />} />
+            <Route path="/recruitment" element={<PreloadedRecruitment />} />
             <Route path="*" element={<PreloadedNotFound />} />
           </Routes>
         </BrowserRouter>
