@@ -1,6 +1,18 @@
-
 import React, { useState } from 'react';
-import { Plus, Edit, Trash, Eye, Search, MapPin, Clock } from 'lucide-react';
+import { Plus, Edit, Trash, Eye, Search, MapPin, Clock, User, Mail, Phone, FileText, Download } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Button } from '../ui/button';
+
+interface Applicant {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  coverLetter: string;
+  cvFileName?: string;
+  appliedDate: string;
+  status: 'pending' | 'reviewed' | 'interviewed' | 'rejected' | 'accepted';
+}
 
 const JobManager = () => {
   const [jobs, setJobs] = useState([
@@ -26,8 +38,47 @@ const JobManager = () => {
     },
   ]);
 
+  // Sample applicants data
+  const [applicants] = useState<Record<number, Applicant[]>>({
+    1: [
+      {
+        id: 1,
+        fullName: 'Nguyễn Văn A',
+        email: 'nguyenvana@email.com',
+        phone: '0123456789',
+        coverLetter: 'Tôi rất quan tâm đến vị trí Frontend Developer này và có 3 năm kinh nghiệm làm việc với React...',
+        cvFileName: 'NguyenVanA_CV.pdf',
+        appliedDate: '2024-01-16',
+        status: 'pending'
+      },
+      {
+        id: 2,
+        fullName: 'Trần Thị B',
+        email: 'tranthib@email.com',
+        phone: '0987654321',
+        coverLetter: 'Với kinh nghiệm 2 năm trong phát triển web và đam mê công nghệ...',
+        cvFileName: 'TranThiB_CV.pdf',
+        appliedDate: '2024-01-17',
+        status: 'reviewed'
+      }
+    ],
+    2: [
+      {
+        id: 3,
+        fullName: 'Lê Văn C',
+        email: 'levanc@email.com',
+        phone: '0369852147',
+        coverLetter: 'Tôi có kinh nghiệm trong lĩnh vực marketing digital và mong muốn được góp phần...',
+        appliedDate: '2024-01-18',
+        status: 'interviewed'
+      }
+    ]
+  });
+
   const [showEditor, setShowEditor] = useState(false);
   const [editingJob, setEditingJob] = useState(null);
+  const [showApplicants, setShowApplicants] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
   const [newJob, setNewJob] = useState({
     title: '',
     department: '',
@@ -90,6 +141,33 @@ const JobManager = () => {
   const handleDeleteJob = (id: number) => {
     if (confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này?')) {
       setJobs(jobs.filter(job => job.id !== id));
+    }
+  };
+
+  const handleViewApplicants = (jobId: number) => {
+    setSelectedJobId(jobId);
+    setShowApplicants(true);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'reviewed': return 'bg-blue-100 text-blue-800';
+      case 'interviewed': return 'bg-purple-100 text-purple-800';
+      case 'accepted': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'pending': return 'Chờ xử lý';
+      case 'reviewed': return 'Đã xem';
+      case 'interviewed': return 'Đã phỏng vấn';
+      case 'accepted': return 'Đã nhận';
+      case 'rejected': return 'Từ chối';
+      default: return status;
     }
   };
 
@@ -249,6 +327,9 @@ const JobManager = () => {
     );
   }
 
+  const selectedJob = jobs.find(job => job.id === selectedJobId);
+  const jobApplicants = selectedJobId ? applicants[selectedJobId] || [] : [];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -329,7 +410,10 @@ const JobManager = () => {
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="text-green-600 hover:text-green-800">
+                      <button 
+                        onClick={() => handleViewApplicants(job.id)}
+                        className="text-green-600 hover:text-green-800"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
@@ -346,6 +430,86 @@ const JobManager = () => {
           </table>
         </div>
       </div>
+
+      {/* Applicants Modal */}
+      <Dialog open={showApplicants} onOpenChange={setShowApplicants}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Danh sách ứng viên - {selectedJob?.title}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {jobApplicants.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <User className="w-12 h-12 mx-auto mb-4" />
+                <p>Chưa có ứng viên nào ứng tuyển cho vị trí này</p>
+              </div>
+            ) : (
+              jobApplicants.map((applicant) => (
+                <div key={applicant.id} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg text-gray-800">
+                        {applicant.fullName}
+                      </h3>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center space-x-1">
+                          <Mail className="w-3 h-3" />
+                          <span>{applicant.email}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Phone className="w-3 h-3" />
+                          <span>{applicant.phone}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock className="w-3 h-3" />
+                          <span>Ứng tuyển: {applicant.appliedDate}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(applicant.status)}`}>
+                      {getStatusText(applicant.status)}
+                    </span>
+                  </div>
+                  
+                  {applicant.coverLetter && (
+                    <div>
+                      <h4 className="font-medium text-gray-700 mb-2">Thư xin việc:</h4>
+                      <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded">
+                        {applicant.coverLetter}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between items-center">
+                    {applicant.cvFileName && (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm text-gray-600">{applicant.cvFileName}</span>
+                        <Button size="sm" variant="outline">
+                          <Download className="w-3 h-3 mr-1" />
+                          Tải CV
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <div className="flex space-x-2">
+                      <Button size="sm" variant="outline">
+                        Liên hệ
+                      </Button>
+                      <Button size="sm">
+                        Phỏng vấn
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
