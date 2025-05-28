@@ -1,6 +1,12 @@
 
 import React, { useState } from 'react';
 import { Plus, Edit, Trash, Eye, Search, Upload, X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const BlogManager = () => {
   const [blogs, setBlogs] = useState([
@@ -8,21 +14,27 @@ const BlogManager = () => {
       id: 1,
       title: 'AI trong Marketing: Tương lai đã đến',
       excerpt: 'Khám phá cách AI đang thay đổi ngành marketing...',
+      content: 'Nội dung chi tiết về AI trong marketing. AI đang cách mạng hóa cách chúng ta tiếp cận khách hàng, từ việc cá nhân hóa trải nghiệm đến tối ưu hóa chiến lược quảng cáo.',
       status: 'published',
       date: '2024-01-15',
-      views: 234
+      views: 234,
+      images: []
     },
     {
       id: 2,
       title: 'Xu hướng E-commerce 2024',
       excerpt: 'Những xu hướng mới trong thương mại điện tử...',
+      content: 'Thương mại điện tử đang phát triển mạnh mẽ với nhiều xu hướng mới như live commerce, social commerce và AI-powered recommendations.',
       status: 'draft',
       date: '2024-01-10',
-      views: 0
+      views: 0,
+      images: []
     },
   ]);
 
   const [showEditor, setShowEditor] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewBlog, setPreviewBlog] = useState(null);
   const [editingBlog, setEditingBlog] = useState(null);
   const [newBlog, setNewBlog] = useState({
     title: '',
@@ -86,6 +98,11 @@ const BlogManager = () => {
       images: blog.images || []
     });
     setShowEditor(true);
+  };
+
+  const handlePreviewBlog = (blog: any) => {
+    setPreviewBlog(blog);
+    setShowPreview(true);
   };
 
   const handleDeleteBlog = (id: number) => {
@@ -299,15 +316,21 @@ const BlogManager = () => {
                       <button
                         onClick={() => handleEditBlog(blog)}
                         className="text-blue-600 hover:text-blue-800"
+                        title="Chỉnh sửa"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="text-green-600 hover:text-green-800">
+                      <button 
+                        onClick={() => handlePreviewBlog(blog)}
+                        className="text-green-600 hover:text-green-800"
+                        title="Xem trước"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteBlog(blog.id)}
                         className="text-red-600 hover:text-red-800"
+                        title="Xóa"
                       >
                         <Trash className="w-4 h-4" />
                       </button>
@@ -319,6 +342,93 @@ const BlogManager = () => {
           </table>
         </div>
       </div>
+
+      {/* Blog Preview Modal */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Xem trước Blog</DialogTitle>
+          </DialogHeader>
+          
+          {previewBlog && (
+            <div className="space-y-6">
+              {/* Blog Header */}
+              <div className="border-b pb-6">
+                <div className="mb-4">
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                    previewBlog.status === 'published' 
+                      ? 'bg-green-100 text-green-600' 
+                      : 'bg-yellow-100 text-yellow-600'
+                  }`}>
+                    {previewBlog.status === 'published' ? 'Đã xuất bản' : 'Bản nháp'}
+                  </span>
+                </div>
+                
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  {previewBlog.title}
+                </h1>
+                
+                <div className="flex items-center gap-4 text-gray-600 text-sm">
+                  <span>Ngày đăng: {previewBlog.date}</span>
+                  <span>•</span>
+                  <span>Lượt xem: {previewBlog.views}</span>
+                </div>
+              </div>
+
+              {/* Blog Images */}
+              {previewBlog.images && previewBlog.images.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Hình ảnh:</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {previewBlog.images.map((image: any) => (
+                      <div key={image.id} className="relative">
+                        <img
+                          src={image.url}
+                          alt={image.name}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Blog Excerpt */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Tóm tắt:</h3>
+                <p className="text-gray-700 italic">{previewBlog.excerpt}</p>
+              </div>
+
+              {/* Blog Content */}
+              <div className="prose max-w-none">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Nội dung:</h3>
+                <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {previewBlog.content || 'Chưa có nội dung.'}
+                </div>
+              </div>
+
+              {/* Preview Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                  onClick={() => {
+                    setShowPreview(false);
+                    handleEditBlog(previewBlog);
+                  }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  Chỉnh sửa
+                </button>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
