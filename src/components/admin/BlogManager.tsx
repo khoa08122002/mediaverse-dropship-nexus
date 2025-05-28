@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, Edit, Trash, Eye, Search } from 'lucide-react';
+import { Plus, Edit, Trash, Eye, Search, Upload, X } from 'lucide-react';
 
 const BlogManager = () => {
   const [blogs, setBlogs] = useState([
@@ -28,8 +28,32 @@ const BlogManager = () => {
     title: '',
     content: '',
     excerpt: '',
-    status: 'draft'
+    status: 'draft',
+    images: []
   });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const imageUrls = files.map(file => ({
+      id: Date.now() + Math.random(),
+      file,
+      url: URL.createObjectURL(file),
+      name: file.name
+    }));
+    
+    setNewBlog({
+      ...newBlog,
+      images: [...newBlog.images, ...imageUrls]
+    });
+  };
+
+  const removeImage = (imageId: number) => {
+    const updatedImages = newBlog.images.filter((img: any) => img.id !== imageId);
+    setNewBlog({
+      ...newBlog,
+      images: updatedImages
+    });
+  };
 
   const handleSaveBlog = () => {
     if (editingBlog) {
@@ -49,7 +73,7 @@ const BlogManager = () => {
     }
     setShowEditor(false);
     setEditingBlog(null);
-    setNewBlog({ title: '', content: '', excerpt: '', status: 'draft' });
+    setNewBlog({ title: '', content: '', excerpt: '', status: 'draft', images: [] });
   };
 
   const handleEditBlog = (blog: any) => {
@@ -58,7 +82,8 @@ const BlogManager = () => {
       title: blog.title,
       content: blog.content || '',
       excerpt: blog.excerpt,
-      status: blog.status
+      status: blog.status,
+      images: blog.images || []
     });
     setShowEditor(true);
   };
@@ -80,7 +105,7 @@ const BlogManager = () => {
             onClick={() => {
               setShowEditor(false);
               setEditingBlog(null);
-              setNewBlog({ title: '', content: '', excerpt: '', status: 'draft' });
+              setNewBlog({ title: '', content: '', excerpt: '', status: 'draft', images: [] });
             }}
             className="text-gray-600 hover:text-gray-800"
           >
@@ -114,6 +139,56 @@ const BlogManager = () => {
                 rows={3}
                 placeholder="Nhập tóm tắt blog"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Hình ảnh
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                <div className="text-center">
+                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <div className="mb-4">
+                    <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center space-x-2">
+                      <Upload className="w-4 h-4" />
+                      <span>Chọn hình ảnh</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  <p className="text-sm text-gray-500">Hoặc kéo thả hình ảnh vào đây</p>
+                  <p className="text-xs text-gray-400 mt-2">PNG, JPG, GIF up to 10MB</p>
+                </div>
+              </div>
+
+              {newBlog.images.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Hình ảnh đã chọn:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {newBlog.images.map((image: any) => (
+                      <div key={image.id} className="relative group">
+                        <img
+                          src={image.url}
+                          alt={image.name}
+                          className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          onClick={() => removeImage(image.id)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                        <p className="text-xs text-gray-500 mt-1 truncate">{image.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
