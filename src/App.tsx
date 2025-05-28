@@ -14,6 +14,7 @@ import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
 import Recruitment from "./pages/Recruitment";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const PreloadedBlog = withPreloader(Blog);
 const PreloadedBlogDetail = withPreloader(BlogDetail);
 const PreloadedContact = withPreloader(Contact);
 const PreloadedRecruitment = withPreloader(Recruitment);
+const PreloadedAdmin = withPreloader(Admin);
 const PreloadedNotFound = withPreloader(NotFound);
 
 const App = () => {
@@ -45,6 +47,7 @@ const App = () => {
             <Route path="/blog/:slug" element={<PreloadedBlogDetail />} />
             <Route path="/contact" element={<PreloadedContact />} />
             <Route path="/recruitment" element={<PreloadedRecruitment />} />
+            <Route path="/admin" element={<PreloadedAdmin />} />
             <Route path="*" element={<PreloadedNotFound />} />
           </Routes>
         </BrowserRouter>
