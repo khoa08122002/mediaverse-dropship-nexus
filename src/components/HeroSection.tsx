@@ -75,7 +75,7 @@ const HeroSection = () => {
 
           {/* Spline 3D Scene */}
               {/* Spline 3D Scene với CSS để ẩn logo */}
-              <div className="aspect-square rounded-2xl overflow-hidden relative">
+              <div className="hidden lg:block aspect-square rounded-2xl overflow-hidden relative">
                   <Spline 
                     scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode"
                     style={{ width: '100%', height: '100%' }}
