@@ -48,6 +48,7 @@ const App = () => {
             <Route path="/contact" element={<PreloadedContact />} />
             <Route path="/recruitment" element={<PreloadedRecruitment />} />
             <Route path="/admin" element={<PreloadedAdmin />} />
+            <Route path="/admin/applicant" element={<PreloadedAdmin />} />
             <Route path="*" element={<PreloadedNotFound />} />
           </Routes>
         </BrowserRouter>

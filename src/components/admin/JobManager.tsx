@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash, Eye, Search, MapPin, Clock, User, Mail, Phone, FileText, Download } from 'lucide-react';
+import { Plus, Edit, Trash, Eye, Search, MapPin, Clock, User, Mail, Phone, FileText, Download, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface Applicant {
   id: number;
@@ -15,6 +16,8 @@ interface Applicant {
 }
 
 const JobManager = () => {
+  const navigate = useNavigate();
+
   const [jobs, setJobs] = useState([
     {
       id: 1,
@@ -142,6 +145,10 @@ const JobManager = () => {
     if (confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này?')) {
       setJobs(jobs.filter(job => job.id !== id));
     }
+  };
+
+  const handleViewApplicantProfile = (applicantId: number, jobId: number) => {
+    navigate(`/admin/applicant?id=${applicantId}&jobId=${jobId}`);
   };
 
   const handleViewApplicants = (jobId: number) => {
@@ -477,7 +484,7 @@ const JobManager = () => {
                   {applicant.coverLetter && (
                     <div>
                       <h4 className="font-medium text-gray-700 mb-2">Thư xin việc:</h4>
-                      <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded">
+                      <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded line-clamp-3">
                         {applicant.coverLetter}
                       </p>
                     </div>
@@ -496,6 +503,14 @@ const JobManager = () => {
                     )}
                     
                     <div className="flex space-x-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleViewApplicantProfile(applicant.id, selectedJobId!)}
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Xem hồ sơ
+                      </Button>
                       <Button size="sm" variant="outline">
                         Liên hệ
                       </Button>

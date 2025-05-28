@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -8,12 +8,18 @@ import BlogManager from '../components/admin/BlogManager';
 import JobManager from '../components/admin/JobManager';
 import ContactManager from '../components/admin/ContactManager';
 import UserManager from '../components/admin/UserManager';
+import ApplicantProfile from '../components/admin/ApplicantProfile';
 import { Shield } from 'lucide-react';
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [searchParams] = useSearchParams();
+  const tab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tab || 'dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [credentials, setCredentials] = useState({ username: '', password: '' });
+
+  // Check if we're on the applicant profile route
+  const isApplicantProfileRoute = window.location.pathname === '/admin/applicant';
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +32,10 @@ const Admin = () => {
   };
 
   const renderContent = () => {
+    if (isApplicantProfileRoute) {
+      return <ApplicantProfile />;
+    }
+    
     switch (activeTab) {
       case 'dashboard':
         return <AdminDashboard />;
@@ -104,9 +114,15 @@ const Admin = () => {
       <Header />
       
       <div className="flex pt-20">
-        <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={() => setIsAuthenticated(false)} />
+        {!isApplicantProfileRoute && (
+          <AdminSidebar 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab} 
+            onLogout={() => setIsAuthenticated(false)} 
+          />
+        )}
         
-        <main className="flex-1 p-6">
+        <main className={`flex-1 p-6 ${isApplicantProfileRoute ? 'ml-0' : ''}`}>
           <div className="max-w-7xl mx-auto">
             {renderContent()}
           </div>
