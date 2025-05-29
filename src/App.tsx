@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -14,6 +15,7 @@ import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
 import Recruitment from "./pages/Recruitment";
 import Admin from "./pages/Admin";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,7 @@ const PreloadedBlogDetail = withPreloader(BlogDetail);
 const PreloadedContact = withPreloader(Contact);
 const PreloadedRecruitment = withPreloader(Recruitment);
 const PreloadedAdmin = withPreloader(Admin);
+const PreloadedLogin = withPreloader(Login);
 const PreloadedNotFound = withPreloader(NotFound);
 
 const App = () => {
@@ -48,6 +51,7 @@ const App = () => {
             <Route path="/recruitment" element={<PreloadedRecruitment />} />
             <Route path="/admin" element={<PreloadedAdmin />} />
             <Route path="/admin/applicant" element={<PreloadedAdmin />} />
+            <Route path="/login" element={<PreloadedLogin />} />
             <Route path="*" element={<PreloadedNotFound />} />
           </Routes>
         </BrowserRouter>
