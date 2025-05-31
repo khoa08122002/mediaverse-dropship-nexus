@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,6 +16,8 @@ import Recruitment from "./pages/Recruitment";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -40,20 +41,36 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<PreloadedIndex />} />
-            <Route path="/about" element={<PreloadedAbout />} />
-            <Route path="/media-services" element={<PreloadedMediaServices />} />
-            <Route path="/ecommerce" element={<PreloadedEcommerce />} />
-            <Route path="/blog" element={<PreloadedBlog />} />
-            <Route path="/blog/:slug" element={<PreloadedBlogDetail />} />
-            <Route path="/contact" element={<PreloadedContact />} />
-            <Route path="/recruitment" element={<PreloadedRecruitment />} />
-            <Route path="/admin" element={<PreloadedAdmin />} />
-            <Route path="/admin/applicant" element={<PreloadedAdmin />} />
-            <Route path="/login" element={<PreloadedLogin />} />
-            <Route path="*" element={<PreloadedNotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<PreloadedIndex />} />
+              <Route path="/about" element={<PreloadedAbout />} />
+              <Route path="/media-services" element={<PreloadedMediaServices />} />
+              <Route path="/ecommerce" element={<PreloadedEcommerce />} />
+              <Route path="/blog" element={<PreloadedBlog />} />
+              <Route path="/blog/:slug" element={<PreloadedBlogDetail />} />
+              <Route path="/contact" element={<PreloadedContact />} />
+              <Route path="/recruitment" element={<PreloadedRecruitment />} />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute>
+                    <PreloadedAdmin />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/applicant" 
+                element={
+                  <ProtectedRoute>
+                    <PreloadedAdmin />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/login" element={<PreloadedLogin />} />
+              <Route path="*" element={<PreloadedNotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

@@ -1,10 +1,11 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { toast } = useToast();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,16 +30,22 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate login process
-    setTimeout(() => {
+    try {
+      await login(formData.email, formData.password);
+      toast({
+        title: "Đăng nhập thành công",
+        description: "Chào mừng bạn quay trở lại!",
+      });
+      navigate('/admin');
+    } catch (error) {
+      toast({
+        title: "Đăng nhập thất bại",
+        description: "Email hoặc mật khẩu không đúng",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-      // For demo purposes, redirect to admin if email contains "admin"
-      if (formData.email.includes('admin')) {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
-    }, 1500);
+    }
   };
 
   return (
@@ -159,7 +168,7 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Sign Up Link */}
+          {/* Register Link */}
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Chưa có tài khoản?{' '}
@@ -181,8 +190,8 @@ const Login = () => {
         <div className="mt-6 text-center">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
             <p className="text-white text-sm mb-2 font-medium">Demo Credentials:</p>
-            <p className="text-white/80 text-xs">Admin: admin@demo.com / password</p>
-            <p className="text-white/80 text-xs">User: user@demo.com / password</p>
+            <p className="text-white/80 text-xs">Admin: admin@example.com / admin123</p>
+            <p className="text-white/80 text-xs">User: user@example.com / user123</p>
           </div>
         </div>
       </div>

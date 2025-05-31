@@ -168,7 +168,7 @@ function toast({ ...props }: Toast) {
   }
 }
 
-function useToast() {
+export function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
@@ -183,9 +183,17 @@ function useToast() {
 
   return {
     ...state,
-    toast,
+    toast: ({ title, description, variant = 'default' }: {
+      title?: string;
+      description: string;
+      variant?: 'default' | 'destructive';
+    }) => {
+      toast({
+        title,
+        description,
+        variant,
+      });
+    },
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }
 }
-
-export { useToast, toast }

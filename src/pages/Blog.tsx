@@ -1,89 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
+import { blogService } from '@/services/blogService';
+import type { BlogData } from '@/types/blog';
+import { toast } from 'react-hot-toast';
+import FeaturedArticle from '@/components/FeaturedArticle';
+import { User, Calendar, Clock } from 'lucide-react';
 
 const Blog = () => {
-  const featuredPost = {
-    title: "Tương lai của AI Marketing: Xu hướng 2024 và dự báo 2025",
-    excerpt: "Khám phá những xu hướng mới nhất trong lĩnh vực AI Marketing và cách các doanh nghiệp có thể tận dụng để tăng trưởng exponential.",
-    author: "Nguyễn Minh Đức",
-    date: "25/12/2024",
-    readTime: "8 phút đọc",
-    category: "AI Marketing",
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
-    tags: ["AI", "Marketing", "Xu hướng 2024", "Machine Learning"],
-    slug: "tuong-lai-ai-marketing-2024-2025"
-  };
-
-  const blogPosts = [
-    {
-      title: "Dropshipping 2024: Chiến lược thành công với AI Automation",
-      excerpt: "Hướng dẫn chi tiết cách xây dựng hệ thống dropshipping tự động với AI, từ product sourcing đến customer service.",
-      author: "Trần Thị Lan",
-      date: "22/12/2024",
-      readTime: "12 phút đọc",
-      category: "E-commerce",
-      image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop",
-      tags: ["Dropshipping", "AI", "Automation", "E-commerce"],
-      slug: "dropshipping-2024-ai-automation"
-    },
-    {
-      title: "Content Marketing với AI: Tạo nội dung viral trong 30 phút",
-      excerpt: "Khám phá cách sử dụng AI tools để tạo ra content chất lượng cao, tối ưu SEO và có khả năng viral trên social media.",
-      author: "Lê Văn Tâm",
-      date: "20/12/2024", 
-      readTime: "6 phút đọc",
-      category: "Content Marketing",
-      image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&h=250&fit=crop",
-      tags: ["Content Marketing", "AI", "SEO", "Social Media"],
-      slug: "content-marketing-ai-viral"
-    },
-    {
-      title: "Omnichannel Commerce: Unified Customer Experience Strategy",
-      excerpt: "Chiến lược tích hợp đa kênh bán hàng hiệu quả, tạo ra trải nghiệm khách hàng seamless từ online đến offline.",
-      author: "Phạm Thị Mai",
-      date: "18/12/2024",
-      readTime: "10 phút đọc", 
-      category: "E-commerce Strategy",
-      image: "https://images.unsplash.com/photo-1556155092-490a1ba16284?w=400&h=250&fit=crop",
-      tags: ["Omnichannel", "CX", "Strategy", "Retail"],
-      slug: "omnichannel-commerce-strategy"
-    },
-    {
-      title: "Social Media Analytics: Đo lường ROI thực tế với AI",
-      excerpt: "Hướng dẫn sử dụng AI analytics để đo lường hiệu quả social media marketing một cách chính xác và actionable.",
-      author: "Võ Minh Khôi",
-      date: "15/12/2024",
-      readTime: "8 phút đọc",
-      category: "Analytics",
-      image: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=250&fit=crop",
-      tags: ["Social Media", "Analytics", "ROI", "AI"],
-      slug: "social-media-analytics-roi-ai"
-    },
-    {
-      title: "Supply Chain 4.0: Tối ưu hóa với AI và IoT",
-      excerpt: "Cách mạng hóa chuỗi cung ứng với công nghệ AI và IoT, từ demand forecasting đến logistics optimization.",
-      author: "Đặng Văn Hùng",
-      date: "12/12/2024",
-      readTime: "15 phút đọc",
-      category: "Supply Chain",
-      image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=250&fit=crop",
-      tags: ["Supply Chain", "AI", "IoT", "Logistics"],
-      slug: "supply-chain-4-ai-iot"
-    },
-    {
-      title: "Customer Data Platform: Unified View của khách hàng",
-      excerpt: "Xây dựng Customer Data Platform hiệu quả để có cái nhìn 360 độ về khách hàng và personalize experience.",
-      author: "Ngô Thị Hương",
-      date: "10/12/2024",
-      readTime: "9 phút đọc",
-      category: "Data Analytics",
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop",
-      tags: ["CDP", "Data", "Personalization", "CRM"],
-      slug: "customer-data-platform"
-    }
-  ];
+  const [loading, setLoading] = useState(false);
+  const [featuredPost, setFeaturedPost] = useState<BlogData | null>(null);
+  const [blogPosts, setBlogPosts] = useState<BlogData[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
 
   const categories = [
     "Tất cả",
@@ -94,6 +23,65 @@ const Blog = () => {
     "Supply Chain",
     "Case Studies"
   ];
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [featured, allPosts] = await Promise.all([
+        blogService.getFeaturedBlog(),
+        blogService.getAllBlogs()
+      ]);
+      
+      // Only show published posts
+      const publishedPosts = allPosts.filter(post => post.status === 'published');
+      
+      setFeaturedPost(featured);
+      setBlogPosts(publishedPosts);
+    } catch (error) {
+      console.error('Error fetching blog data:', error);
+      toast.error('Không thể tải dữ liệu bài viết');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCategoryChange = async (category: string) => {
+    try {
+      setLoading(true);
+      setSelectedCategory(category);
+      
+      let posts;
+      if (category === 'Tất cả') {
+        posts = await blogService.getAllBlogs();
+      } else {
+        posts = await blogService.getBlogsByCategory(category);
+      }
+
+      // Filter for published posts only
+      const publishedPosts = posts.filter(post => post.status === 'published');
+      setBlogPosts(publishedPosts);
+    } catch (error) {
+      console.error('Error filtering by category:', error);
+      toast.error('Không thể lọc bài viết theo danh mục');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -121,61 +109,69 @@ const Blog = () => {
         </section>
 
         {/* Featured Post */}
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-6xl mx-auto">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-2">
-                  <div className="p-8 lg:p-12 text-white">
-                    <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium mb-4">
-                      ⭐ Featured Article
-                    </span>
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-                      {featuredPost.title}
-                    </h2>
-                    <p className="text-blue-100 mb-6 leading-relaxed text-lg">
-                      {featuredPost.excerpt}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {featuredPost.tags.map((tag, index) => (
-                        <span key={index} className="px-3 py-1 bg-white/20 rounded-full text-sm">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <div className="font-semibold">{featuredPost.author}</div>
-                          <div className="text-blue-200 text-sm">
-                            {featuredPost.date} • {featuredPost.readTime}
+        {featuredPost && featuredPost.status === 'published' && featuredPost.isFeatured && (
+          <section className="py-12 px-4">
+            <div className="container mx-auto">
+              <div className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 max-w-4xl mx-auto h-[240px]">
+                <div className="grid md:grid-cols-2 h-full">
+                  {/* Content Section */}
+                  <div className="p-8 bg-gradient-to-r from-blue-600 to-purple-600">
+                    <div className="flex flex-col h-full">
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-blue-100 text-sm font-medium">⭐ Bài viết nổi bật</span>
+                        </div>
+                        
+                        <h2 className="text-3xl font-bold text-white mb-4 line-clamp-2 leading-tight">
+                          {featuredPost.title}
+                        </h2>
+                        
+                        <p className="text-blue-100 text-lg line-clamp-3 mb-8">
+                          {featuredPost.excerpt}
+                        </p>
+
+                        <div className="flex items-center gap-4 text-sm text-blue-100">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4" />
+                            <span>{featuredPost.author.fullName}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>{new Date(featuredPost.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>{featuredPost.readTime}</span>
                           </div>
                         </div>
                       </div>
-                      <Link 
-                        to={`/blog/${featuredPost.slug}`}
-                        className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-                      >
-                        Đọc bài viết
-                      </Link>
                     </div>
                   </div>
-                  
-                  <div className="relative">
+
+                  {/* Image Section */}
+                  <div className="relative h-full">
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
                     <img 
-                      src={featuredPost.image} 
-                      alt={featuredPost.title}
-                      className="w-full h-full object-cover"
+                      src={featuredPost.featuredImage.url} 
+                      alt={featuredPost.featuredImage.alt}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  </div>
+
+                  {/* Read Button - Absolute positioned at the bottom right */}
+                  <div className="absolute bottom-6 right-6 z-10">
+                    <Link 
+                      to={`/blog/${featuredPost.slug}`}
+                      className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-medium transition-colors text-lg"
+                    >
+                      Đọc bài viết
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Categories Filter */}
         <section className="py-10 bg-gray-50 border-y border-gray-200">
@@ -185,8 +181,9 @@ const Blog = () => {
                 {categories.map((category, index) => (
                   <button
                     key={index}
+                    onClick={() => handleCategoryChange(category)}
                     className={`px-6 py-2 rounded-full font-medium transition-colors ${
-                      index === 0 
+                      category === selectedCategory
                         ? 'bg-blue-600 text-white' 
                         : 'bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600'
                     }`}
@@ -204,12 +201,12 @@ const Blog = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {blogPosts.map((post, index) => (
-                  <article key={index} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
+                {blogPosts.map((post) => (
+                  <article key={post.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
                     <div className="relative">
                       <img 
-                        src={post.image} 
-                        alt={post.title}
+                        src={post.featuredImage.url} 
+                        alt={post.featuredImage.alt}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-4 left-4">
@@ -239,10 +236,10 @@ const Blog = () => {
                       
                       <div className="flex items-center justify-between text-sm text-gray-500">
                         <div className="flex items-center space-x-2">
-                          <span>{post.author}</span>
+                          <span>{post.author.fullName}</span>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span>{post.date}</span>
+                          <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                           <span>•</span>
                           <span>{post.readTime}</span>
                         </div>
