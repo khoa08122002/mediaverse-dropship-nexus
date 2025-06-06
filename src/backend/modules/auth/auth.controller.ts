@@ -1,8 +1,10 @@
 import { Controller, Post, Body, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
+import { LocalAuthGuard } from './guards/local-auth.guard';
+import { Public } from './decorators/public.decorator';
 
 export class LoginDto {
   @IsEmail()
@@ -14,24 +16,39 @@ export class LoginDto {
   password: string;
 }
 
+export class RefreshTokenDto {
+  @IsString()
+  @IsNotEmpty()
+  refreshToken: string;
+}
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
+  @Public()
+  @UseGuards(LocalAuthGuard)
   @Post('login')
-  @ApiOperation({ summary: 'Đăng nhập vào hệ thống' })
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiBody({
+    type: LoginDto,
+    description: 'User credentials',
+  })
   @ApiResponse({ status: 200, description: 'Đăng nhập thành công' })
   @ApiResponse({ status: 401, description: 'Email hoặc mật khẩu không đúng' })
   async login(@Body() loginDto: LoginDto) {
-    console.log('Login attempt:', loginDto); // Debug log
-    try {
-      const user = await this.authService.validateUser(loginDto.email, loginDto.password);
-      return this.authService.login(user);
-    } catch (error) {
-      console.error('Login error:', error); // Debug log
-      throw new UnauthorizedException(error.message);
-    }
+    console.log('Login attempt:', { email: loginDto.email }); // Log login attempt
+    return this.authService.login(loginDto);
+  }
+
+  @Public()
+  @Post('refresh')
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({ status: 200, description: 'Token được làm mới thành công' })
+  @ApiResponse({ status: 401, description: 'Refresh token không hợp lệ' })
+  async refresh(@Body() refreshDto: { refreshToken: string }) {
+    return this.authService.refresh(refreshDto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -40,14 +57,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Đổi mật khẩu người dùng' })
   @ApiResponse({ status: 200, description: 'Đổi mật khẩu thành công' })
   @ApiResponse({ status: 401, description: 'Không có quyền hoặc mật khẩu không đúng' })
-  async changePassword(
-    @Request() req,
-    @Body() changePasswordDto: { currentPassword: string; newPassword: string }
-  ) {
-    return this.authService.changePassword(
-      req.user.id,
-      changePasswordDto.currentPassword,
-      changePasswordDto.newPassword
-    );
+  async changePassword(@Body() changePasswordDto: any) {
+    return this.authService.changePassword(changePasswordDto);
   }
 } 

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import logo from '@/assets/images/logo.png';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,7 +24,7 @@ const Header = () => {
         
         <Link to="/" className="absolute left-0 top-1/2 transform -translate-y-1/2 h-28 pb-2 z-10">
           <img 
-            src="./src/assets/images/logo.png" 
+            src={logo}
             alt="PH Group Logo" 
             className="h-full w-auto object-contain" 
           />
@@ -30,7 +32,6 @@ const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo Spacing */}
           <div className="w-24"></div>
-
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-8">
@@ -44,8 +45,8 @@ const Header = () => {
             {/* Dropdown full wrapper */}
             <div 
               className="relative"
-              onMouseEnter={() => setIsServicesOpen(true)}
-              onMouseLeave={() => setIsServicesOpen(false)}
+              onMouseEnter={handleServicesMouseEnter}
+              onMouseLeave={handleServicesMouseLeave}
             >
               <div className="flex flex-col">
                 {/* Trigger button */}

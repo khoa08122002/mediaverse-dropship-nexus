@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { useToast } from '../hooks/use-toast';
+import { contactService } from '@/services/contactService';
 
 const Contact = () => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,6 +13,7 @@ const Contact = () => {
     company: '',
     service: '',
     budget: '',
+    subject: '',
     message: ''
   });
 
@@ -24,25 +25,43 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simulate form submission
-    toast({
-      title: "Cảm ơn bạn đã liên hệ!",
-      description: "Chúng tôi sẽ phản hồi trong vòng 24 giờ.",
-    });
+    try {
+      setLoading(true);
+      await contactService.createContact({
+        ...formData,
+        subject: formData.service || 'Yêu cầu tư vấn'
+      });
+      
+      toast({
+        title: "✅ Gửi yêu cầu thành công!",
+        description: "Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi sớm nhất có thể!",
+        variant: "default"
+      });
 
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-      service: '',
-      budget: '',
-      message: ''
-    });
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        service: '',
+        budget: '',
+        subject: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      toast({
+        title: "❌ Có lỗi xảy ra",
+        description: "Có lỗi xảy ra. Vui lòng thử lại sau!",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const services = [
@@ -118,8 +137,8 @@ const Contact = () => {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
                       <label className="block text-gray-700 font-medium mb-2">
                         Họ và tên *
                       </label>
@@ -133,6 +152,7 @@ const Contact = () => {
                         placeholder="Nguyễn Văn A"
                       />
                     </div>
+
                     <div>
                       <label className="block text-gray-700 font-medium mb-2">
                         Email *
@@ -147,9 +167,7 @@ const Contact = () => {
                         placeholder="email@company.com"
                       />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-gray-700 font-medium mb-2">
                         Số điện thoại *
@@ -164,7 +182,8 @@ const Contact = () => {
                         placeholder="+84 123 456 789"
                       />
                     </div>
-                    <div>
+
+                    <div className="md:col-span-2">
                       <label className="block text-gray-700 font-medium mb-2">
                         Công ty
                       </label>
@@ -177,9 +196,7 @@ const Contact = () => {
                         placeholder="Tên công ty"
                       />
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-gray-700 font-medium mb-2">
                         Dịch vụ quan tâm *
@@ -197,6 +214,7 @@ const Contact = () => {
                         ))}
                       </select>
                     </div>
+
                     <div>
                       <label className="block text-gray-700 font-medium mb-2">
                         Ngân sách dự kiến
@@ -213,28 +231,36 @@ const Contact = () => {
                         ))}
                       </select>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      Mô tả chi tiết nhu cầu *
-                    </label>
-                    <textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      required
-                      rows={5}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Mô tả chi tiết về dự án, mục tiêu, thời gian mong muốn và các yêu cầu đặc biệt..."
-                    />
+                    <div className="md:col-span-2">
+                      <label className="block text-gray-700 font-medium mb-2">
+                        Mô tả chi tiết nhu cầu *
+                      </label>
+                      <textarea
+                        name="message"
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        required
+                        rows={8}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Mô tả chi tiết về dự án, mục tiêu, thời gian mong muốn và các yêu cầu đặc biệt..."
+                      />
+                    </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-semibold disabled:opacity-50"
                   >
-                    Gửi yêu cầu tư vấn
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                        <span>Đang gửi...</span>
+                      </div>
+                    ) : (
+                      'Gửi yêu cầu tư vấn'
+                    )}
                   </button>
                 </form>
               </div>
@@ -403,8 +429,6 @@ const Contact = () => {
           </div>
         </section>
       </main>
-      
-      <Footer />
     </div>
   );
 };

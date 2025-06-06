@@ -2,40 +2,94 @@ import React, { useState, useEffect } from 'react';
 import { Users, Plus, Edit, Trash, Search, Shield, ShieldCheck, User, Key } from 'lucide-react';
 import { userService } from '@/services/userService';
 import type { User as UserType, CreateUserDTO, UpdateUserDTO } from '@/types/user';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const UserManager = () => {
+  const { user: currentUser, isAuthenticated, logout } = useAuth();
   const [users, setUsers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserForm, setShowUserForm] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserType | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+
   const [newUser, setNewUser] = useState<CreateUserDTO>({
     email: '',
     password: '',
     fullName: '',
-    role: 'VIEWER',
+    role: 'USER',
     status: 'ACTIVE'
   });
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    const checkAndFetchUsers = async () => {
+      if (!isAuthenticated) {
+        setError('Vui lòng đăng nhập để truy cập trang này');
+        return;
+      }
+
+      if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'HR') {
+        setError('Bạn không có quyền truy cập trang này');
+        return;
+      }
+
+      await fetchUsers();
+    };
+
+    checkAndFetchUsers();
+  }, [isAuthenticated, currentUser]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await userService.getAllUsers();
       setUsers(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching users:', error);
-      toast.error('Không thể tải danh sách người dùng');
+      if (error.response?.status === 401) {
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        logout();
+      } else {
+        setError(error.response?.data?.message || 'Không thể tải danh sách người dùng');
+        toast.error('Không thể tải danh sách người dùng');
+      }
     } finally {
       setLoading(false);
     }
@@ -44,14 +98,16 @@ const UserManager = () => {
   const handleSearch = async () => {
     try {
       setLoading(true);
+      setError(null);
       if (searchQuery.trim()) {
         const data = await userService.searchUsers(searchQuery);
         setUsers(data);
       } else {
         await fetchUsers();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching users:', error);
+      setError(error.response?.data?.message || 'Có lỗi xảy ra khi tìm kiếm');
       toast.error('Có lỗi xảy ra khi tìm kiếm');
     } finally {
       setLoading(false);
@@ -61,6 +117,7 @@ const UserManager = () => {
   const handleSaveUser = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Validate required fields
       if (!newUser.fullName.trim()) {
@@ -84,10 +141,6 @@ const UserManager = () => {
           role: newUser.role,
           status: newUser.status
         };
-        
-        if (newUser.password.trim()) {
-          updateData.password = newUser.password;
-        }
 
         const updatedUser = await userService.updateUser(editingUser.id, updateData);
         setUsers(users.map(user => user.id === editingUser.id ? updatedUser : user));
@@ -105,11 +158,12 @@ const UserManager = () => {
         email: '',
         password: '',
         fullName: '',
-        role: 'VIEWER',
+        role: 'USER',
         status: 'ACTIVE'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving user:', error);
+      setError(error.response?.data?.message || 'Có lỗi xảy ra khi lưu thông tin');
       toast.error('Có lỗi xảy ra khi lưu thông tin');
     } finally {
       setLoading(false);
@@ -128,19 +182,22 @@ const UserManager = () => {
     setShowUserForm(true);
   };
 
-  const handleDeleteUser = async (id: string) => {
-    if (confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
-      try {
-        setLoading(true);
-        await userService.deleteUser(id);
-        setUsers(users.filter(user => user.id !== id));
-        toast.success('Xóa người dùng thành công');
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        toast.error('Có lỗi xảy ra khi xóa người dùng');
-      } finally {
-        setLoading(false);
-      }
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      await userService.deleteUser(userToDelete.id);
+      setUsers(users.filter(user => user.id !== userToDelete.id));
+      toast.success('Xóa người dùng thành công');
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      setError(error.response?.data?.message || 'Có lỗi xảy ra khi xóa người dùng');
+      toast.error('Có lỗi xảy ra khi xóa người dùng');
+    } finally {
+      setLoading(false);
+      setUserToDelete(null);
     }
   };
 
@@ -191,8 +248,8 @@ const UserManager = () => {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'ADMIN': return <ShieldCheck className="w-4 h-4 text-red-600" />;
-      case 'EDITOR': return <Shield className="w-4 h-4 text-blue-600" />;
-      case 'VIEWER': return <User className="w-4 h-4 text-green-600" />;
+      case 'HR': return <Shield className="w-4 h-4 text-blue-600" />;
+      case 'USER': return <User className="w-4 h-4 text-green-600" />;
       default: return <User className="w-4 h-4 text-gray-600" />;
     }
   };
@@ -200,8 +257,8 @@ const UserManager = () => {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'ADMIN': return 'bg-red-100 text-red-800';
-      case 'EDITOR': return 'bg-blue-100 text-blue-800';
-      case 'VIEWER': return 'bg-green-100 text-green-800';
+      case 'HR': return 'bg-blue-100 text-blue-800';
+      case 'USER': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -214,305 +271,427 @@ const UserManager = () => {
     return new Date(dateString).toLocaleString('vi-VN');
   };
 
-  if (loading) {
+  if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải dữ liệu...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] p-4">
+        <Shield className="w-16 h-16 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-700 mb-2">Không có quyền truy cập</h2>
+        <p className="text-gray-500">Vui lòng đăng nhập để truy cập trang này.</p>
       </div>
     );
   }
 
-  if (showUserForm) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">
-            {editingUser ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
-          </h1>
-          <button
-            onClick={() => {
-              setShowUserForm(false);
-              setEditingUser(null);
-              setNewUser({ email: '', password: '', fullName: '', role: 'VIEWER', status: 'ACTIVE' });
-            }}
-            className="text-gray-600 hover:text-gray-800"
-          >
-            Quay lại
-          </button>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Họ và tên
-              </label>
-              <input
-                type="text"
-                value={newUser.fullName}
-                onChange={(e) => setNewUser({...newUser, fullName: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập họ và tên"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập địa chỉ email"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mật khẩu {editingUser && '(để trống nếu không đổi)'}
-              </label>
-              <input
-                type="password"
-                value={newUser.password}
-                onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder={editingUser ? "Để trống nếu không đổi mật khẩu" : "Nhập mật khẩu"}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Vai trò
-              </label>
-              <select
-                value={newUser.role}
-                onChange={(e) => setNewUser({...newUser, role: e.target.value as 'ADMIN' | 'EDITOR' | 'VIEWER'})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="VIEWER">Viewer - Chỉ xem</option>
-                <option value="EDITOR">Editor - Tạo và chỉnh sửa nội dung</option>
-                <option value="ADMIN">Admin - Toàn quyền</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Trạng thái
-              </label>
-              <select
-                value={newUser.status}
-                onChange={(e) => setNewUser({...newUser, status: e.target.value as 'ACTIVE' | 'INACTIVE'})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="ACTIVE">Hoạt động</option>
-                <option value="INACTIVE">Vô hiệu hóa</option>
-              </select>
-            </div>
-
-            <div className="flex space-x-4">
-              <button
-                onClick={handleSaveUser}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-              >
-                {editingUser ? 'Cập nhật' : 'Tạo người dùng'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (showPasswordForm && editingUser) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Đổi mật khẩu cho {editingUser.fullName}
-          </h1>
-          <button
-            onClick={() => {
-              setShowPasswordForm(false);
-              setPasswordData({
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-              });
-            }}
-            className="text-gray-600 hover:text-gray-800"
-          >
-            Quay lại
-          </button>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mật khẩu hiện tại
-              </label>
-              <input
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập mật khẩu hiện tại"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mật khẩu mới
-              </label>
-              <input
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập mật khẩu mới"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Xác nhận mật khẩu mới
-              </label>
-              <input
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập lại mật khẩu mới"
-              />
-            </div>
-
-            <div className="flex space-x-4">
-              <button
-                onClick={handleChangePassword}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-              >
-                Đổi mật khẩu
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const canManageUsers = currentUser.role === 'ADMIN';
+  const canViewUsers = currentUser.role === 'ADMIN' || currentUser.role === 'HR';
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Quản lý Người dùng</h1>
-        <button
-          onClick={() => setShowUserForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Thêm người dùng</span>
-        </button>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center space-x-2">
+          <Users className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-gray-800">
+            {canManageUsers ? 'Quản lý người dùng' : 'Danh sách người dùng'}
+          </h1>
+        </div>
+        {canManageUsers && (
+          <Button 
+            onClick={() => setShowUserForm(true)} 
+            disabled={loading}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Thêm người dùng
+          </Button>
+        )}
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-            <Search className="w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Tìm kiếm người dùng..."
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={handleSearch}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Tìm kiếm
-            </button>
-          </div>
-          
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <Users className="w-4 h-4" />
-            <span>{users.length} người dùng</span>
-          </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
         </div>
+      )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-3 px-4">Người dùng</th>
-                <th className="text-left py-3 px-4">Vai trò</th>
-                <th className="text-left py-3 px-4">Trạng thái</th>
-                <th className="text-left py-3 px-4">Đăng nhập gần nhất</th>
-                <th className="text-left py-3 px-4">Ngày tạo</th>
-                <th className="text-left py-3 px-4">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-b hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <div>
-                      <h3 className="font-medium text-gray-800">{user.fullName}</h3>
-                      <p className="text-sm text-gray-600">{user.email}</p>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      {getRoleIcon(user.role)}
-                      <span className={`px-2 py-1 rounded-full text-xs ${getRoleColor(user.role)}`}>
-                        {user.role}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(user.status)}`}>
-                      {user.status === 'ACTIVE' ? 'Hoạt động' : 'Vô hiệu hóa'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">{formatDate(user.updatedAt)}</td>
-                  <td className="py-3 px-4 text-gray-600">{formatDate(user.createdAt)}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          setEditingUser(user);
-                          setShowPasswordForm(true);
-                        }}
-                        className="text-yellow-600 hover:text-yellow-800"
-                      >
-                        <Key className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditUser(user)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {user.role !== 'ADMIN' && (
-                        <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+      {!canViewUsers ? (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded mb-4">
+          Bạn không có quyền xem danh sách người dùng. Vui lòng liên hệ Admin để được hỗ trợ.
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Tìm kiếm người dùng..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+              <Button 
+                onClick={handleSearch} 
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Tìm kiếm
+              </Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Họ và tên
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Vai trò
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Trạng thái
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ngày tạo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cập nhật
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Thao tác
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4">
+                      <div className="flex justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                      Không có người dùng nào
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                              <span className="text-white font-medium text-sm">
+                                {user.fullName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {user.fullName}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{user.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleColor(user.role)}`}>
+                            {getRoleIcon(user.role)}
+                            <span className="ml-1">{user.role}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(user.status)}`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(user.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(user.updatedAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex gap-2">
+                          {canManageUsers && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditUser(user)}
+                                disabled={loading}
+                                className="text-blue-600 hover:text-blue-700 border-blue-600 hover:border-blue-700"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setUserToDelete(user)}
+                                disabled={loading}
+                                className="text-red-600 hover:text-red-700 border-red-600 hover:border-red-700"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingUser(user);
+                                  setShowPasswordForm(true);
+                                }}
+                                disabled={loading}
+                                className="text-purple-600 hover:text-purple-700 border-purple-600 hover:border-purple-700"
+                              >
+                                <Key className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
+
+      <Dialog open={showUserForm} onOpenChange={setShowUserForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              <div className="flex items-center space-x-2">
+                {editingUser ? (
+                  <>
+                    <Edit className="w-5 h-5 text-blue-600" />
+                    <span>Sửa người dùng</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5 text-green-600" />
+                    <span>Thêm người dùng mới</span>
+                  </>
+                )}
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="fullName">Họ và tên</Label>
+              <Input
+                id="fullName"
+                value={newUser.fullName}
+                onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                disabled={loading}
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                disabled={loading}
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            {!editingUser && (
+              <div className="grid gap-2">
+                <Label htmlFor="password">Mật khẩu</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  disabled={loading}
+                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            )}
+            <div className="grid gap-2">
+              <Label htmlFor="role">Vai trò</Label>
+              <Select
+                value={newUser.role}
+                onValueChange={(value: 'ADMIN' | 'HR' | 'USER') => setNewUser({ ...newUser, role: value })}
+                disabled={loading}
+              >
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectValue placeholder="Chọn vai trò" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="HR">HR</SelectItem>
+                  <SelectItem value="USER">User</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="status">Trạng thái</Label>
+              <Select
+                value={newUser.status}
+                onValueChange={(value: 'ACTIVE' | 'INACTIVE') => setNewUser({ ...newUser, status: value })}
+                disabled={loading}
+              >
+                <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectValue placeholder="Chọn trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowUserForm(false)}
+              disabled={loading}
+              className="border-gray-300 hover:bg-gray-50"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSaveUser}
+              disabled={loading}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  <span>Đang lưu...</span>
+                </div>
+              ) : (
+                'Lưu'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              <div className="flex items-center space-x-2 text-red-600">
+                <Trash className="w-5 h-5" />
+                <span>Xác nhận xóa người dùng</span>
+              </div>
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={loading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  <span>Đang xóa...</span>
+                </div>
+              ) : (
+                'Xóa'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={showPasswordForm} onOpenChange={setShowPasswordForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              <div className="flex items-center space-x-2">
+                <Key className="w-5 h-5 text-purple-600" />
+                <span>Đổi mật khẩu người dùng</span>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                disabled={loading}
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="newPassword">Mật khẩu mới</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                disabled={loading}
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                disabled={loading}
+                className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPasswordForm(false);
+                setPasswordData({
+                  currentPassword: '',
+                  newPassword: '',
+                  confirmPassword: ''
+                });
+              }}
+              disabled={loading}
+              className="border-gray-300 hover:bg-gray-50"
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleChangePassword}
+              disabled={loading}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  <span>Đang lưu...</span>
+                </div>
+              ) : (
+                'Đổi mật khẩu'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

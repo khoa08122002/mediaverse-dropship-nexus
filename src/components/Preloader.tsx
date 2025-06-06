@@ -1,5 +1,6 @@
 import { useState } from "react";
 import React, { useEffect } from 'react';
+import logo from '@/assets/images/logo.png';
 
 interface PreloaderProps {
   onLoadingComplete: () => void;
@@ -37,11 +38,7 @@ const Preloader: React.FC<PreloaderProps> = ({ onLoadingComplete }) => {
         {/* Logo */}
         <div className="mb-4 flex justify-center">
           <div className="relative">
-            <img 
-              src="./src/assets/images/logo.png" 
-              alt="PH Group Logo" 
-              className="w-40 h-40 object-contain animate-pulse"
-            />
+            <div className="h-16 w-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full blur-xl opacity-30 animate-ping"></div>
           </div>
         </div>

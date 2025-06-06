@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Edit, Trash, Eye, Search, User, Calendar, Clock } from 'lucide-react';
+import { Plus, Edit, Trash, Eye, Search, User, Calendar, Clock, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import {
     Dialog,
     DialogContent,
@@ -10,8 +11,18 @@ import {
 import { Editor } from '@tinymce/tinymce-react';
 import { blogService } from '@/services/blogService';
 import type { BlogImage, BlogData, CreateBlogDTO } from '@/types/blog';
-import { toast } from 'react-hot-toast';
-import { marked } from 'marked';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+
 
 interface BlogFormData extends CreateBlogDTO {
   status: 'draft' | 'published';
@@ -28,14 +39,26 @@ const categories = [
 
 const BlogManager = () => {
   const navigate = useNavigate();
+  const { user: currentUser, isAuthenticated, logout } = useAuth();
   const editorRef = useRef<any>(null);
   const [blogs, setBlogs] = useState<BlogData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showEditor, setShowEditor] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewBlog, setPreviewBlog] = useState<BlogData | null>(null);
   const [editingBlog, setEditingBlog] = useState<BlogData | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   const [newBlog, setNewBlog] = useState<BlogFormData>({
     title: '',
     content: '',
@@ -51,24 +74,51 @@ const BlogManager = () => {
     }
   });
 
+  const isAdmin = currentUser?.role === 'ADMIN';
+  const isHR = currentUser?.role === 'HR';
+  const canManageAllBlogs = isAdmin || isHR;
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.error('Vui lòng đăng nhập để tiếp tục');
-      navigate('/login');
-      return;
-    }
-    fetchBlogs();
-  }, [navigate]);
+    const checkAndFetchBlogs = async () => {
+      if (!isAuthenticated) {
+        setError('Vui lòng đăng nhập để tiếp tục');
+        return;
+      }
+
+      await fetchBlogs();
+    };
+
+    checkAndFetchBlogs();
+  }, [isAuthenticated]);
 
   const fetchBlogs = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await blogService.getAllBlogs();
-      setBlogs(data);
-    } catch (error) {
+      // Parse featuredImage for all posts
+      const processedData = data.map(post => ({
+        ...post,
+        featuredImage: typeof post.featuredImage === 'string' 
+          ? JSON.parse(post.featuredImage)
+          : post.featuredImage
+      }));
+      
+      // Filter blogs based on user role
+      const filteredData = canManageAllBlogs 
+        ? processedData 
+        : processedData.filter(blog => blog.authorId === currentUser?.id);
+      
+      setBlogs(filteredData);
+    } catch (error: any) {
       console.error('Error fetching blogs:', error);
-      toast.error('Không thể tải danh sách bài viết');
+      if (error.response?.status === 401) {
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        logout();
+      } else {
+        setError(error.response?.data?.message || 'Không thể tải danh sách bài viết');
+        toast.error('Không thể tải danh sách bài viết');
+      }
     } finally {
       setLoading(false);
     }
@@ -94,31 +144,118 @@ const BlogManager = () => {
         return;
       }
 
-      setLoading(true);
-      const blogData: CreateBlogDTO = {
-        title: newBlog.title.trim(),
-        content: newBlog.content.trim(),
-        excerpt: newBlog.excerpt.trim(),
-        category: newBlog.category,
-        tags: newBlog.tags,
-        readTime: newBlog.readTime,
-        status: newBlog.status,
-        isFeatured: newBlog.status === 'published' && newBlog.isFeatured,
-        featuredImage: {
-          url: newBlog.featuredImage.url.trim(),
-          alt: newBlog.featuredImage.alt.trim()
+      console.log('Current blog status:', newBlog.status);
+      console.log('Is featured:', newBlog.isFeatured);
+
+      // Nếu đang set bài viết làm featured, kiểm tra xem đã có bài viết featured nào chưa
+      if (newBlog.isFeatured) {
+        console.log('Checking for existing featured blog...');
+        const currentFeaturedBlog = blogs.find(blog => blog.isFeatured && blog.id !== editingBlog?.id);
+        console.log('Current featured blog:', currentFeaturedBlog);
+
+        if (currentFeaturedBlog) {
+          console.log('Found existing featured blog, showing confirmation dialog');
+          setConfirmDialogConfig({
+            title: 'Xác nhận thay đổi bài viết nổi bật',
+            message: 'Hiện đã có một bài viết nổi bật. Bạn có muốn thay thế bài viết nổi bật hiện tại không?',
+            onConfirm: async () => {
+              try {
+                setLoading(true);
+                console.log('Updating old featured blog:', currentFeaturedBlog.id);
+                // Unset featured cho bài viết cũ
+                await blogService.updateBlog(currentFeaturedBlog.id, {
+                  ...currentFeaturedBlog,
+                  isFeatured: false
+                });
+                await saveNewBlog();
+              } catch (error) {
+                console.error('Error updating featured blog:', error);
+                toast.error('Có lỗi xảy ra khi cập nhật bài viết nổi bật');
+                setLoading(false);
+              }
+            }
+          });
+          setConfirmDialogOpen(true);
+          return;
         }
+      }
+
+      // Show confirmation dialog for create/update
+      console.log('Showing create/update confirmation dialog');
+      setConfirmDialogConfig({
+        title: editingBlog ? 'Xác nhận cập nhật' : 'Xác nhận đăng bài',
+        message: editingBlog 
+          ? 'Bạn có chắc chắn muốn cập nhật bài viết này?' 
+          : 'Bạn có chắc chắn muốn đăng bài viết này?',
+        onConfirm: async () => {
+          try {
+            setLoading(true);
+            await saveNewBlog();
+          } catch (error) {
+            console.error('Error saving blog:', error);
+            if (error instanceof Error) {
+              toast.error(`Lỗi: ${error.message}`);
+            } else {
+              toast.error('Có lỗi xảy ra khi lưu bài viết');
+            }
+            setLoading(false);
+          }
+        }
+      });
+      setConfirmDialogOpen(true);
+    } catch (error) {
+      console.error('Error in handleSaveBlog:', error);
+      toast.error('Có lỗi xảy ra khi xử lý yêu cầu');
+    }
+  };
+
+  const saveNewBlog = async () => {
+    try {
+      const featuredImageData = {
+        url: newBlog.featuredImage?.url?.trim() || '',
+        alt: newBlog.featuredImage?.alt?.trim() || newBlog.title.trim()
       };
 
-      console.log('Saving blog with data:', blogData); // Debug log
-
       if (editingBlog) {
-        const response = await blogService.updateBlog(editingBlog.id, blogData);
-        console.log('Update response:', response); // Debug log
-        toast.success('Cập nhật bài viết thành công');
+        // Nếu người dùng là admin/HR hoặc là tác giả, cho phép cập nhật tất cả các trường
+        if (canManageAllBlogs || editingBlog.authorId === currentUser?.id) {
+          const updateData = {
+            title: newBlog.title.trim(),
+            content: newBlog.content.trim(),
+            excerpt: newBlog.excerpt.trim(),
+            category: newBlog.category,
+            tags: newBlog.tags,
+            readTime: newBlog.readTime,
+            status: newBlog.status,
+            isFeatured: newBlog.status === 'published' && newBlog.isFeatured,
+            featuredImage: featuredImageData
+          };
+
+          const response = await blogService.updateBlog(editingBlog.id, updateData);
+          toast.success('Cập nhật bài viết thành công');
+        } else {
+          // Nếu không phải admin/HR hoặc tác giả, chỉ cho phép cập nhật trạng thái featured
+          const updateData = {
+            isFeatured: newBlog.status === 'published' && newBlog.isFeatured
+          };
+          const response = await blogService.updateBlog(editingBlog.id, updateData);
+          toast.success('Cập nhật trạng thái nổi bật thành công');
+        }
       } else {
+        // Tạo blog mới
+        const blogData = {
+          title: newBlog.title.trim(),
+          content: newBlog.content.trim(),
+          excerpt: newBlog.excerpt.trim(),
+          category: newBlog.category,
+          tags: newBlog.tags,
+          readTime: newBlog.readTime,
+          status: newBlog.status,
+          isFeatured: newBlog.status === 'published' && newBlog.isFeatured,
+          featuredImage: featuredImageData
+        };
+
         const response = await blogService.createBlog(blogData);
-        console.log('Create response:', response); // Debug log
         toast.success('Tạo bài viết mới thành công');
       }
 
@@ -139,13 +276,6 @@ const BlogManager = () => {
           alt: ''
         }
       });
-    } catch (error) {
-      console.error('Error saving blog:', error);
-      if (error instanceof Error) {
-        toast.error(`Lỗi: ${error.message}`);
-      } else {
-        toast.error('Có lỗi xảy ra khi lưu bài viết');
-      }
     } finally {
       setLoading(false);
     }
@@ -173,19 +303,24 @@ const BlogManager = () => {
   };
 
   const handleDeleteBlog = async (id: string) => {
-    if (confirm('Bạn có chắc chắn muốn xóa bài viết này?')) {
-      try {
-        setLoading(true);
-        await blogService.deleteBlog(id);
-        toast.success('Xóa bài viết thành công');
-        await fetchBlogs();
-      } catch (error) {
-        console.error('Error deleting blog:', error);
-        toast.error('Có lỗi xảy ra khi xóa bài viết');
-      } finally {
-        setLoading(false);
+    setConfirmDialogConfig({
+      title: 'Xác nhận xóa',
+      message: 'Bạn có chắc chắn muốn xóa bài viết này?',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await blogService.deleteBlog(id);
+          toast.success('Xóa bài viết thành công');
+          await fetchBlogs();
+        } catch (error) {
+          console.error('Error deleting blog:', error);
+          toast.error('Có lỗi xảy ra khi xóa bài viết');
+        } finally {
+          setLoading(false);
+        }
       }
-    }
+    });
+    setConfirmDialogOpen(true);
   };
 
   const handleSearch = async () => {
@@ -215,6 +350,55 @@ const BlogManager = () => {
       throw error;
     }
   };
+
+  const handleFeaturedChange = async (checked: boolean) => {
+    if (!checked) {
+      // Nếu bỏ featured, không cần xác nhận
+      setNewBlog(prev => ({ ...prev, isFeatured: false }));
+      return;
+    }
+
+    // Kiểm tra xem có bài viết featured nào khác không
+    const currentFeaturedBlog = blogs.find(blog => blog.isFeatured && blog.id !== editingBlog?.id);
+    if (currentFeaturedBlog) {
+      setConfirmDialogConfig({
+        title: 'Xác nhận thay đổi bài viết nổi bật',
+        message: `Bài viết "${currentFeaturedBlog.title}" hiện đang là bài viết nổi bật. Bạn có muốn thay thế bằng bài viết này không?`,
+        onConfirm: async () => {
+          try {
+            setLoading(true);
+            // Unset featured cho bài viết cũ
+            await blogService.updateBlog(currentFeaturedBlog.id, {
+              isFeatured: false
+            });
+            // Set featured cho bài viết mới
+            setNewBlog(prev => ({ ...prev, isFeatured: true }));
+            toast.success('Đã cập nhật bài viết nổi bật');
+          } catch (error) {
+            console.error('Error updating featured blog:', error);
+            toast.error('Có lỗi xảy ra khi cập nhật bài viết nổi bật');
+            // Revert checkbox state
+            setNewBlog(prev => ({ ...prev, isFeatured: false }));
+          } finally {
+            setLoading(false);
+          }
+        }
+      });
+      setConfirmDialogOpen(true);
+    } else {
+      // Nếu không có bài viết featured nào khác, set trực tiếp
+      setNewBlog(prev => ({ ...prev, isFeatured: true }));
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] p-4">
+        <div className="text-2xl font-bold text-gray-700 mb-2">Vui lòng đăng nhập</div>
+        <p className="text-gray-500">Bạn cần đăng nhập để truy cập trang này.</p>
+      </div>
+    );
+  }
 
   if (showEditor) {
     return (
@@ -393,11 +577,11 @@ const BlogManager = () => {
                     const newStatus = e.target.value as 'draft' | 'published';
                     setNewBlog(prev => ({
                       ...prev,
-                      status: newStatus,
-                      isFeatured: newStatus === 'draft' ? false : prev.isFeatured
+                      status: newStatus
                     }));
                   }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  disabled={!canManageAllBlogs && editingBlog?.authorId !== currentUser?.id}
                 >
                   <option value="draft">Bản nháp</option>
                   <option value="published">Đã xuất bản</option>
@@ -409,10 +593,7 @@ const BlogManager = () => {
                       type="checkbox"
                       id="isFeatured"
                       checked={newBlog.isFeatured}
-                      onChange={(e) => setNewBlog(prev => ({
-                        ...prev,
-                        isFeatured: e.target.checked
-                      }))}
+                      onChange={(e) => handleFeaturedChange(e.target.checked)}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
                     <label htmlFor="isFeatured" className="text-sm text-gray-700">
@@ -439,6 +620,36 @@ const BlogManager = () => {
             </div>
           </div>
         </div>
+
+        <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{confirmDialogConfig.title}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmDialogConfig.message}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                if (confirmDialogConfig.title.includes('nổi bật')) {
+                  // If canceling featured blog change, revert the checkbox
+                  setNewBlog(prev => ({ ...prev, isFeatured: false }));
+                }
+                setConfirmDialogOpen(false);
+              }}>
+                Hủy
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setConfirmDialogOpen(false);
+                  confirmDialogConfig.onConfirm();
+                }}
+              >
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }
@@ -446,7 +657,7 @@ const BlogManager = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Quản lý Blog</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Blog</h1>
         <button
           onClick={() => setShowEditor(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
@@ -490,9 +701,22 @@ const BlogManager = () => {
               {blogs.map((blog) => (
                 <tr key={blog.id} className="border-b">
                   <td className="py-3 px-4">
-                    <div>
-                      <p className="font-medium text-gray-800">{blog.title}</p>
-                      <p className="text-sm text-gray-600">{blog.excerpt.substring(0, 100)}...</p>
+                    <div className="flex items-center space-x-4">
+                      {blog.featuredImage?.url ? (
+                        <img
+                          src={blog.featuredImage.url}
+                          alt={blog.featuredImage.alt}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <ImageIcon className="w-6 h-6 text-gray-400" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-gray-800">{blog.title}</p>
+                        <p className="text-sm text-gray-600">{blog.excerpt.substring(0, 100)}...</p>
+                      </div>
                     </div>
                   </td>
                   <td className="py-3 px-4 text-gray-600">{blog.author.fullName}</td>
@@ -516,23 +740,27 @@ const BlogManager = () => {
                   <td className="py-3 px-4 text-gray-600">{blog.views}</td>
                   <td className="py-3 px-4">
                     <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleEditBlog(blog)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
+                      {(canManageAllBlogs || blog.authorId === currentUser?.id) && (
+                        <>
+                          <button
+                            onClick={() => handleEditBlog(blog)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBlog(blog.id)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => handlePreviewBlog(blog)}
                         className="text-gray-600 hover:text-gray-800"
                       >
                         <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBlog(blog.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -543,7 +771,6 @@ const BlogManager = () => {
         </div>
       </div>
 
-      {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -551,7 +778,6 @@ const BlogManager = () => {
           </DialogHeader>
           {previewBlog && (
             <div className="space-y-6">
-              {/* Featured Image */}
               {previewBlog.featuredImage?.url && (
                 <div className="relative rounded-lg overflow-hidden">
                   <img 
@@ -562,7 +788,6 @@ const BlogManager = () => {
                 </div>
               )}
 
-              {/* Blog Info */}
               <div className="space-y-4">
                 <div>
                   <span className="inline-block px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-medium">

@@ -1,74 +1,57 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import ApplicationDialog from '../components/ApplicationDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { MapPin, Clock, Users, Briefcase, Mail, Phone } from 'lucide-react';
+import { recruitmentService, Job } from '../services/recruitmentService';
+import { useToast } from '../components/ui/use-toast';
 
 const Recruitment = () => {
-  const jobPositions = [
-    {
-      id: 1,
-      title: "AI Marketing Specialist",
-      department: "Marketing",
-      location: "TP. Hồ Chí Minh",
-      type: "Full-time",
-      salary: "15-25 triệu VNĐ",
-      description: "Phát triển và triển khai các chiến lược marketing sử dụng AI, phân tích dữ liệu khách hàng và tối ưu hóa chiến dịch quảng cáo.",
-      requirements: [
-        "Kinh nghiệm 2+ năm trong lĩnh vực Marketing Digital",
-        "Hiểu biết về AI và Machine Learning",
-        "Thành thạo Google Analytics, Facebook Ads",
-        "Khả năng phân tích dữ liệu tốt"
-      ]
-    },
-    {
-      id: 2,
-      title: "E-commerce Manager",
-      department: "E-commerce",
-      location: "TP. Hồ Chí Minh",
-      type: "Full-time",
-      salary: "20-30 triệu VNĐ",
-      description: "Quản lý và phát triển hoạt động thương mại điện tử, điều hành các kênh bán hàng online và tối ưu hóa doanh thu.",
-      requirements: [
-        "Kinh nghiệm 3+ năm quản lý E-commerce",
-        "Hiểu biết về Dropshipping, Shopee, Lazada",
-        "Kỹ năng quản lý nhóm tốt",
-        "Có kinh nghiệm với các tools phân tích"
-      ]
-    },
-    {
-      id: 3,
-      title: "Content Creator",
-      department: "Creative",
-      location: "TP. Hồ Chí Minh",
-      type: "Full-time",
-      salary: "12-18 triệu VNĐ",
-      description: "Sáng tạo nội dung đa phương tiện cho các kênh truyền thông, sản xuất video, thiết kế đồ họa và viết content.",
-      requirements: [
-        "Kỹ năng sáng tạo nội dung tốt",
-        "Thành thạo Adobe Creative Suite",
-        "Kinh nghiệm làm video, photography",
-        "Hiểu biết về social media trends"
-      ]
-    },
-    {
-      id: 4,
-      title: "Data Analyst",
-      department: "Analytics",
-      location: "TP. Hồ Chí Minh",
-      type: "Full-time",
-      salary: "18-25 triệu VNĐ",
-      description: "Phân tích dữ liệu kinh doanh, tạo báo cáo insights và hỗ trợ ra quyết định chiến lược cho công ty.",
-      requirements: [
-        "Kinh nghiệm 2+ năm về Data Analysis",
-        "Thành thạo SQL, Python hoặc R",
-        "Hiểu biết về Business Intelligence",
-        "Kỹ năng trình bày và báo cáo tốt"
-      ]
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadJobs();
+  }, []);
+
+  const loadJobs = async () => {
+    try {
+      const fetchedJobs = await recruitmentService.getAllJobs();
+      setJobs(fetchedJobs);
+    } catch (error: any) {
+      console.error('Error loading jobs:', error);
+      let errorMessage = 'Failed to load job listings. Please try again later.';
+      
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            errorMessage = 'Your session has expired. Please log in again.';
+            break;
+          case 403:
+            errorMessage = 'You do not have permission to view job listings.';
+            break;
+          case 404:
+            errorMessage = 'Job listings not found.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+        }
+      } else if (error.request) {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection.';
+      }
+      
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const benefits = [
     "Lương thưởng cạnh tranh, đánh giá tăng lương 2 lần/năm",
@@ -79,6 +62,14 @@ const Recruitment = () => {
     "Flexible working time, work from home",
     "Thưởng hiệu suất, thưởng dự án"
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -104,7 +95,7 @@ const Recruitment = () => {
             </div>
             <div className="flex items-center gap-2">
               <Briefcase className="w-5 h-5" />
-              <span>Đang tuyển {jobPositions.length} vị trí</span>
+              <span>Đang tuyển {jobs.length} vị trí</span>
             </div>
           </div>
         </div>
@@ -177,7 +168,7 @@ const Recruitment = () => {
         </div>
       </section>
 
-      {/* Job Positions - Updated with ApplicationDialog */}
+      {/* Job Positions */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -190,7 +181,7 @@ const Recruitment = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {jobPositions.map((job) => (
+            {jobs.map((job) => (
               <Card key={job.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
@@ -218,17 +209,19 @@ const Recruitment = () => {
                   
                   <div className="mb-4">
                     <h4 className="font-semibold mb-2">Yêu cầu:</h4>
-                    <ul className="space-y-1">
-                      {job.requirements.map((req, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
-                          {req}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="text-gray-600 whitespace-pre-line">
+                      {job.requirements}
+                    </div>
                   </div>
 
-                  <ApplicationDialog jobTitle={job.title}>
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2">Quyền lợi:</h4>
+                    <div className="text-gray-600 whitespace-pre-line">
+                      {job.benefits}
+                    </div>
+                  </div>
+
+                  <ApplicationDialog jobTitle={job.title} jobId={job.id}>
                     <Button className="w-full">
                       Ứng tuyển ngay
                     </Button>
@@ -269,8 +262,6 @@ const Recruitment = () => {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };

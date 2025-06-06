@@ -37,7 +37,7 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
 
     try {
       setIsLoading(true);
-      await axiosInstance.post('/users/change-password', {
+      await axiosInstance.post('/auth/change-password', {
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
       });

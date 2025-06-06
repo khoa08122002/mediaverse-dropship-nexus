@@ -1,7 +1,5 @@
-
 import React from 'react';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
 
 const Ecommerce = () => {
@@ -399,8 +397,6 @@ const Ecommerce = () => {
           </div>
         </section>
       </main>
-      
-      <Footer />
     </div>
   );
 };

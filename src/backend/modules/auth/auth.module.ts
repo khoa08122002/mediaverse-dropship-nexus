@@ -3,22 +3,33 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserModule } from '../user/user.module';
-import { PrismaModule } from '../prisma/prisma.module';
+import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { APP_GUARD } from '@nestjs/core';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
   imports: [
-    PassportModule,
     UserModule,
-    PrismaModule,
+    PassportModule,
     JwtModule.register({
-      secret: 'mediaverse-secret-key-2024',
-      signOptions: { expiresIn: '24h' },
+      secret: process.env.JWT_SECRET || 'mediaverse-secret-key-2024',
+      signOptions: { expiresIn: '1h' },
     }),
+    PrismaModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

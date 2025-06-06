@@ -1,37 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import { CreateBlogDto, UpdateBlogDto } from '../user/dto/blog.dto';
-import slugify from 'slugify';
-
-const prisma = new PrismaClient();
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { CreateBlogDto, UpdateBlogDto } from './dto/blog.dto';
+import { slugify } from '../../../utils/string';
 
 @Injectable()
 export class BlogService {
+  constructor(private prisma: PrismaService) {}
+
   async findAll() {
-    return prisma.blog.findMany({
-      include: {
-        author: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-  }
-
-  async findFeatured() {
-    return prisma.blog.findFirst({
-      where: { 
-        AND: [
-          { isFeatured: true },
-          { status: 'published' }
-        ]
-      },
+    return this.prisma.blog.findMany({
       include: {
         author: {
           select: {
@@ -44,8 +22,8 @@ export class BlogService {
     });
   }
 
-  async findById(id: string) {
-    const blog = await prisma.blog.findUnique({
+  async findOne(id: string) {
+    const blog = await this.prisma.blog.findUnique({
       where: { id },
       include: {
         author: {
@@ -59,14 +37,14 @@ export class BlogService {
     });
 
     if (!blog) {
-      throw new NotFoundException('Blog không tồn tại');
+      throw new NotFoundException('Blog not found');
     }
 
     return blog;
   }
 
   async findBySlug(slug: string) {
-    const blog = await prisma.blog.findUnique({
+    const blog = await this.prisma.blog.findUnique({
       where: { slug },
       include: {
         author: {
@@ -80,84 +58,143 @@ export class BlogService {
     });
 
     if (!blog) {
-      throw new NotFoundException('Blog không tồn tại');
+      throw new NotFoundException('Blog not found');
     }
 
     return blog;
   }
 
-  async create(createBlogDto: CreateBlogDto, authorId: string) {
-    const slug = slugify(createBlogDto.title, { lower: true });
-
-    return prisma.blog.create({
-      data: {
-        title: createBlogDto.title,
-        slug,
-        content: createBlogDto.content,
-        excerpt: createBlogDto.excerpt,
-        featuredImage: {
-          url: createBlogDto.featuredImage.url,
-          alt: createBlogDto.featuredImage.alt
-        },
-        category: createBlogDto.category,
-        tags: createBlogDto.tags,
-        readTime: createBlogDto.readTime,
-        status: createBlogDto.status || 'draft',
-        isFeatured: createBlogDto.isFeatured ?? false,
+  async getFeatured() {
+    return this.prisma.blog.findMany({
+      where: {
+        published: true,
+        isFeatured: true
+      },
+      include: {
         author: {
-          connect: {
-            id: authorId
+          select: {
+            id: true,
+            fullName: true,
+            email: true
           }
         }
       }
     });
   }
 
-  async update(id: string, updateBlogDto: UpdateBlogDto) {
-    const blog = await prisma.blog.findUnique({ where: { id } });
-    if (!blog) {
-      throw new NotFoundException('Blog không tồn tại');
-    }
-
-    const data: any = { ...updateBlogDto };
-    if (updateBlogDto.title) {
-      data.slug = slugify(updateBlogDto.title, { lower: true });
-    }
-
-    return prisma.blog.update({
-      where: { id },
-      data
-    });
-  }
-
-  async delete(id: string) {
-    const blog = await prisma.blog.findUnique({ where: { id } });
-    if (!blog) {
-      throw new NotFoundException('Blog không tồn tại');
-    }
-
-    await prisma.blog.delete({ where: { id } });
-    return { message: 'Blog đã được xóa thành công' };
-  }
-
-  async incrementViews(id: string) {
-    return prisma.blog.update({
-      where: { id },
-      data: {
-        views: {
-          increment: 1
+  async getByTag(tag: string) {
+    return this.prisma.blog.findMany({
+      where: {
+        tags: { has: tag }
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
         }
       }
     });
   }
 
+  async getByCategory(category: string) {
+    return this.prisma.blog.findMany({
+      where: { category },
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
+        }
+      }
+    });
+  }
+
+  async create(createBlogDto: CreateBlogDto, authorId: string) {
+    const slug = slugify(createBlogDto.title);
+    const { featuredImage, ...blogData } = createBlogDto;
+
+    return this.prisma.blog.create({
+      data: {
+        ...blogData,
+        slug,
+        authorId,
+        published: createBlogDto.status === 'published',
+        featuredImage: featuredImage ? JSON.stringify(featuredImage) : null,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
+        }
+      }
+    });
+  }
+
+  async update(id: string, updateBlogDto: UpdateBlogDto, user: any) {
+    const blog = await this.findOne(id);
+    
+    // Kiểm tra quyền: chỉ ADMIN hoặc tác giả mới được cập nhật toàn bộ bài viết
+    if (user.role !== 'ADMIN' && blog.authorId !== user.id) {
+      // Nếu không phải ADMIN hoặc tác giả, chỉ cho phép cập nhật trường isFeatured
+      const { isFeatured, ...otherFields } = updateBlogDto;
+      if (Object.keys(otherFields).length > 0) {
+        throw new ForbiddenException('Bạn không có quyền cập nhật các trường khác của bài viết này');
+      }
+    }
+    
+    let slug = blog.slug;
+    if (updateBlogDto.title) {
+      slug = slugify(updateBlogDto.title);
+    }
+
+    const { featuredImage, author, authorId, id: blogId, createdAt, updatedAt, views, ...blogData } = updateBlogDto;
+
+    const data = {
+      ...blogData,
+      slug,
+      ...(updateBlogDto.status && { published: updateBlogDto.status === 'published' }),
+      ...(featuredImage !== undefined && { 
+        featuredImage: featuredImage ? JSON.stringify(featuredImage) : null 
+      }),
+    };
+
+    return this.prisma.blog.update({
+      where: { id },
+      data,
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
+        }
+      }
+    });
+  }
+
+  async delete(id: string) {
+    await this.findOne(id);
+    return this.prisma.blog.delete({
+      where: { id },
+    });
+  }
+
   async search(query: string) {
-    return prisma.blog.findMany({
+    return this.prisma.blog.findMany({
       where: {
         OR: [
           { title: { contains: query, mode: 'insensitive' } },
           { content: { contains: query, mode: 'insensitive' } },
-          { tags: { hasSome: [query] } }
+          { tags: { has: query } }
         ]
       },
       include: {
@@ -172,60 +209,62 @@ export class BlogService {
     });
   }
 
-  async getPopularTags() {
-    const blogs = await prisma.blog.findMany({
-      select: { tags: true }
+  async getPopularTags(): Promise<{ tag: string; count: number }[]> {
+    const blogs = await this.prisma.blog.findMany({
+      select: {
+        tags: true
+      }
     });
 
-    const tagCount = new Map<string, number>();
+    const tagCounts = new Map<string, number>();
     blogs.forEach(blog => {
       blog.tags.forEach(tag => {
-        tagCount.set(tag, (tagCount.get(tag) || 0) + 1);
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
       });
     });
 
-    return Array.from(tagCount.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([tag]) => tag);
+    return Array.from(tagCounts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+  }
+
+  async incrementViews(id: string) {
+    return this.prisma.blog.update({
+      where: { id },
+      data: {
+        views: { increment: 1 }
+      }
+    });
+  }
+
+  async getFeaturedBlogs() {
+    return this.prisma.blog.findMany({
+      where: {
+        published: true,
+        isFeatured: true
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+    });
   }
 
   async findByTag(tag: string) {
-    return prisma.blog.findMany({
+    return this.prisma.blog.findMany({
       where: {
-        tags: {
-          has: tag
-        }
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
-        }
+        tags: { has: tag }
       }
     });
   }
 
   async findByCategory(category: string) {
-    return prisma.blog.findMany({
+    return this.prisma.blog.findMany({
       where: { 
         AND: [
           { category },
-          { status: 'published' }
+          { published: true }
         ]
       },
-      include: {
-        author: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
-        }
-      }
     });
   }
 } 

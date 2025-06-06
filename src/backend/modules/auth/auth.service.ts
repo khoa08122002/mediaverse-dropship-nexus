@@ -1,64 +1,151 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { Status } from '../../prisma/types';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UserService,
-    private jwtService: JwtService
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async validateUser(email: string, password: string) {
-    console.log('Validating user with email:', email); // Debug log
-    if (!email) {
-      throw new UnauthorizedException('Email is required');
-    }
-
-    const user = await this.userService.findByEmail(email);
-    console.log('Found user:', user); // Debug log
-
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (user.status === Status.INACTIVE) {
-      throw new UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
+    if (user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Account is inactive');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    return user;
+    const { password: _, ...result } = user;
+    return result;
   }
 
-  async login(user: any) {
+  async login(loginDto: { email: string; password: string }) {
+    const user = await this.validateUser(loginDto.email, loginDto.password);
+
     const payload = { 
-      email: user.email, 
       sub: user.id, 
-      role: user.role,
-      status: user.status,
-      fullName: user.fullName
+      email: user.email,
+      role: user.role 
     };
-    await this.userService.updateLastLogin(user.id);
+
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: '1h',
+      secret: process.env.JWT_SECRET || 'your-secret-key',
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+      secret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
+    });
+
+    // Update user's lastLogin
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
 
     return {
-      access_token: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
         fullName: user.fullName,
         role: user.role,
-        status: user.status
-      }
+        status: user.status,
+      },
     };
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
-    return this.userService.changePassword(userId, currentPassword, newPassword);
+  async refresh(refreshDto: { refreshToken: string }) {
+    try {
+      const decoded = this.jwtService.verify(refreshDto.refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
+      });
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: decoded.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      if (user.status !== 'ACTIVE') {
+        throw new UnauthorizedException('Account is inactive');
+      }
+
+      const payload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      };
+
+      const accessToken = this.jwtService.sign(payload, {
+        expiresIn: '1h',
+        secret: process.env.JWT_SECRET || 'your-secret-key',
+      });
+
+      const newRefreshToken = this.jwtService.sign(payload, {
+        expiresIn: '7d',
+        secret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
+      });
+
+      return {
+        accessToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          status: user.status,
+        },
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  async changePassword(changePasswordDto: { 
+    userId: number;
+    currentPassword: string;
+    newPassword: string;
+  }) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: changePasswordDto.userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: changePasswordDto.userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password changed successfully' };
   }
 }

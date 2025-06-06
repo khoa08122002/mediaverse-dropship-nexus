@@ -1,53 +1,53 @@
-import { IsString, IsEmail, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Role, Status } from '../../../prisma/types';
+import { Role, Status } from '../../prisma';
 
 export class CreateUserDto {
-  @ApiProperty({ description: 'Email của người dùng' })
+  @ApiProperty()
   @IsEmail()
   email: string;
 
-  @ApiProperty({ description: 'Mật khẩu của người dùng' })
+  @ApiProperty()
   @IsString()
   password: string;
 
-  @ApiProperty({ description: 'Họ tên đầy đủ của người dùng' })
+  @ApiProperty()
   @IsString()
   fullName: string;
 
-  @ApiProperty({ description: 'Vai trò của người dùng', enum: Role, default: Role.VIEWER })
+  @ApiProperty({ enum: Role })
   @IsEnum(Role)
   @IsOptional()
   role?: Role;
 
-  @ApiProperty({ description: 'Trạng thái người dùng', enum: Status, default: Status.ACTIVE })
+  @ApiProperty({ enum: Status })
   @IsEnum(Status)
   @IsOptional()
-  status?: Status = Status.ACTIVE;
+  status?: Status;
 }
 
 export class UpdateUserDto {
-  @ApiProperty({ description: 'Email của người dùng', required: false })
+  @ApiProperty()
   @IsEmail()
   @IsOptional()
   email?: string;
 
-  @ApiProperty({ description: 'Mật khẩu của người dùng', required: false })
+  @ApiProperty()
   @IsString()
   @IsOptional()
   password?: string;
 
-  @ApiProperty({ description: 'Họ tên đầy đủ của người dùng', required: false })
+  @ApiProperty()
   @IsString()
   @IsOptional()
   fullName?: string;
 
-  @ApiProperty({ description: 'Vai trò của người dùng', enum: Role, required: false })
+  @ApiProperty({ enum: Role })
   @IsEnum(Role)
   @IsOptional()
   role?: Role;
 
-  @ApiProperty({ description: 'Trạng thái người dùng', enum: Status, required: false })
+  @ApiProperty({ enum: Status })
   @IsEnum(Status)
   @IsOptional()
   status?: Status;

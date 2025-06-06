@@ -1,11 +1,12 @@
+import React from 'react';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -15,8 +16,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
-  const { toast } = useToast();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -31,17 +32,21 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      console.log('Attempting login with:', formData.email);
       await login(formData.email, formData.password);
-      toast({
-        title: "Đăng nhập thành công",
-        description: "Chào mừng bạn quay trở lại!",
+      
+      toast.success("Đăng nhập thành công", {
+        description: "Chào mừng bạn quay trở lại!"
       });
-      navigate('/admin');
-    } catch (error) {
-      toast({
-        title: "Đăng nhập thất bại",
-        description: "Email hoặc mật khẩu không đúng",
-        variant: "destructive",
+
+      // Get the redirect path from location state or default to admin
+      const from = location.state?.from?.pathname || '/admin';
+      console.log('Redirecting to:', from);
+      navigate(from, { replace: true });
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      toast.error("Đăng nhập thất bại", {
+        description: error.response?.data?.message || "Email hoặc mật khẩu không đúng"
       });
     } finally {
       setIsLoading(false);
@@ -49,12 +54,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
+      
+      {/* Floating Orbs */}
+      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
       <div className="relative w-full max-w-md">
         {/* Login Card */}

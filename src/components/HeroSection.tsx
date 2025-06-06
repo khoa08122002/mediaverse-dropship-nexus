@@ -1,7 +1,50 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import Spline from '@splinetool/react-spline';
+
+// Lazy load Spline component
+const Spline = lazy(() => import('@splinetool/react-spline'));
+
+// Loading fallback for 3D scene
+const SplineLoadingFallback = () => (
+  <div className="w-full h-full flex items-center justify-center bg-gray-900 rounded-2xl">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+  </div>
+);
+
+// Error boundary for Spline component
+class SplineErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-gray-900 rounded-2xl">
+          <div className="text-center text-gray-400">
+            <p>3D scene failed to load</p>
+            <button
+              onClick={() => this.setState({ hasError: false })}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const HeroSection = () => {
   return (
@@ -74,19 +117,22 @@ const HeroSection = () => {
           </div>
 
           {/* Spline 3D Scene */}
-              {/* Spline 3D Scene với CSS để ẩn logo */}
-              <div className="hidden lg:block aspect-square rounded-2xl overflow-hidden relative">
-                  <Spline 
-                    scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode"
-                    style={{ width: '100%', height: '100%' }}
-                  />
-              </div>  
-            </div>
-            
-            {/* Floating Elements */}
-            <div className="absolute -top-4 -right-4 w-20 h-20 bg-blue-500/30 rounded-full blur-xl animate-bounce delay-500"></div>
-            <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-purple-500/30 rounded-full blur-xl animate-bounce delay-1000"></div>
+          <div className="hidden lg:block aspect-square rounded-2xl overflow-hidden relative">
+            <SplineErrorBoundary>
+              <Suspense fallback={<SplineLoadingFallback />}>
+                <Spline 
+                  scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode"
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </Suspense>
+            </SplineErrorBoundary>
           </div>
+        </div>
+            
+        {/* Floating Elements */}
+        <div className="absolute -top-4 -right-4 w-20 h-20 bg-blue-500/30 rounded-full blur-xl animate-bounce delay-500"></div>
+        <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-purple-500/30 rounded-full blur-xl animate-bounce delay-1000"></div>
+      </div>
     </section>
   );
 };

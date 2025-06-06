@@ -1,22 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { axiosInstance } from '@/lib/axios';
+import axios from '../services/axiosConfig';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
   email: string;
   fullName: string;
-  role: 'ADMIN' | 'EDITOR' | 'VIEWER';
-  status: 'ACTIVE' | 'INACTIVE';
-  lastLogin?: Date;
+  role: string;
+  status: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
+  loading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  isLoading: boolean;
   isAuthenticated: boolean;
 }
 
@@ -24,105 +24,110 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    // Check if user is already logged in from localStorage
-    return localStorage.getItem('isAuthenticated') === 'true';
-  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        // Kiểm tra token trong localStorage khi component mount
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        
-        if (storedToken && storedUser) {
-          // Set token first
-          setToken(storedToken);
-          
-          try {
-            // Verify token by making a request to a protected endpoint
-            const response = await axiosInstance.get('/users/profile');
-            setUser(response.data);
-            setIsAuthenticated(true);
-            localStorage.setItem('user', JSON.stringify(response.data));
-          } catch (error) {
-            console.error('Token verification failed:', error);
-            // Token không hợp lệ, xóa thông tin đăng nhập
-            handleLogout();
-          }
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
-
-  const handleLogout = () => {
-    // Clear localStorage first
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('isAuthenticated');
-
-    // Clear auth state
-    setUser(null);
-    setToken(null);
-    setIsAuthenticated(false);
-
-    // Navigate immediately
-    navigate('/login', { replace: true });
-  };
-
-  const login = async (email: string, password: string) => {
+  const checkAuthStatus = async () => {
     try {
-      setIsLoading(true);
-      const response = await axiosInstance.post('/auth/login', { email, password });
-      const { access_token, user } = response.data;
+      const accessToken = localStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+      
+      if (!accessToken || !refreshToken) {
+        setLoading(false);
+        return;
+      }
 
-      // Ensure we have all required user fields
-      const userData: User = {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName || '',
-        role: user.role,
-        status: user.status,
-        lastLogin: user.lastLogin ? new Date(user.lastLogin) : undefined
-      };
-
-      setToken(access_token);
-      setUser(userData);
-      setIsAuthenticated(true);
-
-      // Lưu thông tin vào localStorage
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('isAuthenticated', 'true');
+      // Try to get user profile with current token
+      try {
+        const response = await axios.get('/auth/profile');
+        setUser(response.data);
+      } catch (profileError) {
+        // If profile fetch fails, try to refresh token
+        try {
+          const refreshResponse = await axios.post('/auth/refresh', { refreshToken });
+          const { accessToken: newAccessToken, user: userData } = refreshResponse.data;
+          
+          localStorage.setItem('accessToken', newAccessToken);
+          setUser(userData);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          // If refresh fails, clear everything
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          setUser(null);
+        }
+      }
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      console.error('Auth check failed:', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const value = {
-    user,
-    token,
-    login,
-    logout: handleLogout,
-    isLoading,
-    isAuthenticated
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      const response = await axios.post('/auth/login', { email, password });
+      const { accessToken, refreshToken, user: userData } = response.data;
+
+      console.log('Login successful:', { userData, accessToken: accessToken.substring(0, 20) + '...' });
+
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      setUser(userData);
+
+      if (userData.role === 'ADMIN' || userData.role === 'HR') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+
+      toast.success('Đăng nhập thành công');
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      const message = error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+      setError(message);
+      toast.error(message);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const logout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    setUser(null);
+    navigate('/login');
+    toast.success('Đăng xuất thành công');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        logout,
+        isAuthenticated: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -130,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

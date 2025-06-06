@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
-import { Role, Status } from '../../prisma/types';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { Role, Status } from '../prisma';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -10,34 +11,17 @@ export class UserService {
 
   async findAll() {
     return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      orderBy: { createdAt: 'desc' }
     });
   }
 
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      where: { id }
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
 
     return user;
@@ -45,73 +29,62 @@ export class UserService {
 
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-        fullName: true,
-        role: true,
-        status: true
-      }
+      where: { email }
     });
   }
 
-  async create(createUserDto: CreateUserDto) {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
+  async create(data: CreateUserDto) {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
     return this.prisma.user.create({
       data: {
-        email: createUserDto.email,
-        password: hashedPassword,
-        fullName: createUserDto.fullName,
-        role: createUserDto.role as Role,
-        status: Status.ACTIVE
-      },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true
+        ...data,
+        password: hashedPassword
       }
     });
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, data: UpdateUserDto) {
     const user = await this.findOne(id);
 
     return this.prisma.user.update({
       where: { id },
-      data: {
-        ...updateUserDto,
-        role: updateUserDto.role as Role
-      },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true
-      }
+      data
     });
   }
 
-  async remove(id: string) {
+  async updatePassword(id: string, hashedPassword: string) {
     const user = await this.findOne(id);
-    return this.prisma.user.delete({ where: { id } });
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword }
+    });
   }
 
   async updateLastLogin(id: string) {
     return this.prisma.user.update({
       where: { id },
-      data: { 
-        updatedAt: new Date() 
-      }
+      data: { lastLogin: new Date() }
+    });
+  }
+
+  async delete(id: string) {
+    const user = await this.findOne(id);
+
+    return this.prisma.user.delete({
+      where: { id }
+    });
+  }
+
+  async searchUsers(query: string) {
+    return this.prisma.user.findMany({
+      where: {
+        OR: [
+          { email: { contains: query, mode: 'insensitive' } },
+          { fullName: { contains: query, mode: 'insensitive' } }
+        ]
+      },
+      orderBy: { createdAt: 'desc' }
     });
   }
 
@@ -121,22 +94,21 @@ export class UserService {
       select: {
         id: true,
         password: true,
-        status: true,
-        role: true
+        status: true
       }
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     if (user.status === Status.INACTIVE) {
-      throw new UnauthorizedException('Account is inactive');
+      throw new UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
     }
 
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) {
-      throw new BadRequestException('Current password is incorrect');
+      throw new BadRequestException('Mật khẩu hiện tại không đúng');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -148,36 +120,6 @@ export class UserService {
       }
     });
 
-    return { message: 'Password changed successfully' };
-  }
-
-  async adminChangePassword(userId: string, newPassword: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        status: true,
-        role: true
-      }
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (user.status === Status.INACTIVE) {
-      throw new UnauthorizedException('Account is inactive');
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { 
-        password: hashedPassword,
-        updatedAt: new Date()
-      }
-    });
-
-    return { message: 'Password changed successfully' };
+    return { message: 'Đổi mật khẩu thành công' };
   }
 }

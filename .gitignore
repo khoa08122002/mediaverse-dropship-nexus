@@ -30,3 +30,17 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Next.js
+/.next/
+/out/
+
+# Local env files
+.env
+
+# Vercel
+.vercel
+
+# Typescript
+*.tsbuildinfo
+next-env.d.ts

@@ -3,12 +3,13 @@ import type { Config } from "tailwindcss";
 const config: Config = {
 	darkMode: ['class'],
 	content: [
-		"./pages/**/*.{ts,tsx}",
-		"./components/**/*.{ts,tsx}",
-		"./app/**/*.{ts,tsx}",
-		"./src/**/*.{ts,tsx}",
-		"./src/**/*.{js,jsx}",
-		"./index.html",
+		"./src/components/**/*.{ts,tsx}",
+		"./src/pages/**/*.{ts,tsx}",
+		"./src/app/**/*.{ts,tsx}",
+		"./src/layouts/**/*.{ts,tsx}",
+		"./src/features/**/*.{ts,tsx}",
+		"./src/*.{ts,tsx}",
+		"./index.html"
 	],
 	prefix: "",
 	theme: {
@@ -80,6 +81,9 @@ const config: Config = {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			borderColor: {
+				DEFAULT: 'hsl(var(--border))'
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
@@ -133,3 +137,5 @@ const config: Config = {
 	},
 	plugins: [require('tailwindcss-animate')],
 } satisfies Config;
+
+export default config;

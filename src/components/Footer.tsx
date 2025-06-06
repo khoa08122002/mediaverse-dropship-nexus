@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Youtube } from 'lucide-react';
+import logo from '@/assets/images/logo.png';
 
 const Footer = () => {
   return (
@@ -11,9 +11,9 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
-              <div className="h-28">
-                <img src="./src/assets/images/logo.png" alt="PH Group Logo" className="h-full w-auto object-contain" />
-              </div>
+              <Link to="/" className="flex items-center">
+                <img src={logo} alt="PH Group Logo" className="h-full w-auto object-contain" />
+              </Link>
               <div>
                 <h4 className="text-xl font-bold text-white">PH Group</h4>
                 <p className="text-sm text-gray-400">AI Marketing & E-commerce</p>

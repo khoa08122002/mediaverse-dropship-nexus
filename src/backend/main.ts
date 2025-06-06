@@ -2,45 +2,42 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
 
-  // Cấu hình CORS
+  // Enable CORS
   app.enableCors({
-    origin: true, // Allow all origins in development
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
+    origin: ['http://localhost:3000'],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
-  // Prefix tất cả các routes với /api
+  // Use global pipes
+  app.useGlobalPipes(new ValidationPipe());
+
+  // Use cookie parser
+  app.use(cookieParser());
+
+  // Set global prefix
   app.setGlobalPrefix('api');
 
-  // Enable validation
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-  }));
-
-  // Cấu hình Swagger
+  // Setup Swagger
   const config = new DocumentBuilder()
-    .setTitle('PH Group API')
-    .setDescription('API documentation for PH Group')
+    .setTitle('MediaVerse API')
+    .setDescription('The MediaVerse API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('api/docs', app, document);
 
-  // Start the application
-  const port = 3002;
-  await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation is available at: http://localhost:${port}/docs`);
-  console.log(`API endpoints are available at: http://localhost:${port}/api`);
+  await app.listen(3002);
+  console.log('Application is running on: http://localhost:3002');
+  console.log('Swagger documentation is available at: http://localhost:3002/api/docs');
+  console.log('API endpoints are available at: http://localhost:3002/api');
 }
 
 bootstrap();

@@ -1,6 +1,4 @@
 import React from 'react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
 import ServicesSection from '../components/ServicesSection';
 import TestimonialSection from '../components/TestimonialSection';
@@ -8,15 +6,13 @@ import SubsidiarySection from '../components/SubsidiarySection';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-black">
-      <Header />
+    <div className="min-h-screen bg-black text-white">
       <main>
         <HeroSection />
         <ServicesSection />
         <TestimonialSection />
         <SubsidiarySection />
       </main>
-      <Footer />
     </div>
   );
 };

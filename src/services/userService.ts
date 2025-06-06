@@ -1,46 +1,79 @@
-import { axiosInstance } from '@/lib/axios';
+import axios from './axiosConfig';
 import type { User, CreateUserDTO, UpdateUserDTO } from '@/types/user';
 
 export const userService = {
   getAllUsers: async (): Promise<User[]> => {
-    const response = await axiosInstance.get('/users');
-    return response.data;
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('No access token found');
+      }
+
+      const response = await axios.get('/users', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error in getAllUsers:', error);
+      if (error.response?.status === 401) {
+        // Token might be expired, try to refresh
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (refreshToken) {
+          try {
+            const refreshResponse = await axios.post('/auth/refresh', { refreshToken });
+            const { accessToken } = refreshResponse.data;
+            localStorage.setItem('accessToken', accessToken);
+            
+            // Retry the original request with new token
+            const retryResponse = await axios.get('/users', {
+              headers: {
+                Authorization: `Bearer ${accessToken}`
+              }
+            });
+            return retryResponse.data;
+          } catch (refreshError) {
+            console.error('Token refresh failed:', refreshError);
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/login';
+            throw new Error('Authentication failed');
+          }
+        }
+      }
+      throw error;
+    }
   },
 
   getUserById: async (id: string): Promise<User> => {
-    const response = await axiosInstance.get(`/users/${id}`);
+    const response = await axios.get(`/users/${id}`);
     return response.data;
   },
 
   createUser: async (userData: CreateUserDTO): Promise<User> => {
-    const response = await axiosInstance.post('/users', userData);
+    const response = await axios.post('/users', userData);
     return response.data;
   },
 
   updateUser: async (id: string, userData: UpdateUserDTO): Promise<User> => {
-    const response = await axiosInstance.put(`/users/${id}`, userData);
+    const response = await axios.put(`/users/${id}`, userData);
     return response.data;
   },
 
   deleteUser: async (id: string): Promise<void> => {
-    await axiosInstance.delete(`/users/${id}`);
+    await axios.delete(`/users/${id}`);
   },
 
   searchUsers: async (query: string): Promise<User[]> => {
-    const response = await axiosInstance.get(`/users/search?q=${query}`);
+    const response = await axios.get(`/users/search?q=${encodeURIComponent(query)}`);
     return response.data;
   },
 
-  changePassword: async (id: string, currentPassword: string, newPassword: string): Promise<void> => {
-    if (id === 'profile') {
-      await axiosInstance.post('/users/change-password', {
-        currentPassword,
-        newPassword
-      });
-    } else {
-      await axiosInstance.post(`/users/${id}/change-password`, {
-        newPassword
-      });
-    }
+  changePassword: async (userId: string, currentPassword: string, newPassword: string): Promise<void> => {
+    await axios.post(`/users/${userId}/change-password`, {
+      currentPassword,
+      newPassword
+    });
   }
 }; 
