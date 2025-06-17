@@ -152,11 +152,11 @@ class RecruitmentService {
       console.log('Fetching application with ID:', id);
       const response = await axios.get(`/recruitment/applications/${id}`);
       console.log('API Response:', response.data);
-      
+
       if (!response.data) {
         throw new Error('Không tìm thấy thông tin ứng viên');
       }
-      
+
       return response.data;
     } catch (error: any) {
       console.error('Error in getApplication:', error);

@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const baseURL = import.meta.env.PROD 
+  ? 'https://mediaverse-dropship-nexus.vercel.app/api'  // Production URL
+  : 'http://localhost:3002/api'; // Development URL
+
 const instance = axios.create({
-  baseURL: 'http://localhost:3002/api',
+  baseURL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -68,7 +72,7 @@ instance.interceptors.response.use(
         }
 
         const refreshResponse = await axios.post(
-          'http://localhost:3002/api/auth/refresh',
+          `${baseURL}/auth/refresh`,  // Use baseURL here too
           { refreshToken },
           {
             withCredentials: true,
