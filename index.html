@@ -1,98 +1,31 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MediaTech - AI Marketing & E-commerce Solutions</title>
-    <meta name="description" content="Giải pháp AI Marketing và E-commerce hàng đầu Việt Nam. Dropshipping automation, content intelligence, social media analytics và omnichannel commerce." />
-    <meta name="keywords" content="AI Marketing, Dropshipping, E-commerce, Digital Marketing, Automation, Vietnam, Truyền thông số, Thương mại điện tử" />
-    <meta name="author" content="MediaTech Vietnam" />
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://mediatech.vn/" />
-    <meta property="og:title" content="MediaTech - AI Marketing & E-commerce Solutions" />
-    <meta property="og:description" content="Giải pháp AI Marketing và E-commerce hàng đầu Việt Nam. Dropshipping automation, content intelligence, social media analytics và omnichannel commerce." />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://mediatech.vn/" />
-    <meta property="twitter:title" content="MediaTech - AI Marketing & E-commerce Solutions" />
-    <meta property="twitter:description" content="Giải pháp AI Marketing và E-commerce hàng đầu Việt Nam" />
-    <meta property="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "MediaTech",
-      "url": "https://mediatech.vn",
-      "logo": "https://mediatech.vn/logo.png",
-      "description": "Công ty chuyên cung cấp giải pháp AI Marketing và E-commerce tại Việt Nam",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "123 Đường ABC",
-        "addressLocality": "Quận 1",
-        "addressRegion": "TP.HCM",
-        "addressCountry": "VN"
-      },
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "telephone": "+84-123-456-789",
-        "contactType": "customer service"
-      }
-    }
-    </script>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>PHG Corporation - AI Marketing & E-commerce Solutions</title>
+    <meta name="description" content="Next-generation AI Marketing and E-commerce solutions for modern businesses" />
     
-    <style>
-      html { visibility: hidden; }
-      #root:empty::before {
-        content: '';
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 50px;
-        height: 50px;
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
+    <!-- Preconnect to Spline CDN -->
+    <link rel="preconnect" href="https://prod.spline.design" />
+    <link rel="dns-prefetch" href="https://prod.spline.design" />
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful');
+          }).catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
       }
-      @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
-      }
-    </style>
+    </script>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Show content when React is ready
-      window.addEventListener('DOMContentLoaded', function() {
-        document.documentElement.style.visibility = 'visible';
-      });
-
-      // Show content after 2 seconds even if React fails
-      setTimeout(function() {
-        document.documentElement.style.visibility = 'visible';
-      }, 2000);
-
-      // Add error handler
-      window.onerror = function(msg, url, lineNo, columnNo, error) {
-        console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
-        document.documentElement.style.visibility = 'visible';
-        return false;
-      };
-    </script>
   </body>
 </html>

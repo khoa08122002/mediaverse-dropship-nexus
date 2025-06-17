@@ -14,7 +14,19 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Status = exports.Role = void 0;
 __exportStar(require("../../../../prisma/prisma.service"), exports);
 __exportStar(require("../../../../prisma/prisma.module"), exports);
 __exportStar(require("../../../../prisma/types"), exports);
+var Role;
+(function (Role) {
+    Role["ADMIN"] = "ADMIN";
+    Role["HR"] = "HR";
+    Role["USER"] = "USER";
+})(Role || (exports.Role = Role = {}));
+var Status;
+(function (Status) {
+    Status["ACTIVE"] = "ACTIVE";
+    Status["INACTIVE"] = "INACTIVE";
+})(Status || (exports.Status = Status = {}));
 //# sourceMappingURL=index.js.map

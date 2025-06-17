@@ -15,8 +15,9 @@ import { PrismaModule } from '../../prisma/prisma.module';
     UserModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'mediaverse-secret-key-2024',
-      signOptions: { expiresIn: '1h' },
+      global: true,
+      secret: process.env.JWT_SECRET || 'phg-corporation-secret-key-2024',
+      signOptions: { expiresIn: '1d' },
     }),
     PrismaModule,
   ],

@@ -43,19 +43,21 @@ export default defineConfig({
   build: {
     sourcemap: true,
     minify: 'esbuild',
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'react-vendor';
-            if (id.includes('radix-ui')) return 'ui-vendor';
-            if (id.includes('@splinetool')) return 'spline-vendor';
-            return 'vendor';
-          }
-        },
+        manualChunks: {
+          'react-core': ['react', 'react-dom', 'react-router-dom'],
+          'ui-core': ['@radix-ui/react-dialog', '@radix-ui/react-slot', '@radix-ui/react-label'],
+          'ui-utils': ['lucide-react', 'sonner', '@tanstack/react-query'],
+          'spline-core': ['@splinetool/runtime'],
+          'spline-utils': ['@splinetool/react-spline'],
+      },
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
       },
     },
-    chunkSizeWarningLimit: 2000,
     target: 'esnext',
     assetsInlineLimit: 4096,
   },
@@ -67,9 +69,8 @@ export default defineConfig({
       'lucide-react',
       'sonner',
       '@tanstack/react-query',
-      '@splinetool/react-spline'
     ],
-    exclude: [],
+    exclude: ['@splinetool/runtime', '@splinetool/react-spline'],
     force: true,
     esbuildOptions: {
       target: 'esnext',

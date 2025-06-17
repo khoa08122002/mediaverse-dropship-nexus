@@ -79,6 +79,9 @@ const Header = () => {
             <Link to="/blog" className="text-gray-300 hover:text-white transition-colors font-medium">
               Blog
             </Link>
+            <Link to="/recruitment" className="text-gray-300 hover:text-white transition-colors font-medium">
+              Tuyển dụng
+            </Link>
             <Link to="/contact" className="text-gray-300 hover:text-white transition-colors font-medium">
               Liên hệ
             </Link>
@@ -121,6 +124,9 @@ const Header = () => {
               </Link>
               <Link to="/blog" className="text-gray-300 hover:text-white transition-colors font-medium">
                 Blog
+              </Link>
+              <Link to="/recruitment" className="text-gray-300 hover:text-white transition-colors font-medium">
+                Tuyển dụng
               </Link>
               <Link to="/contact" className="text-gray-300 hover:text-white transition-colors font-medium">
                 Liên hệ

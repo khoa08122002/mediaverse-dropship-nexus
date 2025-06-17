@@ -25,6 +25,7 @@ const job_dto_1 = require("./dto/job.dto");
 const application_dto_1 = require("./dto/application.dto");
 const prisma_1 = require("../prisma");
 const client_1 = require("@prisma/client");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 let RecruitmentController = class RecruitmentController {
     constructor(recruitmentService, fileUploadService) {
         this.recruitmentService = recruitmentService;
@@ -43,16 +44,7 @@ let RecruitmentController = class RecruitmentController {
         return this.recruitmentService.updateJob(Number(id), updateJobDto);
     }
     async deleteJob(id) {
-        await this.recruitmentService.deleteJob(Number(id));
-    }
-    async getAllApplications() {
-        return this.recruitmentService.getAllApplications();
-    }
-    async getJobApplications(id, query) {
-        return this.recruitmentService.getJobApplications(Number(id), query);
-    }
-    async getStats() {
-        return this.recruitmentService.getStats();
+        return this.recruitmentService.deleteJob(Number(id));
     }
     async createApplication(createApplicationDto, file) {
         try {
@@ -131,21 +123,37 @@ let RecruitmentController = class RecruitmentController {
             throw error;
         }
     }
+    async getAllApplications() {
+        return this.recruitmentService.getAllApplications();
+    }
+    async getJobApplications(id, query) {
+        return this.recruitmentService.getJobApplications(Number(id), query);
+    }
+    async getStats() {
+        return this.recruitmentService.getStats();
+    }
     async getApplication(id) {
-        return this.recruitmentService.getApplication(id);
+        return this.recruitmentService.getApplication(Number(id));
     }
     async updateApplicationStatus(id, updateStatusDto) {
-        return this.recruitmentService.updateApplicationStatus(id, updateStatusDto.status);
+        return this.recruitmentService.updateApplicationStatus(Number(id), updateStatusDto.status);
     }
     async downloadCV(id, res) {
+        console.log(`Attempting to download CV for application ${id}`);
         const application = await this.recruitmentService.getApplication(id);
+        console.log('Application found:', application);
         if (!application.cvFile) {
+            console.log('No CV file found in application');
             throw new common_1.NotFoundException('CV file not found');
         }
+        console.log('CV filename:', application.cvFile);
         const filePath = await this.fileUploadService.getCVPath(application.cvFile);
+        console.log('CV file path:', filePath);
         if (!filePath) {
+            console.log('File path is null');
             throw new common_1.NotFoundException('CV file not found');
         }
+        console.log('Sending file from path:', filePath);
         return res.sendFile(filePath);
     }
     async deleteApplication(id) {
@@ -154,6 +162,7 @@ let RecruitmentController = class RecruitmentController {
 };
 exports.RecruitmentController = RecruitmentController;
 __decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('jobs'),
     (0, swagger_1.ApiOperation)({ summary: 'Get all jobs' }),
     __metadata("design:type", Function),
@@ -161,6 +170,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], RecruitmentController.prototype, "getAllJobs", null);
 __decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('jobs/:id'),
     (0, swagger_1.ApiOperation)({ summary: 'Get job by id' }),
     __param(0, (0, common_1.Param)('id')),
@@ -200,35 +210,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], RecruitmentController.prototype, "deleteJob", null);
 __decorate([
-    (0, common_1.Get)('applications'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(prisma_1.Role.ADMIN, prisma_1.Role.HR),
-    (0, swagger_1.ApiOperation)({ summary: 'Get all applications' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], RecruitmentController.prototype, "getAllApplications", null);
-__decorate([
-    (0, common_1.Get)('jobs/:id/applications'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(prisma_1.Role.ADMIN, prisma_1.Role.HR),
-    (0, swagger_1.ApiOperation)({ summary: 'Get applications for a job' }),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Query)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, application_dto_1.ApplicationQueryDto]),
-    __metadata("design:returntype", Promise)
-], RecruitmentController.prototype, "getJobApplications", null);
-__decorate([
-    (0, common_1.Get)('stats'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(prisma_1.Role.ADMIN, prisma_1.Role.HR),
-    (0, swagger_1.ApiOperation)({ summary: 'Get recruitment statistics' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], RecruitmentController.prototype, "getStats", null);
-__decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Post)('applications'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('cvFile', {
         limits: {
@@ -299,13 +281,42 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], RecruitmentController.prototype, "createApplication", null);
 __decorate([
+    (0, common_1.Get)('applications'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(prisma_1.Role.ADMIN, prisma_1.Role.HR),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all applications' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], RecruitmentController.prototype, "getAllApplications", null);
+__decorate([
+    (0, common_1.Get)('jobs/:id/applications'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(prisma_1.Role.ADMIN, prisma_1.Role.HR),
+    (0, swagger_1.ApiOperation)({ summary: 'Get applications for a job' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, application_dto_1.ApplicationQueryDto]),
+    __metadata("design:returntype", Promise)
+], RecruitmentController.prototype, "getJobApplications", null);
+__decorate([
+    (0, common_1.Get)('stats'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(prisma_1.Role.ADMIN, prisma_1.Role.HR),
+    (0, swagger_1.ApiOperation)({ summary: 'Get recruitment statistics' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], RecruitmentController.prototype, "getStats", null);
+__decorate([
     (0, common_1.Get)('applications/:id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(prisma_1.Role.ADMIN, prisma_1.Role.HR),
     (0, swagger_1.ApiOperation)({ summary: 'Get application by id' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], RecruitmentController.prototype, "getApplication", null);
 __decorate([
@@ -316,7 +327,7 @@ __decorate([
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, application_dto_1.UpdateApplicationStatusDto]),
+    __metadata("design:paramtypes", [String, application_dto_1.UpdateApplicationStatusDto]),
     __metadata("design:returntype", Promise)
 ], RecruitmentController.prototype, "updateApplicationStatus", null);
 __decorate([

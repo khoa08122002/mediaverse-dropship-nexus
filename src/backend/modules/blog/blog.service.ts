@@ -8,8 +8,20 @@ import { slugify } from '../../../utils/string';
 export class BlogService {
   constructor(private prisma: PrismaService) {}
 
+  private parseBlogFeaturedImage(blog: any) {
+    if (!blog) return null;
+    return {
+      ...blog,
+      featuredImage: blog.featuredImage ? JSON.parse(blog.featuredImage) : null
+    };
+  }
+
+  private parseBlogsFeaturedImage(blogs: any[]) {
+    return blogs.map(blog => this.parseBlogFeaturedImage(blog));
+  }
+
   async findAll() {
-    return this.prisma.blog.findMany({
+    const blogs = await this.prisma.blog.findMany({
       include: {
         author: {
           select: {
@@ -20,6 +32,7 @@ export class BlogService {
         }
       }
     });
+    return this.parseBlogsFeaturedImage(blogs);
   }
 
   async findOne(id: string) {
@@ -40,7 +53,7 @@ export class BlogService {
       throw new NotFoundException('Blog not found');
     }
 
-    return blog;
+    return this.parseBlogFeaturedImage(blog);
   }
 
   async findBySlug(slug: string) {
@@ -61,11 +74,11 @@ export class BlogService {
       throw new NotFoundException('Blog not found');
     }
 
-    return blog;
+    return this.parseBlogFeaturedImage(blog);
   }
 
   async getFeatured() {
-    return this.prisma.blog.findMany({
+    const blogs = await this.prisma.blog.findMany({
       where: {
         published: true,
         isFeatured: true
@@ -80,10 +93,11 @@ export class BlogService {
         }
       }
     });
+    return this.parseBlogsFeaturedImage(blogs);
   }
 
   async getByTag(tag: string) {
-    return this.prisma.blog.findMany({
+    const blogs = await this.prisma.blog.findMany({
       where: {
         tags: { has: tag }
       },
@@ -97,10 +111,11 @@ export class BlogService {
         }
       }
     });
+    return this.parseBlogsFeaturedImage(blogs);
   }
 
   async getByCategory(category: string) {
-    return this.prisma.blog.findMany({
+    const blogs = await this.prisma.blog.findMany({
       where: { category },
       include: {
         author: {
@@ -112,13 +127,14 @@ export class BlogService {
         }
       }
     });
+    return this.parseBlogsFeaturedImage(blogs);
   }
 
   async create(createBlogDto: CreateBlogDto, authorId: string) {
     const slug = slugify(createBlogDto.title);
     const { featuredImage, ...blogData } = createBlogDto;
 
-    return this.prisma.blog.create({
+    const blog = await this.prisma.blog.create({
       data: {
         ...blogData,
         slug,
@@ -136,6 +152,8 @@ export class BlogService {
         }
       }
     });
+
+    return this.parseBlogFeaturedImage(blog);
   }
 
   async update(id: string, updateBlogDto: UpdateBlogDto, user: any) {
@@ -155,18 +173,31 @@ export class BlogService {
       slug = slugify(updateBlogDto.title);
     }
 
-    const { featuredImage, author, authorId, id: blogId, createdAt, updatedAt, views, ...blogData } = updateBlogDto;
+    const { featuredImage, ...blogData } = updateBlogDto;
 
-    const data = {
-      ...blogData,
+    // Chỉ lấy các trường được phép cập nhật
+    const allowedFields = {
+      title: blogData.title,
+      content: blogData.content,
+      excerpt: blogData.excerpt,
+      category: blogData.category,
+      tags: blogData.tags,
+      readTime: blogData.readTime,
+      isFeatured: blogData.isFeatured,
+      status: blogData.status,
       slug,
-      ...(updateBlogDto.status && { published: updateBlogDto.status === 'published' }),
+      published: blogData.status === 'published',
       ...(featuredImage !== undefined && { 
         featuredImage: featuredImage ? JSON.stringify(featuredImage) : null 
-      }),
+      })
     };
 
-    return this.prisma.blog.update({
+    // Lọc bỏ các trường undefined
+    const data = Object.entries(allowedFields)
+      .filter(([_, value]) => value !== undefined)
+      .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+
+    const updatedBlog = await this.prisma.blog.update({
       where: { id },
       data,
       include: {
@@ -179,6 +210,8 @@ export class BlogService {
         }
       }
     });
+
+    return this.parseBlogFeaturedImage(updatedBlog);
   }
 
   async delete(id: string) {
@@ -189,7 +222,7 @@ export class BlogService {
   }
 
   async search(query: string) {
-    return this.prisma.blog.findMany({
+    const blogs = await this.prisma.blog.findMany({
       where: {
         OR: [
           { title: { contains: query, mode: 'insensitive' } },
@@ -207,6 +240,8 @@ export class BlogService {
         }
       }
     });
+
+    return this.parseBlogsFeaturedImage(blogs);
   }
 
   async getPopularTags(): Promise<{ tag: string; count: number }[]> {
@@ -239,7 +274,7 @@ export class BlogService {
   }
 
   async getFeaturedBlogs() {
-    return this.prisma.blog.findMany({
+    const blogs = await this.prisma.blog.findMany({
       where: {
         published: true,
         isFeatured: true
@@ -247,24 +282,25 @@ export class BlogService {
       orderBy: { createdAt: 'desc' },
       take: 3,
     });
+
+    return this.parseBlogsFeaturedImage(blogs);
   }
 
   async findByTag(tag: string) {
-    return this.prisma.blog.findMany({
+    const blogs = await this.prisma.blog.findMany({
       where: {
         tags: { has: tag }
       }
     });
+
+    return this.parseBlogsFeaturedImage(blogs);
   }
 
   async findByCategory(category: string) {
-    return this.prisma.blog.findMany({
-      where: { 
-        AND: [
-          { category },
-          { published: true }
-        ]
-      },
+    const blogs = await this.prisma.blog.findMany({
+      where: { category }
     });
+
+    return this.parseBlogsFeaturedImage(blogs);
   }
 } 

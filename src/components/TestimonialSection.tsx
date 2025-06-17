@@ -1,28 +1,27 @@
-
 import React from 'react';
 
 const TestimonialSection = () => {
   const testimonials = [
     {
-      name: "Nguyễn Văn A",
-      position: "CEO, TechViet Corp",
-      content: "MediaTech đã giúp chúng tôi tăng trưởng doanh thu 300% chỉ trong 6 tháng thông qua giải pháp AI Marketing và Dropshipping tự động.",
+      name: "Nguyễn Văn An",
+      position: "Customer",
+      content: "PHG Corporation đã giúp chúng tôi tăng trưởng doanh thu 300% chỉ trong 6 tháng thông qua giải pháp AI Marketing và Dropshipping tự động.",
       rating: 5,
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+      avatar: "/avatar.jpg"
     },
     {
-      name: "Trần Thị B",
-      position: "Marketing Director, Fashion Plus",
-      content: "Hệ thống dropshipping của MediaTech hoàn toàn thay đổi cách chúng tôi vận hành. Tự động hóa 90% quy trình và tăng hiệu quả vượt bậc.",
+      name: "Trần Thị Bình",
+      position: "Marketing Director",
+      content: "Hệ thống dropshipping của PHG Corporation hoàn toàn thay đổi cách chúng tôi vận hành. Tự động hóa 90% quy trình và tăng hiệu quả vượt bậc.",
       rating: 5,
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
+      avatar: "/avatar.jpg"
     },
     {
-      name: "Lê Minh C",
-      position: "Founder, StartupXYZ",
-      content: "Đội ngũ MediaTech rất chuyên nghiệp và hiểu rõ thị trường Việt Nam. Content SEO và chiến lược marketing của họ thực sự hiệu quả.",
+      name: "Lê Minh",
+      position: "Customer",
+      content: "Đội ngũ PHG Corporation rất chuyên nghiệp và hiểu rõ thị trường Việt Nam. Content SEO và chiến lược marketing của họ thực sự hiệu quả.",
       rating: 5,
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+      avatar: "/avatar.jpg"
     }
   ];
 
@@ -40,7 +39,7 @@ const TestimonialSection = () => {
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Hơn 500+ doanh nghiệp đã tin tưởng và đạt được kết quả vượt ngoài mong đợi 
-            cùng với các giải pháp của MediaTech.
+            cùng với các giải pháp của PHG Corporation.
           </p>
         </div>
 
@@ -82,7 +81,7 @@ const TestimonialSection = () => {
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 md:p-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
             <div>
-              <div className="text-4xl md:text-5xl font-bold mb-2">500+</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">300+</div>
               <div className="text-blue-100">Dự án hoàn thành</div>
             </div>
             <div>
@@ -90,7 +89,7 @@ const TestimonialSection = () => {
               <div className="text-blue-100">Khách hàng hài lòng</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-bold mb-2">5</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2">5+</div>
               <div className="text-blue-100">Năm kinh nghiệm</div>
             </div>
             <div>

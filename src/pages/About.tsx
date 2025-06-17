@@ -12,14 +12,14 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
               <span className="inline-block px-4 py-2 bg-blue-100 text-blue-600 rounded-full text-sm font-medium mb-6">
-                🏢 Về MediaTech
+                🏢 Về PHG Corporation
               </span>
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 Dẫn dắt tương lai
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> truyền thông số</span>
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed">
-                MediaTech được thành lập với sứ mệnh đưa công nghệ AI và giải pháp E-commerce 
+                PHG Corporation được thành lập với sứ mệnh đưa công nghệ AI và giải pháp E-commerce 
                 tiên tiến đến gần hơn với các doanh nghiệp Việt Nam, giúp họ phát triển bền vững 
                 trong kỷ nguyên số hóa.
               </p>
@@ -37,19 +37,19 @@ const About = () => {
                 </h2>
                 <div className="space-y-4 text-gray-600 leading-relaxed">
                   <p>
-                    Được thành lập vào năm 2019 bởi đội ngũ chuyên gia có nhiều năm kinh nghiệm 
-                    trong lĩnh vực marketing số và thương mại điện tử, MediaTech ra đời với mong muốn 
+                    Được thành lập vào năm 2022 bởi đội ngũ chuyên gia có nhiều năm kinh nghiệm 
+                    trong lĩnh vực marketing số và thương mại điện tử, PHG Corporation ra đời với mong muốn 
                     thu hẹp khoảng cách công nghệ giữa Việt Nam và thế giới.
                   </p>
                   <p>
                     Chúng tôi nhận thấy rằng nhiều doanh nghiệp Việt Nam vẫn đang gặp khó khăn trong 
                     việc áp dụng các công nghệ mới như AI, Machine Learning vào hoạt động kinh doanh. 
-                    Từ đó, MediaTech được sinh ra để trở thành cầu nối, mang đến những giải pháp 
+                    Từ đó, PHG Corporation được sinh ra để trở thành cầu nối, mang đến những giải pháp 
                     công nghệ tiên tiến nhưng dễ tiếp cận và phù hợp với thị trường Việt Nam.
                   </p>
                   <p>
                     Sau 5 năm phát triển, chúng tôi đã xây dựng được hệ sinh thái dịch vụ hoàn chỉnh 
-                    với 3 công ty con chuyên biệt, phục vụ hơn 500+ doanh nghiệp từ startup đến 
+                    với 3 công ty con chuyên biệt, phục vụ hơn 100+ doanh nghiệp từ startup đến 
                     các tập đoàn lớn.
                   </p>
                 </div>
@@ -128,7 +128,7 @@ const About = () => {
                   Giá trị cốt lõi
                 </h2>
                 <p className="text-xl text-gray-600">
-                  Những nguyên tắc định hướng mọi hoạt động của MediaTech
+                  Những nguyên tắc định hướng mọi hoạt động của PHG Corporation
                 </p>
               </div>
               
@@ -179,50 +179,47 @@ const About = () => {
                   Đội ngũ lãnh đạo
                 </h2>
                 <p className="text-xl text-gray-600">
-                  Những con người tài năng đằng sau thành công của MediaTech
+                  Những con người tài năng đằng sau thành công của PHG Corporation
                 </p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="bg-white rounded-2xl p-8 text-center shadow-lg">
                   <img 
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" 
+                    src="/avatar.jpg" 
                     alt="CEO" 
                     className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                   />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Nguyễn Minh Đức</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Đỗ Phú Huy</h3>
                   <p className="text-blue-600 font-medium mb-4">CEO & Founder</p>
                   <p className="text-gray-600 text-sm">
-                    10+ năm kinh nghiệm trong lĩnh vực AI và Machine Learning. 
-                    Cựu kỹ sư Google, thạc sĩ Stanford University.
+                    Chuyên gia hàng đầu về E-commerce và Fintech tại Việt Nam. 
                   </p>
                 </div>
                 
                 <div className="bg-white rounded-2xl p-8 text-center shadow-lg">
                   <img 
-                    src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face" 
+                    src="/avatar.jpg" 
                     alt="CTO" 
                     className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                   />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Trần Thị Lan</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Nguyễn Hoàng Phi Hùng</h3>
                   <p className="text-purple-600 font-medium mb-4">CTO</p>
                   <p className="text-gray-600 text-sm">
-                    Chuyên gia hàng đầu về E-commerce và Fintech tại Việt Nam. 
-                    Cựu Tech Lead Shopee, thạc sĩ NUS Singapore.
+                    7+ năm kinh nghiệm trong lĩnh vực AI và Machine Learning.
                   </p>
                 </div>
                 
                 <div className="bg-white rounded-2xl p-8 text-center shadow-lg">
                   <img 
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" 
+                    src="/avatar.jpg" 
                     alt="CMO" 
                     className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
                   />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Lê Văn Tâm</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Nguyễn Đăng Đạt</h3>
                   <p className="text-green-600 font-medium mb-4">CMO</p>
                   <p className="text-gray-600 text-sm">
-                    15+ năm kinh nghiệm Digital Marketing và Growth Hacking. 
-                    Cựu Marketing Director Lazada Vietnam.
+                    5+ năm kinh nghiệm Digital Marketing và Marketing Director. 
                   </p>
                 </div>
               </div>

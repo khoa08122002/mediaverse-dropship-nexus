@@ -121,7 +121,7 @@ const Blog = () => {
             </h1>
             <p className="text-xl text-gray-600 leading-relaxed">
               Khám phá những insights mới nhất về AI Marketing, E-commerce Automation 
-              và Digital Transformation từ đội ngũ experts của MediaTech.
+              và Digital Transformation từ đội ngũ experts của PHG Corporation.
             </p>
           </div>
         </div>

@@ -4,7 +4,6 @@ export declare class FileUploadService {
     private ensureUploadDir;
     saveCV(file: Express.Multer.File): Promise<string>;
     deleteCV(filename: string): Promise<void>;
-    getCVPath(filename: string): string;
-    fileExists(filename: string): Promise<boolean>;
+    getCVPath(filename: string): Promise<string>;
     deleteFile(filepath: string): Promise<void>;
 }

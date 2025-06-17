@@ -102,7 +102,7 @@ const Contact = () => {
                 của bạn
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed mb-8">
-                Liên hệ ngay với đội ngũ chuyên gia MediaTech để được tư vấn miễn phí 
+                Liên hệ ngay với đội ngũ chuyên gia PHG Corporation để được tư vấn miễn phí 
                 và nhận proposal chi tiết cho dự án của bạn.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -113,10 +113,10 @@ const Contact = () => {
                   📞 +84 123 456 789
                 </a>
                 <a 
-                  href="mailto:contact@mediatech.vn" 
+                  href="mailto:contact@PHG Corporation.vn" 
                   className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg hover:bg-blue-50 transition-all duration-300 font-semibold"
                 >
-                  ✉️ contact@mediatech.vn
+                  ✉️ contact@phgcorporation.com
                 </a>
               </div>
             </div>
@@ -306,8 +306,8 @@ const Contact = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
                       <p className="text-gray-600">
-                        <a href="mailto:contact@mediatech.vn" className="hover:text-blue-600">contact@mediatech.vn</a><br />
-                        <a href="mailto:sales@mediatech.vn" className="hover:text-blue-600">sales@mediatech.vn</a>
+                        <a href="mailto:contact@phgcorporation.com" className="hover:text-blue-600">contact@phgcorporation.com</a><br />
+                        <a href="mailto:sales@phgcorporation.com" className="hover:text-blue-600">sales@phgcorporation.com</a>
                       </p>
                     </div>
                   </div>
@@ -334,34 +334,34 @@ const Contact = () => {
                     <div>
                       <div className="font-medium text-gray-900">DropShip Pro</div>
                       <a 
-                        href="https://dropship.mediatech.vn" 
+                        href="https://dropship.phgcorporation.com" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-purple-600 hover:text-purple-700 text-sm"
                       >
-                        dropship.mediatech.vn ↗
+                        dropship.phgcorporation.com ↗
                       </a>
                     </div>
                     <div>
                       <div className="font-medium text-gray-900">Analytics Hub</div>
                       <a 
-                        href="https://analytics.mediatech.vn" 
+                        href="https://analytics.phgcorporation.com" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-700 text-sm"
                       >
-                        analytics.mediatech.vn ↗
+                        analytics.phgcorporation.com ↗
                       </a>
                     </div>
                     <div>
                       <div className="font-medium text-gray-900">Content Studio</div>
                       <a 
-                        href="https://content.mediatech.vn" 
+                        href="https://content.phgcorporation.com" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-green-600 hover:text-green-700 text-sm"
                       >
-                        content.mediatech.vn ↗
+                        content.phgcorporation.com ↗
                       </a>
                     </div>
                   </div>

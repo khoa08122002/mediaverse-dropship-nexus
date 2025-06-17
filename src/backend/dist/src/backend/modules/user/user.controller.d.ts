@@ -14,7 +14,9 @@ export declare class UserController {
         status: import(".prisma/client").$Enums.Status;
         createdAt: Date;
         updatedAt: Date;
+        password: string;
         role: import(".prisma/client").$Enums.Role;
+        lastLogin: Date | null;
     }[]>;
     getProfile(req: any): Promise<{
         id: string;
@@ -25,6 +27,7 @@ export declare class UserController {
         updatedAt: Date;
         password: string;
         role: import(".prisma/client").$Enums.Role;
+        lastLogin: Date | null;
     }>;
     changePassword(req: any, changePasswordDto: {
         currentPassword: string;
@@ -41,26 +44,9 @@ export declare class UserController {
         updatedAt: Date;
         password: string;
         role: import(".prisma/client").$Enums.Role;
+        lastLogin: Date | null;
     }>;
     create(createUserDto: CreateUserDto): Promise<{
-        id: string;
-        fullName: string;
-        email: string;
-        status: import(".prisma/client").$Enums.Status;
-        createdAt: Date;
-        updatedAt: Date;
-        role: import(".prisma/client").$Enums.Role;
-    }>;
-    update(id: string, updateUserDto: UpdateUserDto): Promise<{
-        id: string;
-        fullName: string;
-        email: string;
-        status: import(".prisma/client").$Enums.Status;
-        createdAt: Date;
-        updatedAt: Date;
-        role: import(".prisma/client").$Enums.Role;
-    }>;
-    remove(id: string): Promise<{
         id: string;
         fullName: string;
         email: string;
@@ -71,6 +57,18 @@ export declare class UserController {
         role: import(".prisma/client").$Enums.Role;
         lastLogin: Date | null;
     }>;
+    update(id: string, updateUserDto: UpdateUserDto): Promise<{
+        id: string;
+        fullName: string;
+        email: string;
+        status: import(".prisma/client").$Enums.Status;
+        createdAt: Date;
+        updatedAt: Date;
+        password: string;
+        role: import(".prisma/client").$Enums.Role;
+        lastLogin: Date | null;
+    }>;
+    remove(id: string): Promise<any>;
     adminChangePassword(id: string, newPassword: string): Promise<{
         id: string;
         fullName: string;
@@ -78,15 +76,9 @@ export declare class UserController {
         status: import(".prisma/client").$Enums.Status;
         createdAt: Date;
         updatedAt: Date;
+        password: string;
         role: import(".prisma/client").$Enums.Role;
+        lastLogin: Date | null;
     }>;
-    search(query: string): Promise<{
-        id: string;
-        fullName: string;
-        email: string;
-        status: import(".prisma/client").$Enums.Status;
-        createdAt: Date;
-        updatedAt: Date;
-        role: import(".prisma/client").$Enums.Role;
-    }[]>;
+    search(query: string): Promise<any>;
 }

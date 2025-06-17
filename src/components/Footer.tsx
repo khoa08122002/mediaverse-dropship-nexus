@@ -23,7 +23,7 @@ const Footer = () => {
               Giải pháp truyền thông số và thương mại điện tử hàng đầu Việt Nam với công nghệ AI tiên tiến.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://www.facebook.com/phgroup.media" className="text-gray-400 hover:text-white transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -60,23 +60,23 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="text-lg font-semibold">Liên hệ</h4>
             <div className="space-y-2 text-sm text-gray-400">
-              <p>📧 contact@mediatech.vn</p>
+              <p>📧 contact@phgcorporation.com</p>
               <p>📞 +84 123 456 789</p>
-              <p>📍 123 Đường ABC, Quận 1, TP.HCM</p>
+              <p>📍 Cư Xá Điện Lực 51 - 53 Trần Não, TP Thủ Đức</p>
             </div>
             <div className="space-y-2">
               <h5 className="font-medium text-white">Các công ty con:</h5>
               <div className="text-sm text-gray-400 space-y-1">
-                <p>• dropship.mediatech.vn</p>
-                <p>• analytics.mediatech.vn</p>
-                <p>• content.mediatech.vn</p>
+                <p>• dropship.phgcorporation.com</p>
+                <p>• analytics.phgcorporation.com</p>
+                <p>• content.phgcorporation.com</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-          <p>&copy; 2024 MediaTech. Tất cả quyền được bảo lưu.</p>
+          <p>&copy; 2024 PHG Corporation. Tất cả quyền được bảo lưu.</p>
         </div>
       </div>
     </footer>

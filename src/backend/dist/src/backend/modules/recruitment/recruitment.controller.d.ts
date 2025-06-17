@@ -12,13 +12,13 @@ export declare class RecruitmentController {
     getJobById(id: string): Promise<Job>;
     createJob(createJobDto: CreateJobDto): Promise<Job>;
     updateJob(id: string, updateJobDto: UpdateJobDto): Promise<Job>;
-    deleteJob(id: string): Promise<void>;
+    deleteJob(id: string): Promise<Job>;
+    createApplication(createApplicationDto: CreateApplicationDto, file?: Express.Multer.File): Promise<Application>;
     getAllApplications(): Promise<Application[]>;
     getJobApplications(id: string, query: ApplicationQueryDto): Promise<Application[]>;
     getStats(): Promise<any>;
-    createApplication(createApplicationDto: CreateApplicationDto, file?: Express.Multer.File): Promise<Application>;
-    getApplication(id: number): Promise<Application>;
-    updateApplicationStatus(id: number, updateStatusDto: UpdateApplicationStatusDto): Promise<Application>;
+    getApplication(id: string): Promise<Application>;
+    updateApplicationStatus(id: string, updateStatusDto: UpdateApplicationStatusDto): Promise<Application>;
     downloadCV(id: number, res: Response): Promise<void>;
     deleteApplication(id: number): Promise<{
         id: number;

@@ -135,13 +135,19 @@ let BlogService = class BlogService {
             }
         });
     }
-    async update(id, updateBlogDto) {
+    async update(id, updateBlogDto, user) {
         const blog = await this.findOne(id);
+        if (user.role !== 'ADMIN' && blog.authorId !== user.id) {
+            const { isFeatured, ...otherFields } = updateBlogDto;
+            if (Object.keys(otherFields).length > 0) {
+                throw new common_1.ForbiddenException('Bạn không có quyền cập nhật các trường khác của bài viết này');
+            }
+        }
         let slug = blog.slug;
         if (updateBlogDto.title) {
             slug = (0, string_1.slugify)(updateBlogDto.title);
         }
-        const { featuredImage, ...blogData } = updateBlogDto;
+        const { featuredImage, author, authorId, id: blogId, createdAt, updatedAt, views, ...blogData } = updateBlogDto;
         const data = {
             ...blogData,
             slug,

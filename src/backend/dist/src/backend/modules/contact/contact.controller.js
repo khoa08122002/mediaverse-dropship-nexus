@@ -21,6 +21,7 @@ const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const prisma_1 = require("../prisma");
 const contact_service_1 = require("./contact.service");
 const swagger_1 = require("@nestjs/swagger");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 let ContactController = ContactController_1 = class ContactController {
     constructor(contactService) {
         this.contactService = contactService;
@@ -103,6 +104,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ContactController.prototype, "findOne", null);
 __decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Post)(),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new contact' }),
     __param(0, (0, common_1.Body)()),

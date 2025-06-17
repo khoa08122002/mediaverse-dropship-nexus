@@ -13,56 +13,37 @@ exports.JwtStrategy = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
-const config_1 = require("@nestjs/config");
-const prisma_service_1 = require("../../prisma/prisma.service");
-const prisma_1 = require("../../prisma");
+const prisma_service_1 = require("../../../prisma/prisma.service");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
-    constructor(configService, prisma) {
+    constructor(prisma) {
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: configService.get('JWT_SECRET') || 'mediaverse-secret-key-2024',
+            secretOrKey: process.env.JWT_SECRET || 'your-secret-key',
         });
-        this.configService = configService;
         this.prisma = prisma;
     }
     async validate(payload) {
-        if (!payload || !payload.sub) {
-            throw new common_1.UnauthorizedException('Token không hợp lệ');
-        }
         const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
-            select: {
-                id: true,
-                email: true,
-                role: true,
-                status: true,
-                fullName: true
-            }
         });
         if (!user) {
-            throw new common_1.UnauthorizedException('Người dùng không tồn tại');
+            throw new common_1.UnauthorizedException('User not found');
         }
-        if (user.status === prisma_1.Status.INACTIVE) {
-            throw new common_1.UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
-        }
-        const role = user.role;
-        if (!Object.values(prisma_1.Role).includes(role)) {
-            throw new common_1.UnauthorizedException('Vai trò không hợp lệ');
+        if (user.status !== 'ACTIVE') {
+            throw new common_1.UnauthorizedException('User account is inactive');
         }
         return {
             id: user.id,
             email: user.email,
-            role: role,
+            role: user.role,
             status: user.status,
-            fullName: user.fullName
         };
     }
 };
 exports.JwtStrategy = JwtStrategy;
 exports.JwtStrategy = JwtStrategy = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [config_1.ConfigService,
-        prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], JwtStrategy);
 //# sourceMappingURL=jwt.strategy.js.map

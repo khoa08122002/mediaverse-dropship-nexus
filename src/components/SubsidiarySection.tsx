@@ -5,7 +5,7 @@ const SubsidiarySection = () => {
   const subsidiaries = [
     {
       name: "DropShip Pro",
-      domain: "dropship.mediatech.vn",
+      domain: "dropship.phgcorporation.com",
       description: "Nền tảng dropshipping tự động với hơn 10,000+ sản phẩm hot trend và hệ thống fulfillment thông minh.",
       features: ["Tự động đồng bộ sản phẩm", "Quản lý inventory real-time", "Tích hợp payment gateway", "Analytics dashboard"],
       color: "from-purple-500 to-pink-500",
@@ -13,7 +13,7 @@ const SubsidiarySection = () => {
     },
     {
       name: "Analytics Hub",
-      domain: "analytics.mediatech.vn",
+      domain: "analytics.phgcorporation.com",
       description: "Công cụ phân tích dữ liệu chuyên sâu với AI, giúp doanh nghiệp đưa ra quyết định kinh doanh thông minh.",
       features: ["AI-powered insights", "Real-time dashboard", "Predictive analytics", "Custom reports"],
       color: "from-blue-500 to-cyan-500",
@@ -21,7 +21,7 @@ const SubsidiarySection = () => {
     },
     {
       name: "Content Studio",
-      domain: "content.mediatech.vn",
+      domain: "content.phgcorporation.com",
       description: "Studio sáng tạo nội dung số với đội ngũ chuyên gia và công nghệ AI, tạo ra content viral và engaging.",
       features: ["AI content generation", "Video production", "Social media content", "SEO optimization"],
       color: "from-green-500 to-teal-500",
@@ -47,7 +47,7 @@ const SubsidiarySection = () => {
             <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"> dịch vụ chuyên biệt</span>
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Mỗi công ty con trong hệ sinh thái MediaTech đều là chuyên gia trong lĩnh vực riêng, 
+            Mỗi công ty con trong hệ sinh thái phgcorporation.com đều là chuyên gia trong lĩnh vực riêng, 
             mang đến giải pháp tối ưu cho từng nhu cầu cụ thể của khách hàng.
           </p>
         </div>

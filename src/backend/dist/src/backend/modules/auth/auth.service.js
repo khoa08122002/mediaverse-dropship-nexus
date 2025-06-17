@@ -12,117 +12,125 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
-const user_service_1 = require("../user/user.service");
+const prisma_service_1 = require("../../prisma/prisma.service");
 const bcrypt = require("bcrypt");
-const prisma_1 = require("../prisma");
 let AuthService = class AuthService {
-    constructor(userService, jwtService) {
-        this.userService = userService;
+    constructor(prisma, jwtService) {
+        this.prisma = prisma;
         this.jwtService = jwtService;
     }
     async validateUser(email, password) {
-        console.log('Validating user with email:', email);
-        if (!email) {
-            throw new common_1.UnauthorizedException('Email is required');
-        }
-        const user = await this.userService.findByEmail(email);
-        console.log('Found user:', user);
+        const user = await this.prisma.user.findUnique({ where: { email } });
         if (!user) {
-            throw new common_1.UnauthorizedException('Email hoặc mật khẩu không đúng');
+            throw new common_1.UnauthorizedException('Invalid email or password');
         }
-        if (user.status === prisma_1.Status.INACTIVE) {
-            throw new common_1.UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
+        if (user.status !== 'ACTIVE') {
+            throw new common_1.UnauthorizedException('Account is inactive');
         }
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new common_1.UnauthorizedException('Email hoặc mật khẩu không đúng');
+            throw new common_1.UnauthorizedException('Invalid email or password');
         }
-        return user;
+        const { password: _, ...result } = user;
+        return result;
     }
-    async login(user) {
+    async login(loginDto) {
+        const user = await this.validateUser(loginDto.email, loginDto.password);
         const payload = {
-            email: user.email,
             sub: user.id,
-            role: user.role,
-            status: user.status,
-            fullName: user.fullName
+            email: user.email,
+            role: user.role
         };
-        await this.userService.updateLastLogin(user.id);
-        const access_token = this.jwtService.sign(payload, {
-            secret: process.env.JWT_SECRET || 'mediaverse-secret-key-2024',
-            expiresIn: '15m'
+        const accessToken = this.jwtService.sign(payload, {
+            expiresIn: '1h',
+            secret: process.env.JWT_SECRET || 'your-secret-key',
         });
-        const refresh_token = this.jwtService.sign(payload, {
-            secret: process.env.JWT_REFRESH_SECRET || 'mediaverse-refresh-secret-2024',
-            expiresIn: '7d'
+        const refreshToken = this.jwtService.sign(payload, {
+            expiresIn: '7d',
+            secret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
+        });
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() },
         });
         return {
-            access_token,
-            refresh_token,
+            accessToken,
+            refreshToken,
             user: {
                 id: user.id,
                 email: user.email,
                 fullName: user.fullName,
                 role: user.role,
-                status: user.status
-            }
+                status: user.status,
+            },
         };
     }
-    async refreshToken(refreshToken) {
+    async refresh(refreshDto) {
         try {
-            const payload = this.jwtService.verify(refreshToken, {
-                secret: process.env.JWT_REFRESH_SECRET || 'mediaverse-refresh-secret-2024'
+            const decoded = this.jwtService.verify(refreshDto.refreshToken, {
+                secret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
             });
-            const user = await this.userService.findOne(payload.sub);
+            const user = await this.prisma.user.findUnique({
+                where: { id: decoded.sub },
+            });
             if (!user) {
-                throw new common_1.UnauthorizedException('Người dùng không tồn tại');
+                throw new common_1.UnauthorizedException('User not found');
             }
             if (user.status !== 'ACTIVE') {
-                throw new common_1.UnauthorizedException('Tài khoản đã bị vô hiệu hóa');
+                throw new common_1.UnauthorizedException('Account is inactive');
             }
-            const newPayload = { email: user.email, sub: user.id, role: user.role };
-            const access_token = this.jwtService.sign(newPayload, {
-                secret: process.env.JWT_SECRET || 'mediaverse-secret-key-2024',
-                expiresIn: '15m'
+            const payload = {
+                sub: user.id,
+                email: user.email,
+                role: user.role,
+            };
+            const accessToken = this.jwtService.sign(payload, {
+                expiresIn: '1h',
+                secret: process.env.JWT_SECRET || 'your-secret-key',
             });
-            const refresh_token = this.jwtService.sign(newPayload, {
-                secret: process.env.JWT_REFRESH_SECRET || 'mediaverse-refresh-secret-2024',
-                expiresIn: '7d'
+            const newRefreshToken = this.jwtService.sign(payload, {
+                expiresIn: '7d',
+                secret: process.env.JWT_REFRESH_SECRET || 'your-refresh-secret',
             });
             return {
-                access_token,
-                refresh_token,
+                accessToken,
+                refreshToken: newRefreshToken,
                 user: {
                     id: user.id,
                     email: user.email,
                     fullName: user.fullName,
                     role: user.role,
-                    status: user.status
-                }
+                    status: user.status,
+                },
             };
         }
         catch (error) {
-            throw new common_1.UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
+            throw new common_1.UnauthorizedException('Invalid refresh token');
         }
     }
-    async changePassword(userId, currentPassword, newPassword) {
-        const user = await this.userService.findOne(userId);
+    async changePassword(changePasswordDto) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: changePasswordDto.userId },
+        });
         if (!user) {
-            throw new common_1.UnauthorizedException('Người dùng không tồn tại');
+            throw new common_1.UnauthorizedException('User not found');
         }
-        const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        const isPasswordValid = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
         if (!isPasswordValid) {
-            throw new common_1.UnauthorizedException('Mật khẩu hiện tại không đúng');
+            throw new common_1.UnauthorizedException('Current password is incorrect');
         }
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await this.userService.update(userId, { password: hashedPassword });
-        return { message: 'Đổi mật khẩu thành công' };
+        const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: changePasswordDto.userId },
+            data: { password: hashedPassword },
+        });
+        return { message: 'Password changed successfully' };
     }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [user_service_1.UserService,
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         jwt_1.JwtService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

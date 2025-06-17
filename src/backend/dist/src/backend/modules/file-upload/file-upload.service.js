@@ -15,7 +15,7 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 let FileUploadService = class FileUploadService {
     constructor() {
-        this.uploadDir = (0, path_1.join)(__dirname, '..', '..', 'uploads', 'cv');
+        this.uploadDir = (0, path_1.join)(process.cwd(), 'uploads', 'cv');
         this.ensureUploadDir();
     }
     async ensureUploadDir() {
@@ -38,13 +38,8 @@ let FileUploadService = class FileUploadService {
         if (file.size > maxSize) {
             throw new common_1.BadRequestException('File size must be less than 5MB');
         }
-        const timestamp = Date.now();
-        const ext = file.originalname.split('.').pop();
-        const filename = `${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`;
-        const filepath = (0, path_1.join)(this.uploadDir, filename);
         try {
-            await fs_1.promises.writeFile(filepath, file.buffer);
-            return filename;
+            return file.filename;
         }
         catch (error) {
             console.error('Error saving file:', error);
@@ -62,12 +57,12 @@ let FileUploadService = class FileUploadService {
             console.error('Error deleting file:', error);
         }
     }
-    getCVPath(filename) {
+    async getCVPath(filename) {
         if (!filename)
             return null;
         const filepath = (0, path_1.join)(this.uploadDir, filename);
         try {
-            fs_1.promises.access(filepath);
+            await fs_1.promises.access(filepath);
             return filepath;
         }
         catch (error) {
@@ -75,22 +70,14 @@ let FileUploadService = class FileUploadService {
             return null;
         }
     }
-    async fileExists(filename) {
-        try {
-            await fs_1.promises.access((0, path_1.join)(this.uploadDir, filename));
-            return true;
-        }
-        catch {
-            return false;
-        }
-    }
     async deleteFile(filepath) {
+        if (!filepath)
+            return;
         try {
             await fs_1.promises.unlink(filepath);
         }
         catch (error) {
             console.error('Error deleting file:', error);
-            throw error;
         }
     }
 };

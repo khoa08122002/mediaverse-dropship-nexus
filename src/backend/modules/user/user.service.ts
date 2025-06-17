@@ -46,6 +46,11 @@ export class UserService {
   async update(id: string, data: UpdateUserDto) {
     const user = await this.findOne(id);
 
+    // Hash password if it's being updated
+    if (data.password) {
+      data.password = await bcrypt.hash(data.password, 10);
+    }
+
     return this.prisma.user.update({
       where: { id },
       data
@@ -71,8 +76,17 @@ export class UserService {
   async delete(id: string) {
     const user = await this.findOne(id);
 
-    return this.prisma.user.delete({
-      where: { id }
+    // Sử dụng transaction để đảm bảo tính toàn vẹn
+    return this.prisma.$transaction(async (prisma) => {
+      // Xóa tất cả các blogs của user
+      await prisma.blog.deleteMany({
+        where: { authorId: id }
+      });
+
+      // Xóa user
+      return prisma.user.delete({
+        where: { id }
+      });
     });
   }
 

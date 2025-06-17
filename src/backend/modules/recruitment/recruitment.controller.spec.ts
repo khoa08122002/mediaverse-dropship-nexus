@@ -77,7 +77,7 @@ describe('RecruitmentController', () => {
 
       mockRecruitmentService.createJob.mockResolvedValue(mockJob);
 
-      const result = await controller.getAllJobs();
+      const result = await controller.createJob(createJobDto);
       expect(result).toBe(mockJob);
       expect(mockRecruitmentService.createJob).toHaveBeenCalledWith(createJobDto);
     });
@@ -106,7 +106,7 @@ describe('RecruitmentController', () => {
 
       mockRecruitmentService.updateJob.mockResolvedValue(mockUpdatedJob);
 
-      const result = await controller.getJobById('1');
+      const result = await controller.updateJob('1', updateJobDto);
       expect(result).toBe(mockUpdatedJob);
       expect(mockRecruitmentService.updateJob).toHaveBeenCalledWith(1, updateJobDto);
     });

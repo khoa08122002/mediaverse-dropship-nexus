@@ -26,8 +26,8 @@ async function bootstrap() {
 
   // Setup Swagger
   const config = new DocumentBuilder()
-    .setTitle('MediaVerse API')
-    .setDescription('The MediaVerse API description')
+    .setTitle('PHG Corporation API')
+    .setDescription('The PHG Corporation API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

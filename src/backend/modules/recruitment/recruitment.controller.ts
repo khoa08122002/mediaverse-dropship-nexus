@@ -269,30 +269,23 @@ export class RecruitmentController {
   @Get('applications/:id/cv')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.HR)
-  @ApiOperation({ summary: 'Download CV file' })
+  @ApiOperation({ summary: 'Download CV của ứng viên' })
   async downloadCV(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Res() res: Response
   ) {
-    console.log(`Attempting to download CV for application ${id}`);
-    const application = await this.recruitmentService.getApplication(id);
-    console.log('Application found:', application);
-    
+    const applicationId = Number(id);
+    if (isNaN(applicationId)) {
+      throw new BadRequestException('ID không hợp lệ');
+    }
+    const application = await this.recruitmentService.getApplication(applicationId);
     if (!application.cvFile) {
-      console.log('No CV file found in application');
-      throw new NotFoundException('CV file not found');
+      throw new NotFoundException('CV không tồn tại');
     }
-    
-    console.log('CV filename:', application.cvFile);
     const filePath = await this.fileUploadService.getCVPath(application.cvFile);
-    console.log('CV file path:', filePath);
-    
     if (!filePath) {
-      console.log('File path is null');
-      throw new NotFoundException('CV file not found');
+      throw new NotFoundException('File CV không tồn tại trên hệ thống');
     }
-    
-    console.log('Sending file from path:', filePath);
     return res.sendFile(filePath);
   }
 

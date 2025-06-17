@@ -1,7 +1,7 @@
 {
-  "name": "mediaverse-backend",
+  "name": "phg-corporation-backend",
   "version": "1.0.0",
-  "description": "Backend for MediaVerse application",
+  "description": "Backend for PHG Corporation application",
   "main": "main.ts",
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

@@ -118,7 +118,7 @@ export class AuthService {
   }
 
   async changePassword(changePasswordDto: { 
-    userId: number;
+    userId: string;
     currentPassword: string;
     newPassword: string;
   }) {

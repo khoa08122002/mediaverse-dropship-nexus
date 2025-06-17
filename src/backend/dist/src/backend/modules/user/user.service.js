@@ -20,118 +20,67 @@ let UserService = class UserService {
     }
     async findAll() {
         return this.prisma.user.findMany({
-            select: {
-                id: true,
-                email: true,
-                fullName: true,
-                role: true,
-                status: true,
-                createdAt: true,
-                updatedAt: true
-            }
+            orderBy: { createdAt: 'desc' }
         });
     }
     async findOne(id) {
         const user = await this.prisma.user.findUnique({
-            where: { id },
-            select: {
-                id: true,
-                email: true,
-                password: true,
-                fullName: true,
-                role: true,
-                status: true,
-                createdAt: true,
-                updatedAt: true
-            }
+            where: { id }
         });
         if (!user) {
-            throw new common_1.NotFoundException('User not found');
+            throw new common_1.NotFoundException('Không tìm thấy người dùng');
         }
         return user;
     }
     async findByEmail(email) {
         return this.prisma.user.findUnique({
-            where: { email },
-            select: {
-                id: true,
-                email: true,
-                password: true,
-                fullName: true,
-                role: true,
-                status: true
-            }
+            where: { email }
         });
     }
     async create(data) {
-        const existingUser = await this.findByEmail(data.email);
-        if (existingUser) {
-            throw new common_1.ConflictException('Email đã tồn tại');
-        }
         const hashedPassword = await bcrypt.hash(data.password, 10);
         return this.prisma.user.create({
             data: {
-                email: data.email,
-                password: hashedPassword,
-                fullName: data.fullName,
-                role: data.role || prisma_1.Role.USER,
-                status: data.status || prisma_1.Status.ACTIVE
-            },
-            select: {
-                id: true,
-                email: true,
-                fullName: true,
-                role: true,
-                status: true,
-                createdAt: true,
-                updatedAt: true
+                ...data,
+                password: hashedPassword
             }
         });
     }
     async update(id, data) {
         const user = await this.findOne(id);
-        if (data.email && data.email !== user.email) {
-            const existingUser = await this.findByEmail(data.email);
-            if (existingUser) {
-                throw new common_1.ConflictException('Email đã tồn tại');
-            }
-        }
-        const updateData = {};
-        if (data.password) {
-            updateData.password = await bcrypt.hash(data.password, 10);
-        }
-        if (data.email)
-            updateData.email = data.email;
-        if (data.fullName)
-            updateData.fullName = data.fullName;
-        if (data.role)
-            updateData.role = data.role;
-        if (data.status)
-            updateData.status = data.status;
         return this.prisma.user.update({
             where: { id },
-            data: updateData,
-            select: {
-                id: true,
-                email: true,
-                fullName: true,
-                role: true,
-                status: true,
-                createdAt: true,
-                updatedAt: true
-            }
+            data
         });
     }
-    async remove(id) {
+    async updatePassword(id, hashedPassword) {
         const user = await this.findOne(id);
-        return this.prisma.user.delete({ where: { id } });
+        return this.prisma.user.update({
+            where: { id },
+            data: { password: hashedPassword }
+        });
     }
     async updateLastLogin(id) {
         return this.prisma.user.update({
             where: { id },
-            data: {
-                lastLogin: new Date()
-            }
+            data: { lastLogin: new Date() }
+        });
+    }
+    async delete(id) {
+        const user = await this.findOne(id);
+        return this.prisma.user.delete({
+            where: { id }
+        });
+    }
+    async searchUsers(query) {
+        return this.prisma.user.findMany({
+            where: {
+                OR: [
+                    { email: { contains: query, mode: 'insensitive' } },
+                    { fullName: { contains: query, mode: 'insensitive' } }
+                ]
+            },
+            orderBy: { createdAt: 'desc' }
         });
     }
     async changePassword(userId, currentPassword, newPassword) {
@@ -162,25 +111,6 @@ let UserService = class UserService {
             }
         });
         return { message: 'Đổi mật khẩu thành công' };
-    }
-    async search(query) {
-        return this.prisma.user.findMany({
-            where: {
-                OR: [
-                    { email: { contains: query, mode: 'insensitive' } },
-                    { fullName: { contains: query, mode: 'insensitive' } }
-                ]
-            },
-            select: {
-                id: true,
-                email: true,
-                fullName: true,
-                role: true,
-                status: true,
-                createdAt: true,
-                updatedAt: true
-            }
-        });
     }
 };
 exports.UserService = UserService;

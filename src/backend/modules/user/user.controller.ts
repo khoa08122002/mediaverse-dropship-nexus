@@ -5,6 +5,7 @@ import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import * as bcrypt from 'bcrypt';
 
 export enum Role {
   ADMIN = 'ADMIN',
@@ -88,7 +89,7 @@ export class UserController {
   @ApiOperation({ summary: 'Xóa người dùng' })
   @ApiResponse({ status: 200, description: 'Người dùng đã được xóa' })
   async remove(@Param('id') id: string) {
-    return this.userService.remove(id);
+    return this.userService.delete(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -101,7 +102,9 @@ export class UserController {
     @Param('id') id: string,
     @Body('newPassword') newPassword: string
   ) {
-    return this.userService.update(id, { password: newPassword });
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.userService.updatePassword(id, hashedPassword);
+    return { message: 'Mật khẩu đã được thay đổi' };
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -111,6 +114,6 @@ export class UserController {
   @ApiOperation({ summary: 'Tìm kiếm người dùng' })
   @ApiResponse({ status: 200, description: 'Danh sách người dùng tìm thấy' })
   async search(@Query('q') query: string) {
-    return this.userService.search(query);
+    return this.userService.searchUsers(query);
   }
 } 

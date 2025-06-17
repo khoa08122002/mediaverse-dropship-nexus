@@ -1,31 +1,38 @@
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
+import { PrismaService } from '../../prisma/prisma.service';
 export declare class AuthService {
-    private userService;
-    private jwtService;
-    constructor(userService: UserService, jwtService: JwtService);
+    private readonly prisma;
+    private readonly jwtService;
+    constructor(prisma: PrismaService, jwtService: JwtService);
     validateUser(email: string, password: string): Promise<{
         id: string;
         fullName: string;
         email: string;
         status: import(".prisma/client").$Enums.Status;
-        password: string;
+        createdAt: Date;
+        updatedAt: Date;
         role: import(".prisma/client").$Enums.Role;
+        lastLogin: Date | null;
     }>;
-    login(user: any): Promise<{
-        access_token: string;
-        refresh_token: string;
+    login(loginDto: {
+        email: string;
+        password: string;
+    }): Promise<{
+        accessToken: string;
+        refreshToken: string;
         user: {
-            id: any;
-            email: any;
-            fullName: any;
-            role: any;
-            status: any;
+            id: string;
+            email: string;
+            fullName: string;
+            role: import(".prisma/client").$Enums.Role;
+            status: import(".prisma/client").$Enums.Status;
         };
     }>;
-    refreshToken(refreshToken: string): Promise<{
-        access_token: string;
-        refresh_token: string;
+    refresh(refreshDto: {
+        refreshToken: string;
+    }): Promise<{
+        accessToken: string;
+        refreshToken: string;
         user: {
             id: string;
             email: string;
@@ -34,7 +41,11 @@ export declare class AuthService {
             status: "ACTIVE";
         };
     }>;
-    changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{
+    changePassword(changePasswordDto: {
+        userId: number;
+        currentPassword: string;
+        newPassword: string;
+    }): Promise<{
         message: string;
     }>;
 }

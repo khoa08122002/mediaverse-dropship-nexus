@@ -25,11 +25,14 @@ exports.RecruitmentModule = RecruitmentModule = __decorate([
             file_upload_module_1.FileUploadModule,
             platform_express_1.MulterModule.register({
                 storage: (0, multer_1.diskStorage)({
-                    destination: (0, path_1.join)(__dirname, '..', '..', 'uploads', 'cv'),
+                    destination: (req, file, cb) => {
+                        cb(null, (0, path_1.join)(process.cwd(), 'uploads', 'cv'));
+                    },
                     filename: (req, file, cb) => {
                         const timestamp = Date.now();
                         const randomStr = Math.random().toString(36).substring(7);
-                        cb(null, `${timestamp}-${randomStr}${(0, path_1.extname)(file.originalname)}`);
+                        const ext = (0, path_1.extname)(file.originalname);
+                        cb(null, `${timestamp}-${randomStr}${ext}`);
                     },
                 }),
                 limits: {
@@ -37,7 +40,7 @@ exports.RecruitmentModule = RecruitmentModule = __decorate([
                 },
                 fileFilter: (req, file, cb) => {
                     if (!file) {
-                        cb(null, true);
+                        cb(null, false);
                         return;
                     }
                     const allowedTypes = [
@@ -49,7 +52,7 @@ exports.RecruitmentModule = RecruitmentModule = __decorate([
                         cb(null, true);
                     }
                     else {
-                        cb(new Error('Only PDF and Word documents are allowed'), false);
+                        cb(new Error('Chỉ chấp nhận file PDF hoặc Word'), false);
                     }
                 },
             }),

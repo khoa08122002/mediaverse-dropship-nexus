@@ -89,13 +89,13 @@ const Ecommerce = () => {
   const platforms = [
     {
       name: "DropShip Pro",
-      url: "dropship.mediatech.vn",
+      url: "dropship.phgcorporation.com",
       description: "Nền tảng dropshipping #1 Việt Nam với 10,000+ sản phẩm hot trend",
       features: ["Auto product sync", "1-click store setup", "AI pricing", "24/7 support"]
     },
     {
       name: "Analytics Hub",
-      url: "analytics.mediatech.vn", 
+      url: "analytics.phgcorporation.com", 
       description: "Business intelligence platform cho e-commerce với real-time insights",
       features: ["Real-time dashboard", "Predictive analytics", "Custom reports", "API integration"]
     }
@@ -310,7 +310,7 @@ const Ecommerce = () => {
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 Những transformation stories từ các doanh nghiệp đã áp dụng thành công 
-                giải pháp e-commerce của MediaTech.
+                giải pháp e-commerce của PHG Corporation.
               </p>
             </div>
 
@@ -386,7 +386,7 @@ const Ecommerce = () => {
                 Đặt lịch demo
               </Link>
               <a 
-                href="https://dropship.mediatech.vn" 
+                href="https://dropship.phgcorporation.com" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="border-2 border-white/30 text-white px-8 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors"

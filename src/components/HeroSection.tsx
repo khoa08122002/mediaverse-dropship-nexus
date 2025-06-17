@@ -1,18 +1,23 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import Spline from '@splinetool/react-spline';
 
-// Lazy load Spline component
-const Spline = lazy(() => import('@splinetool/react-spline'));
-
-// Loading fallback for 3D scene
-const SplineLoadingFallback = () => (
-  <div className="w-full h-full flex items-center justify-center bg-gray-900 rounded-2xl">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+// Loading component that matches the page design
+const LoadingScene = () => (
+  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-2xl relative overflow-hidden">
+    {/* Floating Orbs - matching the main page design */}
+    <div className="absolute top-10 left-10 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl animate-pulse"></div>
+    <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-500/20 rounded-full blur-2xl animate-pulse delay-500"></div>
+    
+    <div className="relative z-10 flex flex-col items-center">
+      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500"></div>
+      <p className="mt-4 text-gray-400 font-medium">Preparing 3D Experience...</p>
+    </div>
   </div>
 );
 
-// Error boundary for Spline component
+// Error boundary with matching design
 class SplineErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }
@@ -29,12 +34,12 @@ class SplineErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="w-full h-full flex items-center justify-center bg-gray-900 rounded-2xl">
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-2xl">
           <div className="text-center text-gray-400">
-            <p>3D scene failed to load</p>
+            <p className="text-lg font-medium">3D scene failed to load</p>
             <button
               onClick={() => this.setState({ hasError: false })}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="mt-4 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium"
             >
               Retry
             </button>
@@ -119,7 +124,7 @@ const HeroSection = () => {
           {/* Spline 3D Scene */}
           <div className="hidden lg:block aspect-square rounded-2xl overflow-hidden relative">
             <SplineErrorBoundary>
-              <Suspense fallback={<SplineLoadingFallback />}>
+              <Suspense fallback={<LoadingScene />}>
                 <Spline 
                   scene="https://prod.spline.design/zUQ9uRpjrb1vjK5R/scene.splinecode"
                   style={{ width: '100%', height: '100%' }}

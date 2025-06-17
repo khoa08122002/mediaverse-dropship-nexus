@@ -235,7 +235,7 @@ const MediaServices = () => {
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 Những câu chuyện thành công thực tế từ các doanh nghiệp đã áp dụng 
-                giải pháp AI Marketing của MediaTech.
+                giải pháp AI Marketing của PHG Corporation.
               </p>
             </div>
 

@@ -245,11 +245,11 @@ const Recruitment = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <a 
-                href="mailto:hr@mediatech.vn" 
+                href="mailto:hr@phgcorporation.com" 
                 className="flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <Mail className="w-5 h-5" />
-                hr@mediatech.vn
+                hr@phgcorporation.com
               </a>
               <a 
                 href="tel:+84123456789" 

@@ -7,22 +7,24 @@ export declare class RefreshTokenDto {
     refreshToken: string;
 }
 export declare class AuthController {
-    private authService;
+    private readonly authService;
     constructor(authService: AuthService);
     login(loginDto: LoginDto): Promise<{
-        access_token: string;
-        refresh_token: string;
+        accessToken: string;
+        refreshToken: string;
         user: {
-            id: any;
-            email: any;
-            fullName: any;
-            role: any;
-            status: any;
+            id: string;
+            email: string;
+            fullName: string;
+            role: import(".prisma/client").$Enums.Role;
+            status: import(".prisma/client").$Enums.Status;
         };
     }>;
-    refresh(refreshTokenDto: RefreshTokenDto): Promise<{
-        access_token: string;
-        refresh_token: string;
+    refresh(refreshDto: {
+        refreshToken: string;
+    }): Promise<{
+        accessToken: string;
+        refreshToken: string;
         user: {
             id: string;
             email: string;
@@ -31,10 +33,7 @@ export declare class AuthController {
             status: "ACTIVE";
         };
     }>;
-    changePassword(req: any, changePasswordDto: {
-        currentPassword: string;
-        newPassword: string;
-    }): Promise<{
+    changePassword(changePasswordDto: any): Promise<{
         message: string;
     }>;
 }

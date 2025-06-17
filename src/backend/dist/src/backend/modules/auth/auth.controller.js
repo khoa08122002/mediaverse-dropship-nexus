@@ -18,6 +18,8 @@ const auth_service_1 = require("./auth.service");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
+const local_auth_guard_1 = require("./guards/local-auth.guard");
+const public_decorator_1 = require("./decorators/public.decorator");
 class LoginDto {
 }
 exports.LoginDto = LoginDto;
@@ -44,33 +46,26 @@ let AuthController = class AuthController {
         this.authService = authService;
     }
     async login(loginDto) {
-        console.log('Login attempt:', loginDto);
-        try {
-            const user = await this.authService.validateUser(loginDto.email, loginDto.password);
-            return this.authService.login(user);
-        }
-        catch (error) {
-            console.error('Login error:', error);
-            throw new common_1.UnauthorizedException(error.message);
-        }
+        console.log('Login attempt:', { email: loginDto.email });
+        return this.authService.login(loginDto);
     }
-    async refresh(refreshTokenDto) {
-        try {
-            return await this.authService.refreshToken(refreshTokenDto.refreshToken);
-        }
-        catch (error) {
-            console.error('Refresh token error:', error);
-            throw new common_1.UnauthorizedException(error.message);
-        }
+    async refresh(refreshDto) {
+        return this.authService.refresh(refreshDto);
     }
-    async changePassword(req, changePasswordDto) {
-        return this.authService.changePassword(req.user.id, changePasswordDto.currentPassword, changePasswordDto.newPassword);
+    async changePassword(changePasswordDto) {
+        return this.authService.changePassword(changePasswordDto);
     }
 };
 exports.AuthController = AuthController;
 __decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.UseGuards)(local_auth_guard_1.LocalAuthGuard),
     (0, common_1.Post)('login'),
-    (0, swagger_1.ApiOperation)({ summary: 'Đăng nhập vào hệ thống' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Login with email and password' }),
+    (0, swagger_1.ApiBody)({
+        type: LoginDto,
+        description: 'User credentials',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Đăng nhập thành công' }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Email hoặc mật khẩu không đúng' }),
     __param(0, (0, common_1.Body)()),
@@ -79,13 +74,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
+    (0, public_decorator_1.Public)(),
     (0, common_1.Post)('refresh'),
-    (0, swagger_1.ApiOperation)({ summary: 'Làm mới token' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Refresh access token' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Token được làm mới thành công' }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Refresh token không hợp lệ' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [RefreshTokenDto]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "refresh", null);
 __decorate([
@@ -95,10 +91,9 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Đổi mật khẩu người dùng' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Đổi mật khẩu thành công' }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Không có quyền hoặc mật khẩu không đúng' }),
-    __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "changePassword", null);
 exports.AuthController = AuthController = __decorate([

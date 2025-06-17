@@ -286,14 +286,16 @@ export class RecruitmentService {
 
   async getApplication(id: number): Promise<Application> {
     const application = await this.prisma.application.findUnique({
-      where: { id },
+      where: {
+        id: id
+      },
       include: {
         job: true
       }
     });
 
     if (!application) {
-      throw new NotFoundException(`Application with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy đơn ứng tuyển với ID ${id}`);
     }
 
     return this.mapPrismaApplicationToApplication(application);
