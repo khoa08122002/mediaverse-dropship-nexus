@@ -39,12 +39,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ApplicationStatus } from '@/lib/prisma-types';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ApplicantProfile = () => {
   const navigate = useNavigate();
   const { id: applicantId } = useParams();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<Application | null>(null);
+  const { user: currentUser } = useAuth();
 
   useEffect(() => {
     if (!applicantId) {
@@ -140,6 +142,17 @@ const ApplicantProfile = () => {
       default: return status;
     }
   };
+
+  // Check for authentication
+  if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'HR')) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-4rem)] p-4">
+        <User className="w-16 h-16 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-700 mb-2">Không có quyền truy cập</h2>
+        <p className="text-gray-500">Bạn không có quyền xem trang này.</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

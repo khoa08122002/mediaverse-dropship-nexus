@@ -150,7 +150,16 @@ class RecruitmentService {
   async getApplication(id: number): Promise<Application> {
     try {
       console.log('Fetching application with ID:', id);
-      const response = await axios.get(`/recruitment/applications/${id}`);
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Vui lòng đăng nhập để tiếp tục');
+      }
+
+      const response = await axios.get(`/recruitment/applications/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       console.log('API Response:', response.data);
 
       if (!response.data) {
@@ -296,7 +305,11 @@ class RecruitmentService {
   async downloadCV(id: number): Promise<Blob> {
     try {
       console.log(`Attempting to download CV for application ${id}`);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Vui lòng đăng nhập để tiếp tục');
+      }
+
       const response = await axios.get(`/recruitment/applications/${id}/cv`, {
         responseType: 'blob',
         headers: {
@@ -338,7 +351,7 @@ class RecruitmentService {
       const jobId = Number(data.jobId);
       if (isNaN(jobId)) {
         throw new Error('Invalid job ID');
-        }
+      }
       formData.append('jobId', jobId.toString());
       
       // Add required fields
@@ -354,7 +367,7 @@ class RecruitmentService {
       // Handle CV file
       if (data.cvFile instanceof File) {
         formData.append('cvFile', data.cvFile, data.cvFile.name);
-        }
+      }
 
       const response = await axios.post('/recruitment/applications', formData, {
         headers: {
@@ -371,7 +384,16 @@ class RecruitmentService {
 
   async deleteApplication(id: number): Promise<void> {
     try {
-      await axios.delete(`/recruitment/applications/${id}`);
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Vui lòng đăng nhập để tiếp tục');
+      }
+
+      await axios.delete(`/recruitment/applications/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
     } catch (error: any) {
       if (error.response?.status === 404) {
         throw new Error('Ứng viên không tồn tại hoặc đã bị xóa');
