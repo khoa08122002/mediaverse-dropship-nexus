@@ -22,35 +22,45 @@ async function main() {
 
   // Create sample jobs
   const jobs = await Promise.all([
-    prisma.job.upsert({
-      where: { id: 1 },
-      update: {},
-      create: {
+    prisma.job.create({
+      data: {
         title: 'Frontend Developer',
         department: 'Engineering',
         location: 'Ho Chi Minh City',
-        type: 'FULLTIME',
+        type: 'fulltime',
         description: 'We are looking for a Frontend Developer to join our team.',
         requirements: '- 2+ years of experience with React\n- Strong knowledge of JavaScript/TypeScript\n- Experience with modern frontend frameworks',
         benefits: '- Competitive salary\n- Health insurance\n- Annual leave\n- Training opportunities',
         salary: '$1000-$2000',
-        status: 'ACTIVE',
+        status: 'active',
       },
+    }).catch((error) => {
+      if (error.code === 'P2002') {
+        return prisma.job.findFirst({
+          where: { title: 'Frontend Developer' }
+        });
+      }
+      throw error;
     }),
-    prisma.job.upsert({
-      where: { id: 2 },
-      update: {},
-      create: {
+    prisma.job.create({
+      data: {
         title: 'Backend Developer',
         department: 'Engineering',
         location: 'Ho Chi Minh City',
-        type: 'FULLTIME',
+        type: 'fulltime',
         description: 'We are looking for a Backend Developer to join our team.',
         requirements: '- 2+ years of experience with Node.js\n- Strong knowledge of TypeScript\n- Experience with NestJS and PostgreSQL',
         benefits: '- Competitive salary\n- Health insurance\n- Annual leave\n- Training opportunities',
         salary: '$1000-$2000',
-        status: 'ACTIVE',
+        status: 'active',
       },
+    }).catch((error) => {
+      if (error.code === 'P2002') {
+        return prisma.job.findFirst({
+          where: { title: 'Backend Developer' }
+        });
+      }
+      throw error;
     }),
   ]);
 
