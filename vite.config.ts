@@ -54,15 +54,19 @@ export default defineConfig(({ mode }) => {
       assetsDir: 'assets',
       sourcemap: !isProduction,
       minify: isProduction ? 'esbuild' : false,
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 2000,
       rollupOptions: {
         output: {
-          manualChunks: {
-            'react-core': ['react', 'react-dom', 'react-router-dom'],
-            'ui-core': ['@radix-ui/react-dialog', '@radix-ui/react-slot', '@radix-ui/react-label'],
-            'ui-utils': ['lucide-react', 'sonner', '@tanstack/react-query'],
-            'spline-core': ['@splinetool/runtime'],
-            'spline-utils': ['@splinetool/react-spline'],
+          manualChunks: (id) => {
+            if (id.includes('node_modules')) {
+              if (id.includes('react')) return 'react-vendor';
+              if (id.includes('@radix-ui')) return 'radix-vendor';
+              if (id.includes('@splinetool')) return 'spline-vendor';
+              if (id.includes('lucide-react') || id.includes('sonner') || id.includes('@tanstack/react-query')) {
+                return 'utils-vendor';
+              }
+              return 'vendor';
+            }
           },
           assetFileNames: (assetInfo) => {
             if (!assetInfo.name) return 'assets/[name]-[hash][extname]';

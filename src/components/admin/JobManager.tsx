@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Briefcase, Plus, Edit, Trash, Eye, Search, MapPin, Clock, User, Mail, Phone, FileText, Download, ExternalLink, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { recruitmentService } from '@/services/recruitmentService';
-import type { Job, Application } from '../../types/prisma';
-import { JobType, JobStatus } from '../../types/prisma';
+import type { Job, Application } from '@prisma/client';
+import { JobType, JobStatus } from '@prisma/client';
 import { CreateJobDto, JobTypeLowercase, JobStatusLowercase } from '@/backend/modules/recruitment/dto/job.dto';
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
