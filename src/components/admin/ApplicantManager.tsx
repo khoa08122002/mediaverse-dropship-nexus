@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Search, Eye, CheckCircle, XCircle, Clock, Download, Trash2, BriefcaseIcon } from 'lucide-react';
+import { Users, Search, Eye, CheckCircle, Clock, Download, Trash2, BriefcaseIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { recruitmentService } from '@/services/recruitmentService';
-import type { Application as PrismaApplication, Job } from '@prisma/client';
-import { ApplicationStatus } from '@prisma/client';
+import type { Application, Job, ApplicationStatusType } from '@/lib/prisma-types';
+import { ApplicationStatus } from '@/lib/prisma-types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
-
-interface Application extends PrismaApplication {
-  job?: Job;
-}
 
 const ApplicantManager = () => {
   const navigate = useNavigate();
@@ -94,27 +90,27 @@ const ApplicantManager = () => {
     }
   };
 
-  const getStatusLabel = (status: ApplicationStatus) => {
+  const getStatusLabel = (status: ApplicationStatusType) => {
     switch (status) {
-      case ApplicationStatus.accepted:
-        return 'Đã chấp nhận';
-      case ApplicationStatus.rejected:
+      case ApplicationStatus.ACCEPTED:
+        return 'Đã tuyển';
+      case ApplicationStatus.REJECTED:
         return 'Từ chối';
-      case ApplicationStatus.interviewed:
-        return 'Đã phỏng vấn';
-      case ApplicationStatus.reviewed:
+      case ApplicationStatus.INTERVIEWING:
+        return 'Đang phỏng vấn';
+      case ApplicationStatus.REVIEWING:
         return 'Đang xem xét';
-      case ApplicationStatus.pending:
+      case ApplicationStatus.PENDING:
         return 'Chờ xử lý';
       default:
         return status;
     }
   };
 
-  const handleStatusChange = async (applicationId: number, newStatus: string) => {
+  const handleStatusChange = async (applicationId: number, newStatus: ApplicationStatusType) => {
     try {
       setLoading(true);
-      await recruitmentService.updateApplicationStatus(applicationId, newStatus as ApplicationStatus);
+      await recruitmentService.updateApplicationStatus(applicationId, newStatus);
       toast.success('Cập nhật trạng thái thành công');
       await fetchApplications();
     } catch (error: any) {
@@ -147,17 +143,17 @@ const ApplicantManager = () => {
     }
   };
 
-  const getStatusColor = (status: ApplicationStatus) => {
+  const getStatusColor = (status: ApplicationStatusType) => {
     switch (status) {
-      case ApplicationStatus.accepted:
+      case ApplicationStatus.ACCEPTED:
         return 'bg-green-100 text-green-800';
-      case ApplicationStatus.rejected:
+      case ApplicationStatus.REJECTED:
         return 'bg-red-100 text-red-800';
-      case ApplicationStatus.interviewed:
+      case ApplicationStatus.INTERVIEWING:
         return 'bg-purple-100 text-purple-800';
-      case ApplicationStatus.reviewed:
+      case ApplicationStatus.REVIEWING:
         return 'bg-blue-100 text-blue-800';
-      case ApplicationStatus.pending:
+      case ApplicationStatus.PENDING:
         return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -379,17 +375,17 @@ const ApplicantManager = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Select
                         defaultValue={application.status}
-                        onValueChange={(value) => handleStatusChange(application.id, value)}
+                        onValueChange={(value) => handleStatusChange(application.id, value as ApplicationStatusType)}
                       >
                         <SelectTrigger className={`w-[140px] ${getStatusColor(application.status)}`}>
-                          <SelectValue placeholder={getStatusLabel(application.status)} />
+                          <SelectValue>{getStatusLabel(application.status)}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">{getStatusLabel(ApplicationStatus.pending)}</SelectItem>
-                          <SelectItem value="reviewed">{getStatusLabel(ApplicationStatus.reviewed)}</SelectItem>
-                          <SelectItem value="interviewed">{getStatusLabel(ApplicationStatus.interviewed)}</SelectItem>
-                          <SelectItem value="accepted">{getStatusLabel(ApplicationStatus.accepted)}</SelectItem>
-                          <SelectItem value="rejected">{getStatusLabel(ApplicationStatus.rejected)}</SelectItem>
+                          <SelectItem value={ApplicationStatus.PENDING}>Chờ xử lý</SelectItem>
+                          <SelectItem value={ApplicationStatus.REVIEWING}>Đang xem xét</SelectItem>
+                          <SelectItem value={ApplicationStatus.INTERVIEWING}>Đang phỏng vấn</SelectItem>
+                          <SelectItem value={ApplicationStatus.ACCEPTED}>Đã tuyển</SelectItem>
+                          <SelectItem value={ApplicationStatus.REJECTED}>Từ chối</SelectItem>
                         </SelectContent>
                       </Select>
                     </td>

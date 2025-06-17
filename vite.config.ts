@@ -14,18 +14,17 @@ export default defineConfig(({ mode }) => {
         babel: {
           plugins: ["@babel/plugin-transform-react-jsx"],
         },
-        jsxRuntime: 'automatic',
-        jsxImportSource: 'react',
+        jsxRuntime: 'classic',
       }),
     ],
     server: {
       port: 3000,
       proxy: {
         '/api': {
-          target: env.VITE_API_URL || 'http://localhost:3002',
+          target: 'http://localhost:3002',
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, ''),
+          rewrite: (path) => path.replace(/^\/api/, '')
         }
       },
       watch: {

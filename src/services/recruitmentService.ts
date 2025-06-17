@@ -1,20 +1,18 @@
 import axios from './axiosConfig';
-import type { Job, Application as PrismaApplication } from '@prisma/client';
-import { ApplicationStatus, JobType, JobStatus } from '@prisma/client';
+import { 
+  ApplicationStatus, 
+  JobType, 
+  JobStatus,
+  type Job,
+  type Application
+} from '@/lib/prisma-types';
 import type { CreateJobDto, UpdateJobDto } from '@/backend/modules/recruitment/dto/job.dto';
 
-export { ApplicationStatus };
-
-export interface Application extends PrismaApplication {
-  job?: Job;
-}
-
-export type { Job };
-
-export { JobType, JobStatus };
+export { ApplicationStatus, JobType, JobStatus };
+export type { Job, Application };
 
 export interface UpdateApplicationStatusDto {
-  status: ApplicationStatus;
+  status: typeof ApplicationStatus[keyof typeof ApplicationStatus];
 }
 
 export interface CreateApplicationDto {
@@ -37,12 +35,12 @@ class RecruitmentService {
     return response.data;
   }
 
-  async createJob(jobData: any): Promise<Job> {
+  async createJob(jobData: CreateJobDto): Promise<Job> {
     const response = await axios.post('/recruitment/jobs', jobData);
     return response.data;
   }
 
-  async updateJob(id: number, jobData: any): Promise<Job> {
+  async updateJob(id: number, jobData: UpdateJobDto): Promise<Job> {
     const response = await axios.put(`/recruitment/jobs/${id}`, jobData);
     return response.data;
   }
@@ -204,7 +202,10 @@ class RecruitmentService {
     }
   }
 
-  async updateApplicationStatus(id: number, status: ApplicationStatus): Promise<Application> {
+  async updateApplicationStatus(
+    id: number, 
+    status: typeof ApplicationStatus[keyof typeof ApplicationStatus]
+  ): Promise<Application> {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {

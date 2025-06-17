@@ -11,8 +11,11 @@ const publicRoutes = [
   '/blogs/search'
 ];
 
+// In development, use localhost:3002, in production use relative path
+const baseURL = import.meta.env.PROD ? '/api' : 'http://localhost:3002/api';
+
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3002/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
