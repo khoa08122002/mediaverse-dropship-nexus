@@ -39,7 +39,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-        ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js"
+        ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js",
+        "react": path.resolve(__dirname, "./node_modules/react"),
+        "react-dom": path.resolve(__dirname, "./node_modules/react-dom")
       },
     },
     define: {
@@ -57,10 +59,13 @@ export default defineConfig(({ mode }) => {
       minify: isProduction ? 'esbuild' : false,
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
+        external: ['react', 'react-dom'],
         output: {
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
-              if (id.includes('react')) return 'react-vendor';
+              if (id.includes('react') || id.includes('scheduler') || id.includes('prop-types')) {
+                return 'react-vendor';
+              }
               if (id.includes('@radix-ui')) return 'radix-vendor';
               if (id.includes('@splinetool')) return 'spline-vendor';
               if (id.includes('lucide-react') || id.includes('sonner') || id.includes('@tanstack/react-query')) {
