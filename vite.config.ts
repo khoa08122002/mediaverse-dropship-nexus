@@ -39,10 +39,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-        ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js",
-        "react": path.resolve(__dirname, "./node_modules/react"),
-        "react-dom": path.resolve(__dirname, "./node_modules/react-dom")
-      },
+        ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js"
+      }
     },
     define: {
       'process.env': Object.entries(env).reduce((prev, [key, val]) => {
@@ -59,33 +57,14 @@ export default defineConfig(({ mode }) => {
       minify: isProduction ? 'esbuild' : false,
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
-        external: ['react', 'react-dom'],
         output: {
-          manualChunks: (id) => {
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('scheduler') || id.includes('prop-types')) {
-                return 'react-vendor';
-              }
-              if (id.includes('@radix-ui')) return 'radix-vendor';
-              if (id.includes('@splinetool')) return 'spline-vendor';
-              if (id.includes('lucide-react') || id.includes('sonner') || id.includes('@tanstack/react-query')) {
-                return 'utils-vendor';
-              }
-              return 'vendor';
-            }
-          },
-          assetFileNames: (assetInfo) => {
-            if (!assetInfo.name) return 'assets/[name]-[hash][extname]';
-            const info = assetInfo.name.split('.');
-            const ext = info[info.length - 1];
-            if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
-              return `assets/images/[name]-[hash][extname]`;
-            }
-            return `assets/[name]-[hash][extname]`;
-          },
-          chunkFileNames: 'assets/js/[name]-[hash].js',
-          entryFileNames: 'assets/js/[name]-[hash].js',
-        },
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'radix-vendor': ['@radix-ui/react-alert-dialog', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-label', '@radix-ui/react-select', '@radix-ui/react-slot', '@radix-ui/react-tooltip'],
+            'utils-vendor': ['lucide-react', 'sonner', '@tanstack/react-query'],
+            'spline-vendor': ['@splinetool/react-spline']
+          }
+        }
       },
       target: 'esnext',
       assetsInlineLimit: 4096,

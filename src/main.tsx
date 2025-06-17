@@ -1,5 +1,5 @@
 import React, { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 
@@ -66,7 +66,7 @@ console.log('main.tsx: App component wrapped in StrictMode');
 // Add error handling for render
 try {
   console.log('main.tsx: Starting to create root...');
-  const rootInstance = createRoot(root);
+  const rootInstance = ReactDOM.createRoot(root);
   console.log('main.tsx: Root instance created successfully');
   
   console.log('main.tsx: Starting to render app...');
