@@ -1,44 +1,39 @@
 {
   "version": 2,
   "buildCommand": "npm run build:vercel",
+  "outputDirectory": "dist",
   "builds": [
     {
       "src": "dist/backend/main.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "dist/**",
-      "use": "@vercel/static"
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "dist/backend/main.js",
-      "headers": {
-        "Cache-Control": "no-cache"
-      }
+      "dest": "/dist/backend/main.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/$1",
+      "continue": true
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/assets/(.*)",
       "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
+        "cache-control": "public, max-age=31536000, immutable"
       },
       "continue": true
     },
     {
-      "src": "/(.*\\.(js|css|ico|png|jpg|jpeg|svg|gif))",
-      "dest": "dist/$1",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
       "src": "/(.*)",
-      "dest": "dist/index.html",
-      "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate"
-      }
+      "dest": "/dist/index.html"
     }
   ]
 } 
