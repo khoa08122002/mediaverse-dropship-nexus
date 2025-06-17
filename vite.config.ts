@@ -5,6 +5,8 @@ import path from "path";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const isProduction = mode === 'production';
+
   return {
     plugins: [
       react({
@@ -50,8 +52,8 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
-      sourcemap: true,
-      minify: 'esbuild',
+      sourcemap: !isProduction,
+      minify: isProduction ? 'esbuild' : false,
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
@@ -62,13 +64,22 @@ export default defineConfig(({ mode }) => {
             'spline-core': ['@splinetool/runtime'],
             'spline-utils': ['@splinetool/react-spline'],
           },
-          assetFileNames: 'assets/[name]-[hash][extname]',
-          chunkFileNames: 'assets/[name]-[hash].js',
-          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: (assetInfo) => {
+            if (!assetInfo.name) return 'assets/[name]-[hash][extname]';
+            const info = assetInfo.name.split('.');
+            const ext = info[info.length - 1];
+            if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+              return `assets/images/[name]-[hash][extname]`;
+            }
+            return `assets/[name]-[hash][extname]`;
+          },
+          chunkFileNames: 'assets/js/[name]-[hash].js',
+          entryFileNames: 'assets/js/[name]-[hash].js',
         },
       },
       target: 'esnext',
       assetsInlineLimit: 4096,
+      emptyOutDir: true,
     },
     optimizeDeps: {
       include: [
