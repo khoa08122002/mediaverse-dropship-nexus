@@ -6,12 +6,12 @@ import { FileUploadService } from '../file-upload/file-upload.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
-import { CreateApplicationDto, UpdateApplicationStatusDto, ApplicationQueryDto } from './dto/application.dto';
+import type { CreateJobDto, UpdateJobDto } from './dto/job.dto';
+import type { CreateApplicationDto, UpdateApplicationStatusDto, ApplicationQueryDto } from './dto/application.dto';
 import { Role } from '../prisma';
 import { Prisma } from '@prisma/client';
-import { Response } from 'express';
-import { Job, Application } from './types/recruitment.types';
+import type { Response } from 'express';
+import type { Job, Application } from './types/recruitment.types';
 import { Public } from '../auth/decorators/public.decorator';
 
 
