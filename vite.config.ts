@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
+        ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js"
       },
     },
     define: {
