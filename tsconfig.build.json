@@ -1,11 +1,23 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "strict": false,
+    "outDir": "dist",
+    "sourceMap": true,
     "noImplicitAny": false,
-    "strictPropertyInitialization": false,
     "strictNullChecks": false,
-    "skipLibCheck": true
+    "strictFunctionTypes": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "allowJs": true,
+    "declaration": false,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
   },
   "exclude": [
     "node_modules",

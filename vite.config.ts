@@ -9,13 +9,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      react({
-        include: "**/*.{jsx,tsx}",
-        babel: {
-          plugins: ["@babel/plugin-transform-react-jsx"],
-        },
-        jsxRuntime: 'classic',
-      }),
+      react()
     ],
     server: {
       port: 3000,
@@ -39,7 +33,8 @@ export default defineConfig(({ mode }) => {
       alias: {
         "@": path.resolve(__dirname, "./src"),
         ".prisma/client/index-browser": "./node_modules/.prisma/client/index-browser.js"
-      }
+      },
+      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
     },
     define: {
       'process.env': Object.entries(env).reduce((prev, [key, val]) => {
@@ -59,39 +54,25 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            'radix-vendor': ['@radix-ui/react-alert-dialog', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-label', '@radix-ui/react-select', '@radix-ui/react-slot', '@radix-ui/react-tooltip'],
-            'utils-vendor': ['lucide-react', 'sonner', '@tanstack/react-query'],
-            'spline-vendor': ['@splinetool/react-spline']
+            'ui': ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
+            'utils-vendor': ['axios', 'date-fns', 'sonner'],
           }
         }
       },
       target: 'esnext',
       assetsInlineLimit: 4096,
       emptyOutDir: true,
-    },
-    optimizeDeps: {
-      include: [
-        'react',
-        'react-dom',
-        'react-router-dom',
-        'lucide-react',
-        'sonner',
-        '@tanstack/react-query',
-      ],
-      exclude: [
-        '@splinetool/runtime',
-        '@splinetool/react-spline',
-        '@prisma/client'
-      ],
-      force: true,
-      esbuildOptions: {
-        target: 'esnext',
+      commonjsOptions: {
+        include: [/node_modules/],
+        extensions: ['.js', '.cjs', '.ts', '.tsx'],
+        transformMixedEsModules: true
       }
     },
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom'],
+      exclude: ['@prisma/client']
+    },
     clearScreen: false,
-    logLevel: 'info',
-    esbuild: {
-      logOverride: { 'this-is-undefined-in-esm': 'silent' }
-    }
+    logLevel: 'info'
   }
 });
