@@ -2,15 +2,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RecruitmentController } from './recruitment.controller';
 import { RecruitmentService } from './recruitment.service';
 import { FileUploadService } from '../file-upload/file-upload.service';
-import type { CreateJobDto } from './dto/job.dto';
-import type { CreateApplicationDto } from './dto/application.dto';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateJobDto } from './dto/job.dto';
+import { CreateApplicationDto } from './dto/application.dto';
 import { JobTypeValues, JobStatusValues } from './dto/job.dto';
 import { ApplicationStatus } from '@prisma/client';
+
+jest.mock('./recruitment.service');
+jest.mock('../file-upload/file-upload.service');
 
 describe('RecruitmentController', () => {
   let controller: RecruitmentController;
   let service: RecruitmentService;
+  let fileUploadService: FileUploadService;
 
   const mockRecruitmentService = {
     createJob: jest.fn(),
@@ -32,19 +36,15 @@ describe('RecruitmentController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RecruitmentController],
       providers: [
-        {
-          provide: RecruitmentService,
-          useValue: mockRecruitmentService,
-        },
-        {
-          provide: FileUploadService,
-          useValue: mockFileUploadService,
-        },
+        RecruitmentService,
+        FileUploadService,
+        PrismaService
       ],
     }).compile();
 
     controller = module.get<RecruitmentController>(RecruitmentController);
     service = module.get<RecruitmentService>(RecruitmentService);
+    fileUploadService = module.get<FileUploadService>(FileUploadService);
 
     // Clear all mocks before each test
     jest.clearAllMocks();

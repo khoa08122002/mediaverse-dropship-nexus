@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsEnum, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsEmail, IsEnum, IsOptional, IsNumber, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { ApplicationStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -6,15 +6,18 @@ import { Type } from 'class-transformer';
 export class CreateApplicationDto {
   @ApiProperty()
   @IsString()
-  fullName: string;
+  @IsNotEmpty()
+  fullName!: string;
 
   @ApiProperty()
   @IsEmail()
-  email: string;
+  @IsNotEmpty()
+  email!: string;
 
   @ApiProperty()
   @IsString()
-  phone: string;
+  @IsNotEmpty()
+  phone!: string;
 
   @ApiProperty({ required: false })
   @IsString()
@@ -29,7 +32,8 @@ export class CreateApplicationDto {
   @ApiProperty()
   @Type(() => Number)
   @IsNumber()
-  jobId: number;
+  @IsNotEmpty()
+  jobId!: number;
 }
 
 export class UpdateApplicationStatusDto {
@@ -48,4 +52,25 @@ export class ApplicationQueryDto {
   @IsString()
   @IsOptional()
   search?: string;
+}
+
+export class ApplicationDto {
+  @IsString()
+  @IsNotEmpty()
+  fullName!: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  phone!: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  jobId!: number;
+
+  @IsEnum(ApplicationStatus)
+  status: ApplicationStatus = ApplicationStatus.pending;
 } 

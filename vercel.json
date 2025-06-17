@@ -2,56 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/backend/main.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "prisma/schema.prisma",
-          "dist/**/*.js"
-        ],
-        "excludeFiles": [
-          "node_modules/**",
-          ".next/**",
-          "dist/**/*.map",
-          "**/*.test.*"
-        ]
-      }
-    },
-    {
       "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "zeroConfig": true,
-        "framework": "vite",
-        "distDir": "dist"
-      }
+      "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/src/backend/main.ts"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://mediaverse-dropship-nexus.vercel.app" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,PATCH,OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Origin, X-Requested-With, Content-Type, Accept, Authorization" },
-        { "key": "Access-Control-Allow-Credentials", "value": "true" }
-      ]
-    },
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
+      "src": "/(.*)",
+      "dest": "/"
     }
   ],
   "env": {
