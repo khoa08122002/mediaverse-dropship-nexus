@@ -48,12 +48,11 @@ enum JobType {
 }
 
 enum ApplicationStatus {
-  PENDING
-  REVIEWING
-  INTERVIEWING
-  SHORTLISTED
-  HIRED
-  REJECTED
+  pending
+  reviewed
+  interviewed
+  accepted
+  rejected
 }
 
 model User {
