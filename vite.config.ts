@@ -48,6 +48,8 @@ export default defineConfig(({ mode }) => {
       }, {})
     },
     build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
       sourcemap: true,
       minify: 'esbuild',
       chunkSizeWarningLimit: 1000,
