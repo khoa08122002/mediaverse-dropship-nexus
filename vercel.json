@@ -8,9 +8,14 @@
       "use": "@vercel/node",
       "config": {
         "includeFiles": [
-          "dist/**",
-          "src/backend/**",
-          "prisma/**"
+          "prisma/schema.prisma",
+          "dist/**/*.js"
+        ],
+        "excludeFiles": [
+          "node_modules/**",
+          ".next/**",
+          "dist/**/*.map",
+          "**/*.test.*"
         ]
       }
     }

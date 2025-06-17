@@ -10,7 +10,7 @@
     "build:frontend": "vite build",
     "build:backend": "tsc -p tsconfig.backend.json",
     "build": "npm run build:frontend",
-    "vercel-build": "prisma generate && tsc -p tsconfig.backend.json && vite build",
+    "vercel-build": "prisma generate && NODE_ENV=production tsc -p tsconfig.backend.json && vite build",
     "start": "node dist/backend/main.js",
     "test": "jest",
     "test:watch": "jest --watch",
