@@ -5,6 +5,10 @@
   "framework": "vite",
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "https://api.mediaverse-dropship.com/api/$1"
+    },
+    {
       "src": "/assets/(.*)",
       "headers": {
         "cache-control": "public, max-age=31536000, immutable"
@@ -19,6 +23,8 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "DATABASE_URL": "@database_url",
+    "JWT_SECRET": "@jwt_secret"
   }
 } 
