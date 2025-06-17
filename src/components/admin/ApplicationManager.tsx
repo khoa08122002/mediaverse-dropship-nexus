@@ -60,7 +60,7 @@ const ApplicationManager = () => {
     }
   };
 
-  const handleStatusChange = async (applicationId: number, newStatus: ApplicationStatus) => {
+  const handleStatusChange = async (applicationId: number, newStatus: typeof ApplicationStatus[keyof typeof ApplicationStatus]) => {
     try {
       setUpdatingStatus(applicationId);
       await recruitmentService.updateApplicationStatus(applicationId, newStatus);
@@ -100,7 +100,7 @@ const ApplicationManager = () => {
     }
   };
 
-  const getStatusLabel = (status: ApplicationStatus) => {
+  const getStatusLabel = (status: typeof ApplicationStatus[keyof typeof ApplicationStatus]) => {
     switch (status) {
       case 'pending':
         return 'Chờ xử lý';
@@ -117,7 +117,7 @@ const ApplicationManager = () => {
     }
   };
 
-  const getStatusColor = (status: ApplicationStatus) => {
+  const getStatusColor = (status: typeof ApplicationStatus[keyof typeof ApplicationStatus]) => {
     switch (status) {
       case 'accepted':
         return 'bg-green-100 text-green-800';
@@ -270,7 +270,7 @@ const ApplicationManager = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Select
                         value={application.status}
-                        onValueChange={(value: ApplicationStatus) => handleStatusChange(application.id, value)}
+                        onValueChange={(value: typeof ApplicationStatus[keyof typeof ApplicationStatus]) => handleStatusChange(application.id, value)}
                         disabled={updatingStatus === application.id}
                       >
                         <SelectTrigger className={`w-[140px] ${getStatusColor(application.status)}`}>

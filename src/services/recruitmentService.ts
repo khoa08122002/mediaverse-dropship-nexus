@@ -1,18 +1,19 @@
 import axios from './axiosConfig';
-import { 
-  ApplicationStatus, 
-  JobType, 
-  JobStatus,
-  type Job,
-  type Application
+import type { 
+  Application,
+  ApplicationStatusType,
+  Job,
+  JobTypeValue,
+  JobStatusValue
 } from '@/lib/prisma-types';
+import { ApplicationStatus, JobType, JobStatus } from '@/lib/prisma-types';
 import type { CreateJobDto, UpdateJobDto } from '@/backend/modules/recruitment/dto/job.dto';
 
 export { ApplicationStatus, JobType, JobStatus };
-export type { Job, Application };
+export type { Application, Job };
 
 export interface UpdateApplicationStatusDto {
-  status: typeof ApplicationStatus[keyof typeof ApplicationStatus];
+  status: ApplicationStatusType;
 }
 
 export interface CreateApplicationDto {
@@ -148,21 +149,14 @@ class RecruitmentService {
 
   async getApplication(id: number): Promise<Application> {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        throw new Error('Vui lòng đăng nhập để tiếp tục');
-      }
-
-      const response = await axios.get(`/recruitment/applications/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
+      console.log('Fetching application with ID:', id);
+      const response = await axios.get(`/recruitment/applications/${id}`);
+      console.log('API Response:', response.data);
+      
       if (!response.data) {
         throw new Error('Không tìm thấy thông tin ứng viên');
       }
-
+      
       return response.data;
     } catch (error: any) {
       console.error('Error in getApplication:', error);
@@ -204,7 +198,7 @@ class RecruitmentService {
 
   async updateApplicationStatus(
     id: number, 
-    status: typeof ApplicationStatus[keyof typeof ApplicationStatus]
+    status: ApplicationStatusType
   ): Promise<Application> {
     try {
       const token = localStorage.getItem('accessToken');

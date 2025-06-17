@@ -161,14 +161,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTabChange }) => {
             <div key={index} className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm">{stat.label}</p>
-                  <p className="text-3xl font-bold text-gray-800">
+                  <div className="text-gray-600 text-sm">{stat.label}</div>
+                  <div className="text-3xl font-bold text-gray-800">
                     {loading ? (
                       <div className="animate-pulse h-8 w-16 bg-gray-200 rounded"></div>
                     ) : (
                       stat.value
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div className={`p-3 rounded-full ${getStatColor(stat.color)}`}>
                   <Icon className="w-6 h-6 text-white" />

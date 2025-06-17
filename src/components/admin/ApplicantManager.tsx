@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Search, Eye, CheckCircle, Clock, Download, Trash2, BriefcaseIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { recruitmentService } from '@/services/recruitmentService';
-import type { Application, Job, ApplicationStatusType } from '@/lib/prisma-types';
+import type { Application, ApplicationStatusType, Job } from '@/lib/prisma-types';
 import { ApplicationStatus } from '@/lib/prisma-types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
+import ApplicantProfile from './ApplicantProfile';
 
 const ApplicantManager = () => {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ const ApplicantManager = () => {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [stats, setStats] = useState<any>(null);
   const [applicationsByJob, setApplicationsByJob] = useState<{ job: Job; applicationsCount: number }[]>([]);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -58,6 +60,7 @@ const ApplicantManager = () => {
     try {
       setLoading(true);
       const data = await recruitmentService.getAllApplications();
+      console.log('Fetched applications:', data);
       setApplications(data);
     } catch (error: any) {
       console.error('Error fetching applications:', error);
@@ -145,16 +148,16 @@ const ApplicantManager = () => {
 
   const getStatusColor = (status: ApplicationStatusType) => {
     switch (status) {
+      case ApplicationStatus.PENDING:
+        return 'bg-yellow-100 text-yellow-800';
+      case ApplicationStatus.REVIEWING:
+        return 'bg-blue-100 text-blue-800';
+      case ApplicationStatus.INTERVIEWING:
+        return 'bg-purple-100 text-purple-800';
       case ApplicationStatus.ACCEPTED:
         return 'bg-green-100 text-green-800';
       case ApplicationStatus.REJECTED:
         return 'bg-red-100 text-red-800';
-      case ApplicationStatus.INTERVIEWING:
-        return 'bg-purple-100 text-purple-800';
-      case ApplicationStatus.REVIEWING:
-        return 'bg-blue-100 text-blue-800';
-      case ApplicationStatus.PENDING:
-        return 'bg-yellow-100 text-yellow-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -184,6 +187,28 @@ const ApplicantManager = () => {
       setDeleteDialogOpen(false);
       setSelectedApplication(null);
     }
+  };
+
+  const handleViewApplication = (application: Application) => {
+    if (!application || !application.id) {
+      toast.error('Thông tin ứng viên không hợp lệ');
+      return;
+    }
+    
+    // Add detailed logging
+    console.log('Viewing application details:', {
+      id: application.id,
+      fullName: application.fullName,
+      email: application.email,
+      status: application.status
+    });
+    
+    navigate(`/admin/applicants/${application.id}`);
+  };
+
+  const handleCloseViewDialog = () => {
+    setViewDialogOpen(false);
+    setSelectedApplication(null);
   };
 
   if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'HR')) {
@@ -346,7 +371,11 @@ const ApplicantManager = () => {
                 </tr>
               ) : (
                 applications.map((application) => (
-                  <tr key={application.id} className="hover:bg-gray-50">
+                  <tr 
+                    key={application.id} 
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleViewApplication(application)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -397,37 +426,34 @@ const ApplicantManager = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/admin/applicants/${application.id}`)}
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            handleViewApplication(application);
+                          }}
                           className="text-blue-600 hover:text-blue-700"
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        {application.cvFile ? (
+                        {application.cvFile && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDownloadCV(application.id, application.fullName)}
-                            className="text-purple-600 hover:text-purple-700 flex items-center"
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
+                              handleDownloadCV(application.id, application.fullName);
+                            }}
+                            className="text-purple-600 hover:text-purple-700"
                           >
-                            <Download className="w-4 h-4 mr-1" />
-                            CV
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled
-                            className="text-gray-400"
-                            title="Ứng viên chưa upload CV"
-                          >
-                            <Download className="w-4 h-4 mr-1" />
-                            No CV
+                            Tải CV
                           </Button>
                         )}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(application)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(application);
+                          }}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="w-4 h-4" />

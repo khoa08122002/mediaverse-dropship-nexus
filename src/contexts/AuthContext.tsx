@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Try to get user profile with current token
       try {
-        const response = await axios.get('/auth/profile');
+        const response = await axios.get('/users/profile');
         setUser(response.data);
       } catch (profileError) {
         // If profile fetch fails, try to refresh token

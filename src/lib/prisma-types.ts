@@ -8,7 +8,7 @@ export const ApplicationStatus = {
   REJECTED: 'rejected'
 } as const;
 
-export type ApplicationStatusType = typeof ApplicationStatus[keyof typeof ApplicationStatus];
+export type ApplicationStatusType = (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
 
 export const JobType = {
   FULL_TIME: 'FULL_TIME',
@@ -17,11 +17,15 @@ export const JobType = {
   INTERNSHIP: 'INTERNSHIP'
 } as const;
 
+export type JobTypeValue = (typeof JobType)[keyof typeof JobType];
+
 export const JobStatus = {
   DRAFT: 'DRAFT',
   PUBLISHED: 'PUBLISHED',
   CLOSED: 'CLOSED'
 } as const;
+
+export type JobStatusValue = (typeof JobStatus)[keyof typeof JobStatus];
 
 export type Job = PrismaJob;
 

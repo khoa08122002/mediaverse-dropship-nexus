@@ -21,6 +21,7 @@ import Recruitment from './pages/Recruitment';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
+import ApplicantManager from './components/admin/ApplicantManager';
 
 // Configure React Query
 const queryClient = new QueryClient({
@@ -99,6 +100,7 @@ const AdminLayout = () => {
   );
 };
 
+// Configure router with future flags
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />}>
@@ -114,20 +116,34 @@ const router = createBrowserRouter(
         <Route index element={<Admin />} />
         <Route path="contacts" element={<ContactManager />} />
         <Route path="applicants">
-          <Route index element={<Admin />} />
+          <Route index element={<ApplicantManager />} />
           <Route path=":id" element={<ApplicantProfile />} />
         </Route>
       </Route>
       <Route path="/login" element={<Login />} errorElement={<ErrorBoundary><NotFound /></ErrorBoundary>} />
       <Route path="*" element={<NotFound />} />
     </Route>
-  )
+  ),
+  {
+    future: {
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true
+    }
+  }
 );
 
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <RouterProvider 
+        router={router} 
+        future={{
+          v7_startTransition: true
+        }}
+      />
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
