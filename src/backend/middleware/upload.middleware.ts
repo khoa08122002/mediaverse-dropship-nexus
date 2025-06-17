@@ -1,24 +1,24 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import * as multer from 'multer';
+import multer from 'multer';
 import { join } from 'path';
 
 @Injectable()
 export class UploadMiddleware implements NestMiddleware {
-  private upload: any;
+  private upload: multer.Multer;
 
   constructor() {
     const storage = multer.diskStorage({
-      destination: (req, file, cb) => {
+      destination: (_req, _file, cb) => {
         cb(null, join(process.cwd(), 'uploads', 'cv'));
       },
-      filename: (req, file, cb) => {
+      filename: (_req, file, cb) => {
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
         cb(null, `${uniqueSuffix}-${file.originalname}`);
       }
     });
 
-    const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
       if (!file.originalname.match(/\.(pdf|doc|docx)$/)) {
         return cb(null, false);
       }
@@ -31,11 +31,11 @@ export class UploadMiddleware implements NestMiddleware {
       limits: {
         fileSize: 5 * 1024 * 1024 // 5MB
       }
-    }).single('file');
+    });
   }
 
   use(req: Request, res: Response, next: NextFunction) {
-    this.upload(req, res, (err: any) => {
+    this.upload.single('file')(req, res, (err: any) => {
       if (err) {
         return res.status(400).json({
           message: 'File upload error',

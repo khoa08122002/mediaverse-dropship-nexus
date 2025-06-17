@@ -10,6 +10,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { Contact } from '../../types/contact.types';
 import { Public } from '../auth/decorators/public.decorator';
 
+interface ErrorResponse {
+  message: string;
+  status: number;
+}
+
 @ApiTags('contacts')
 @Controller('contacts')
 export class ContactController {
@@ -27,9 +32,10 @@ export class ContactController {
       return await this.contactService.findAll();
     } catch (error) {
       this.logger.error('Error finding all contacts:', error);
+      const err = error as ErrorResponse;
       throw new HttpException(
-        error.message || 'Internal server error',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Internal server error',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -43,9 +49,10 @@ export class ContactController {
       return await this.contactService.findOne(id);
     } catch (error) {
       this.logger.error(`Error finding contact with id ${id}:`, error);
+      const err = error as ErrorResponse;
       throw new HttpException(
-        error.message || 'Internal server error',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Internal server error',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -58,9 +65,10 @@ export class ContactController {
       return await this.contactService.create(data);
     } catch (error) {
       this.logger.error('Error creating contact:', error);
+      const err = error as ErrorResponse;
       throw new HttpException(
-        error.message || 'Internal server error',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Internal server error',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -74,9 +82,10 @@ export class ContactController {
       return await this.contactService.update(id, data);
     } catch (error) {
       this.logger.error(`Error updating contact with id ${id}:`, error);
+      const err = error as ErrorResponse;
       throw new HttpException(
-        error.message || 'Internal server error',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Internal server error',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -90,9 +99,10 @@ export class ContactController {
       return await this.contactService.remove(id);
     } catch (error) {
       this.logger.error(`Error deleting contact with id ${id}:`, error);
+      const err = error as ErrorResponse;
       throw new HttpException(
-        error.message || 'Internal server error',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Internal server error',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }
@@ -110,9 +120,10 @@ export class ContactController {
       return await this.contactService.reply(id, message);
     } catch (error) {
       this.logger.error(`Error replying to contact with id ${id}:`, error);
+      const err = error as ErrorResponse;
       throw new HttpException(
-        error.message || 'Internal server error',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+        err.message || 'Internal server error',
+        err.status || HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
   }

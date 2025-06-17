@@ -14,6 +14,7 @@ import { Response } from 'express';
 import { Job, Application } from './types/recruitment.types';
 import { Public } from '../auth/decorators/public.decorator';
 
+
 @ApiTags('recruitment')
 @Controller('recruitment')
 export class RecruitmentController {
