@@ -90,7 +90,11 @@ export default defineConfig(({ mode }) => {
         'sonner',
         '@tanstack/react-query',
       ],
-      exclude: ['@splinetool/runtime', '@splinetool/react-spline'],
+      exclude: [
+        '@splinetool/runtime',
+        '@splinetool/react-spline',
+        '@prisma/client'
+      ],
       force: true,
       esbuildOptions: {
         target: 'esnext',
