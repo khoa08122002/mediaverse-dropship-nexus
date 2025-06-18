@@ -18,7 +18,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     // Log all queries in development
     if (process.env.NODE_ENV !== 'production') {
-      this.$on<any>('query', (e: Prisma.QueryEvent) => {
+      (this as any).$on('query', (e: Prisma.QueryEvent) => {
         this.logger.debug(`Query: ${e.query}`);
         this.logger.debug(`Params: ${e.params}`);
         this.logger.debug(`Duration: ${e.duration}ms`);
@@ -26,7 +26,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
 
     // Always log errors
-    this.$on<any>('error', (e: Prisma.LogEvent) => {
+    (this as any).$on('error', (e: Prisma.LogEvent) => {
       this.logger.error(`Database error: ${e.message}`);
     });
   }
