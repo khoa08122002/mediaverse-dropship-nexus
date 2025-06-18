@@ -10,7 +10,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "start": "node dist/backend/main.js",
-    "start:prod": "prisma generate && prisma migrate deploy && node dist/backend/main.js",
+    "start:prod": "node dist/backend/main.js",
     "start:dev": "ts-node-dev --project tsconfig.backend.json src/backend/main.ts",
     "test": "jest",
     "test:watch": "jest --watch",

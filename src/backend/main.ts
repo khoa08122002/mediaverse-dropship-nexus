@@ -18,7 +18,7 @@ async function bootstrap() {
 
     // Create NestJS application with increased timeout
     const app = await NestFactory.create(AppModule, {
-      logger: ['error', 'warn', 'log', 'debug'],
+      logger: ['error', 'warn', 'log'],
       abortOnError: false,
     });
 
@@ -48,7 +48,7 @@ async function bootstrap() {
     app.use(cookieParser());
     app.setGlobalPrefix('api');
 
-    // Configure Swagger
+    // Configure Swagger only in development
     if (process.env.NODE_ENV !== 'production') {
       logger.log('Setting up Swagger documentation...');
       
@@ -78,32 +78,21 @@ async function bootstrap() {
     logger.log(`Environment: ${process.env.NODE_ENV}`);
     logger.log(`Health check endpoint: /api/health`);
     logger.log('=================================');
-    
+
     // Handle shutdown gracefully
-    process.on('SIGTERM', async () => {
-      logger.log('SIGTERM received. Shutting down gracefully...');
-      try {
-        await app.close();
-        logger.log('Application closed successfully');
-        process.exit(0);
-      } catch (error) {
-        logger.error('Error during shutdown:', error);
-        process.exit(1);
-      }
-    });
-
-    // Handle uncaught exceptions
-    process.on('uncaughtException', (error) => {
-      logger.error('Uncaught exception:', error);
-      // Don't exit immediately to allow for cleanup
-      setTimeout(() => process.exit(1), 1000);
-    });
-
-    // Handle unhandled rejections
-    process.on('unhandledRejection', (reason) => {
-      logger.error('Unhandled rejection:', reason);
-      // Don't exit immediately to allow for cleanup
-      setTimeout(() => process.exit(1), 1000);
+    const signals = ['SIGTERM', 'SIGINT'];
+    signals.forEach(signal => {
+      process.on(signal, async () => {
+        logger.log(`${signal} received. Shutting down gracefully...`);
+        try {
+          await app.close();
+          logger.log('Application closed successfully');
+          process.exit(0);
+        } catch (error) {
+          logger.error('Error during shutdown:', error);
+          process.exit(1);
+        }
+      });
     });
 
   } catch (error) {
@@ -113,9 +102,15 @@ async function bootstrap() {
   }
 }
 
-// Start the application
-bootstrap().catch(error => {
-  console.error('Fatal error during bootstrap:', error);
-  console.error('Stack trace:', error.stack);
+// Add global unhandled error handlers
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
   process.exit(1);
 });
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+  process.exit(1);
+});
+
+bootstrap();
