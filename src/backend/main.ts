@@ -13,8 +13,7 @@ async function bootstrap() {
     logger.log('Starting application initialization...');
     logger.log(`Environment: ${process.env.NODE_ENV}`);
     logger.log(`Port: ${process.env.PORT}`);
-    logger.log(`Database URL is set: ${!!process.env.DATABASE_URL}`);
-    logger.log(`JWT Secret is set: ${!!process.env.JWT_SECRET}`);
+    logger.log(`Host: ${process.env.HOST}`);
     logger.log('=================================');
 
     // Create NestJS application
@@ -63,13 +62,14 @@ async function bootstrap() {
 
     // Start the server
     const port = process.env.PORT || 3002;
-    logger.log(`Starting server on port ${port}...`);
+    const host = process.env.HOST || '0.0.0.0';
     
-    await app.listen(port);
+    logger.log(`Starting server on ${host}:${port}...`);
+    await app.listen(port, host);
     
     logger.log('=================================');
     logger.log('Application successfully started!');
-    logger.log(`Server is running on port: ${port}`);
+    logger.log(`Server is running on ${host}:${port}`);
     logger.log(`Environment: ${process.env.NODE_ENV}`);
     logger.log(`Health check endpoint: /api/health`);
     logger.log('=================================');
