@@ -27,17 +27,16 @@ export class HealthController {
       
       console.log('Application status:', appStatus);
 
-      // Database check with timeout
+      // Database check
       try {
         console.log('Checking database connection...');
-        await Promise.race([
-          this.prisma.$queryRaw`SELECT 1`,
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Database query timeout after 5000ms')), 5000)
-          )
-        ]);
-        dbStatus = 'connected';
-        console.log('Database connection successful');
+        const isHealthy = await this.prisma.isHealthy();
+        dbStatus = isHealthy ? 'connected' : 'disconnected';
+        if (isHealthy) {
+          console.log('Database connection successful');
+        } else {
+          console.error('Database health check failed');
+        }
       } catch (e) {
         dbStatus = 'disconnected';
         error = e.message;

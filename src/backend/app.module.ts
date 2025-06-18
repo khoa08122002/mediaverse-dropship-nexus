@@ -8,11 +8,23 @@ import { ContactModule } from './modules/contact/contact.module';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
 import { HealthController } from './health.controller';
+import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true
+      isGlobal: true,
+      cache: true,
+      envFilePath: ['.env', '.env.production'],
+      expandVariables: true,
+      validate: (config: Record<string, unknown>) => {
+        const required = ['DATABASE_URL', 'JWT_SECRET', 'PORT'];
+        const missing = required.filter(key => !config[key]);
+        if (missing.length > 0) {
+          throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+        }
+        return config;
+      },
     }),
     PrismaModule,
     UserModule,
@@ -23,6 +35,6 @@ import { HealthController } from './health.controller';
     FileUploadModule,
   ],
   controllers: [HealthController],
-  providers: [],
+  providers: [PrismaService],
 })
 export class AppModule {} 
