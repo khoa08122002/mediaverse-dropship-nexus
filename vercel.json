@@ -3,10 +3,16 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/**/*": {
+      "runtime": "nodejs18.x",
+      "memory": 1024
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://api.mediaverse-dropship.com/api/$1"
+      "dest": "https://${BACKEND_URL}/api/$1"
     },
     {
       "src": "/assets/(.*)",
@@ -25,6 +31,7 @@
   "env": {
     "NODE_ENV": "production",
     "DATABASE_URL": "${DATABASE_URL}",
-    "JWT_SECRET": "${JWT_SECRET}"
+    "JWT_SECRET": "${JWT_SECRET}",
+    "BACKEND_URL": "${BACKEND_URL}"
   }
 } 

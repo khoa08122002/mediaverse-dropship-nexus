@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const baseURL = process.env.NODE_ENV === 'production' 
-  ? 'https://api.mediaverse-dropship.com/api'  // In production, use API domain
+  ? `https://${process.env.BACKEND_URL}/api`  // In production, use Railway URL
   : 'http://localhost:3002/api'; // In development, use localhost
 
 const axiosInstance = axios.create({

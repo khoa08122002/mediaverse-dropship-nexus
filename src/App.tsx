@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import Preloader from './components/Preloader';
@@ -117,7 +118,12 @@ const router = createBrowserRouter(
 );
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <SpeedInsights />
+    </>
+  );
 }
 
 export default App;

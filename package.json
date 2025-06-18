@@ -6,7 +6,7 @@
     "dev:frontend": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" vite --force",
     "dev:backend": "ts-node-dev --project tsconfig.backend.json --transpile-only src/backend/main.ts",
     "build": "vite build",
-    "build:backend": "tsc -p tsconfig.backend.json",
+    "build:backend": "prisma generate && tsc -p tsconfig.backend.json",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "start": "node dist/backend/main.js",
@@ -16,12 +16,13 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "vercel-build": "prisma generate && vite build",
+    "vercel-build": "prisma generate && npm run build:backend && vite build",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "prisma:seed": "ts-node --project tsconfig.seed.json prisma/seed.ts"
+    "prisma:seed": "ts-node --project tsconfig.seed.json prisma/seed.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@eslint/config-array": "^0.20.1",
@@ -66,6 +67,7 @@
     "@tanstack/react-query-devtools": "^5.80.7",
     "@tanstack/react-table": "^8.12.0",
     "@tinymce/tinymce-react": "^6.2.1",
+    "@vercel/speed-insights": "^1.2.0",
     "axios": "^1.10.0",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
