@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci && npm run build:backend"
+buildCommand = "rm -rf node_modules && npm install --production=false && npm run build:backend"
 
 [deploy]
 startCommand = "node dist/backend/main.js"
@@ -19,4 +19,8 @@ DATABASE_URL = "${DATABASE_URL}"
 JWT_SECRET = "${JWT_SECRET}"
 NIXPACKS_NODE_VERSION = "18"
 HOST = "0.0.0.0"
-PRISMA_LOG_LEVEL = "error" 
+PRISMA_LOG_LEVEL = "error"
+
+[nixpacks]
+start-command = "node dist/backend/main.js"
+install-command = "npm install --production=false" 
