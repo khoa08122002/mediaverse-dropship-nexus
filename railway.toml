@@ -1,16 +1,16 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && npm run build:backend"
+buildCommand = "npm ci && npm run build:backend"
 
 [deploy]
-startCommand = "npm run start:prod"
+startCommand = "node dist/backend/main.js"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 60
+healthcheckTimeout = 30
 restartPolicyType = "on_failure"
 numReplicas = 1
-healthcheckInterval = 10
+healthcheckInterval = 5
 restartPolicyMaxRetries = 3
-healthcheckInitialDelay = 15
+healthcheckInitialDelay = 10
 
 [deploy.envs]
 NODE_ENV = "production"

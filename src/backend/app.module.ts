@@ -1,4 +1,4 @@
-import { Module, Controller, Get } from '@nestjs/common';
+import { Module, Controller, Get, Logger } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './modules/user/user.module';
@@ -11,14 +11,13 @@ import { Public } from './modules/auth/decorators/public.decorator';
 
 @Controller()
 export class AppController {
+  private readonly logger = new Logger(AppController.name);
+
   @Public()
   @Get('health')
   health() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime()
-    };
+    this.logger.log('Health check requested');
+    return { status: 'ok' };
   }
 }
 
