@@ -8,8 +8,9 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 numReplicas = 1
-healthcheckInterval = 45
-restartPolicyMaxRetries = 5
+healthcheckInterval = 60
+restartPolicyMaxRetries = 3
+waitForHealthcheckReady = true
 
 [deploy.envs]
 NODE_ENV = "production"
@@ -17,4 +18,5 @@ PORT = "3002"
 DATABASE_URL = "${DATABASE_URL}"
 JWT_SECRET = "${JWT_SECRET}"
 NIXPACKS_NODE_VERSION = "18"
-HOST = "0.0.0.0" 
+HOST = "0.0.0.0"
+PRISMA_LOG_LEVEL = "error" 

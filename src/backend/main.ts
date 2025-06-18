@@ -16,9 +16,9 @@ async function bootstrap() {
     logger.log(`Host: ${process.env.HOST}`);
     logger.log('=================================');
 
-    // Create NestJS application
+    // Create NestJS application with increased timeout
     const app = await NestFactory.create(AppModule, {
-      logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+      logger: ['error', 'warn', 'log', 'debug'],
       abortOnError: false,
     });
 
@@ -49,23 +49,28 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
 
     // Configure Swagger
-    logger.log('Setting up Swagger documentation...');
-    
-    const config = new DocumentBuilder()
-      .setTitle('PHG Corporation API')
-      .setDescription('The PHG Corporation API description')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    if (process.env.NODE_ENV !== 'production') {
+      logger.log('Setting up Swagger documentation...');
+      
+      const config = new DocumentBuilder()
+        .setTitle('PHG Corporation API')
+        .setDescription('The PHG Corporation API description')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .build();
+      const document = SwaggerModule.createDocument(app, config);
+      SwaggerModule.setup('api/docs', app, document);
+    }
 
     // Start the server
     const port = process.env.PORT || 3002;
     const host = process.env.HOST || '0.0.0.0';
     
     logger.log(`Starting server on ${host}:${port}...`);
-    await app.listen(port, host);
+    
+    // Set higher timeout for startup
+    const server = await app.listen(port, host);
+    server.setTimeout(300000); // 5 minutes timeout
     
     logger.log('=================================');
     logger.log('Application successfully started!');
@@ -90,13 +95,15 @@ async function bootstrap() {
     // Handle uncaught exceptions
     process.on('uncaughtException', (error) => {
       logger.error('Uncaught exception:', error);
-      process.exit(1);
+      // Don't exit immediately to allow for cleanup
+      setTimeout(() => process.exit(1), 1000);
     });
 
     // Handle unhandled rejections
     process.on('unhandledRejection', (reason) => {
       logger.error('Unhandled rejection:', reason);
-      process.exit(1);
+      // Don't exit immediately to allow for cleanup
+      setTimeout(() => process.exit(1), 1000);
     });
 
   } catch (error) {
