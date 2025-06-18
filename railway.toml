@@ -8,8 +8,10 @@ healthcheckPath = "/api/health"
 healthcheckTimeout = 180
 restartPolicyType = "on_failure"
 numReplicas = 1
+healthcheckInterval = 30
 
 [deploy.envs]
 NODE_ENV = "production"
 PORT = "3002"
-DATABASE_URL = "${DATABASE_URL}" 
+DATABASE_URL = "${DATABASE_URL}"
+JWT_SECRET = "${JWT_SECRET}" 
