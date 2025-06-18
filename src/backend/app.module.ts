@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Controller, Get } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './modules/user/user.module';
@@ -7,7 +7,17 @@ import { BlogModule } from './modules/blog/blog.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
-import { HealthModule } from './modules/health/health.module';
+
+@Controller()
+export class AppController {
+  @Get('api/health')
+  health() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString()
+    };
+  }
+}
 
 @Module({
   imports: [
@@ -32,9 +42,8 @@ import { HealthModule } from './modules/health/health.module';
     ContactModule,
     RecruitmentModule,
     FileUploadModule,
-    HealthModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {} 
