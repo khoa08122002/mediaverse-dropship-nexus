@@ -7,8 +7,7 @@ import { BlogModule } from './modules/blog/blog.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
-import { HealthController } from './health.controller';
-import { PrismaService } from './prisma/prisma.service';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -33,8 +32,9 @@ import { PrismaService } from './prisma/prisma.service';
     ContactModule,
     RecruitmentModule,
     FileUploadModule,
+    HealthModule,
   ],
-  controllers: [HealthController],
-  providers: [PrismaService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {} 

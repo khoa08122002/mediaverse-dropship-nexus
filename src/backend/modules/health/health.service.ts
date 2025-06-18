@@ -1,21 +1,19 @@
-import { Controller, Get, Injectable } from '@nestjs/common';
-import { Public } from './modules/auth/decorators/public.decorator';
-import { PrismaService } from './prisma/prisma.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
-@Controller('health')
-export class HealthController {
-  constructor(private prisma: PrismaService) {}
+export class HealthService {
+  private readonly logger = new Logger(HealthService.name);
 
-  @Public()
-  @Get()
+  constructor(private readonly prisma: PrismaService) {}
+
   async check() {
     const startTime = Date.now();
     let dbStatus = 'unknown';
     let error = null;
 
     try {
-      console.log('Starting health check...');
+      this.logger.log('Starting health check...');
       
       // Basic application check
       const appStatus = {
@@ -25,22 +23,18 @@ export class HealthController {
         uptime: process.uptime(),
       };
       
-      console.log('Application status:', appStatus);
+      this.logger.log('Application status:', appStatus);
 
       // Database check
       try {
-        console.log('Checking database connection...');
-        const isHealthy = await this.prisma.isHealthy();
-        dbStatus = isHealthy ? 'connected' : 'disconnected';
-        if (isHealthy) {
-          console.log('Database connection successful');
-        } else {
-          console.error('Database health check failed');
-        }
+        this.logger.log('Checking database connection...');
+        await this.prisma.$queryRaw`SELECT 1`;
+        dbStatus = 'connected';
+        this.logger.log('Database connection successful');
       } catch (e) {
         dbStatus = 'disconnected';
         error = e.message;
-        console.error('Database health check failed:', {
+        this.logger.error('Database health check failed:', {
           error: e.message,
           stack: e.stack,
           DATABASE_URL_SET: !!process.env.DATABASE_URL
@@ -67,10 +61,10 @@ export class HealthController {
         }
       };
 
-      console.log('Health check complete:', response);
+      this.logger.log('Health check complete:', response);
       return response;
     } catch (e) {
-      console.error('Unexpected error in health check:', e);
+      this.logger.error('Unexpected error in health check:', e);
       throw e;
     }
   }
