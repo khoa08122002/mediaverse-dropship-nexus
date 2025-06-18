@@ -5,12 +5,12 @@ buildCommand = "npm install && npm run build:backend"
 [deploy]
 startCommand = "npm run start:prod"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 300
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 numReplicas = 1
-healthcheckInterval = 15
+healthcheckInterval = 10
 restartPolicyMaxRetries = 3
-healthcheckInitialDelay = 30
+healthcheckInitialDelay = 15
 
 [deploy.envs]
 NODE_ENV = "production"

@@ -7,14 +7,17 @@ import { BlogModule } from './modules/blog/blog.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
+import { Public } from './modules/auth/decorators/public.decorator';
 
 @Controller()
 export class AppController {
-  @Get('api/health')
+  @Public()
+  @Get('health')
   health() {
     return {
       status: 'ok',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
     };
   }
 }

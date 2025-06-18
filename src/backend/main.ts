@@ -16,10 +16,9 @@ async function bootstrap() {
     logger.log(`Host: ${process.env.HOST}`);
     logger.log('=================================');
 
-    // Create NestJS application with increased timeout
+    // Create NestJS application
     const app = await NestFactory.create(AppModule, {
       logger: ['error', 'warn', 'log'],
-      abortOnError: false,
     });
 
     // Configure CORS
@@ -32,17 +31,12 @@ async function bootstrap() {
     app.enableCors({
       origin: corsOrigins,
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     });
 
     // Configure global pipes and middleware
-    logger.log('Setting up global pipes and middleware...');
-    
     app.useGlobalPipes(new ValidationPipe({
       transform: true,
       whitelist: true,
-      forbidNonWhitelisted: true,
     }));
 
     app.use(cookieParser());
@@ -68,9 +62,7 @@ async function bootstrap() {
     
     logger.log(`Starting server on ${host}:${port}...`);
     
-    // Set higher timeout for startup
-    const server = await app.listen(port, host);
-    server.setTimeout(300000); // 5 minutes timeout
+    await app.listen(port, host);
     
     logger.log('=================================');
     logger.log('Application successfully started!');
