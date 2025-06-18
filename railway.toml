@@ -1,14 +1,15 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && npm run build:backend"
+buildCommand = "npm install && npx prisma generate && npm run build:backend"
 
 [deploy]
-startCommand = "npm run start"
+startCommand = "npx prisma migrate deploy && npm run start"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 300
+healthcheckTimeout = 180
 restartPolicyType = "on_failure"
 numReplicas = 1
 
 [deploy.envs]
 NODE_ENV = "production"
-PORT = "3002" 
+PORT = "3002"
+DATABASE_URL = "${DATABASE_URL}" 

@@ -11,7 +11,9 @@ import { HealthController } from './health.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true
+    }),
     PrismaModule,
     UserModule,
     AuthModule,
@@ -21,5 +23,6 @@ import { HealthController } from './health.controller';
     FileUploadModule,
   ],
   controllers: [HealthController],
+  providers: [],
 })
 export class AppModule {} 
