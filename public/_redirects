@@ -1,0 +1,11 @@
+# SPA Fallback Routes
+/api/* /api/:splat 200
+/login /index.html 200
+/contact /index.html 200
+/blog/* /index.html 200
+/admin/* /index.html 200
+/about /index.html 200
+/recruitment /index.html 200
+/media-services /index.html 200
+/ecommerce /index.html 200
+/* /index.html 200 
