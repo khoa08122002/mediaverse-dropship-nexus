@@ -1,11 +1,39 @@
-# SPA Fallback Routes
-/api/* /api/:splat 200
+# SPA Routing - Fallback for all non-API routes to index.html
+/api/* 200
+/assets/* 200
+/*.js 200
+/*.css 200
+/*.png 200
+/*.jpg 200
+/*.jpeg 200
+/*.gif 200
+/*.ico 200
+/*.svg 200
+/*.woff 200
+/*.woff2 200
+/*.ttf 200
+/*.eot 200
+/*.mp4 200
+/*.webm 200
+/*.wav 200
+/*.mp3 200
+/*.json 200
+/*.txt 200
+/*.xml 200
+
+# SPA Routes - All frontend routes should serve index.html
 /login /index.html 200
-/contact /index.html 200
-/blog/* /index.html 200
-/admin/* /index.html 200
+/register /index.html 200
+/forgot-password /index.html 200
 /about /index.html 200
+/contact /index.html 200
+/blog /index.html 200
+/blog/* /index.html 200
 /recruitment /index.html 200
+/admin /index.html 200
+/admin/* /index.html 200
 /media-services /index.html 200
 /ecommerce /index.html 200
+
+# Catch-all fallback
 /* /index.html 200 

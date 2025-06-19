@@ -1,6 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run vercel-build",
+  "outputDirectory": "dist",
   "functions": {
     "api/comprehensive.js": {
       "memory": 1024,
@@ -57,27 +58,62 @@
       "dest": "api/index.js"
     },
     {
+      "src": "/test-login.html",
+      "dest": "dist/test-login.html"
+    },
+    {
       "src": "/test-routing.html",
-      "dest": "public/test-routing.html"
+      "dest": "dist/test-routing.html"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "dist/favicon.ico"
+    },
+    {
+      "src": "/robots.txt",
+      "dest": "dist/robots.txt"
     },
     {
       "src": "/assets/(.*)",
       "dest": "dist/assets/$1"
     },
     {
-      "src": "/(favicon\\.ico|manifest\\.json|robots\\.txt|logo\\.png|avatar\\.jpg|placeholder\\.svg)",
+      "src": "/static/(.*)",
+      "dest": "dist/static/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|webm|wav|mp3|m4a|aac|oga|map|txt|json))$",
       "dest": "dist/$1"
     },
     {
-      "src": "/.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|webm|wav|mp3|m4a|aac|oga|map|txt|json)$",
-      "dest": "dist/$0"
+      "src": "/(login|register|forgot-password|about|contact|blog|recruitment|admin|media-services|ecommerce)/?",
+      "dest": "dist/index.html",
+      "headers": {
+        "cache-control": "s-maxage=0"
+      }
+    },
+    {
+      "src": "/blog/(.*)",
+      "dest": "dist/index.html",
+      "headers": {
+        "cache-control": "s-maxage=0"
+      }
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "dist/index.html",
+      "headers": {
+        "cache-control": "s-maxage=0"
+      }
     },
     {
       "src": "/(.*)",
-      "dest": "dist/index.html"
+      "dest": "dist/index.html",
+      "headers": {
+        "cache-control": "s-maxage=0"
+      }
     }
   ],
-  "outputDirectory": "dist",
   "env": {
     "NODE_ENV": "production"
   }

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deployment Check - PHG Corp</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { 
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+        }
+        .status { 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin-bottom: 20px;
+        }
+        .timestamp {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .links a {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+        .links a:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status">✅ Deployment Active!</div>
+        <h2>PHG Corporation</h2>
+        <p>This page confirms that the latest deployment is live.</p>
+        
+        <div class="timestamp">
+            <strong>Deploy Time:</strong><br>
+            <span id="timestamp">2025-01-26 21:00:00</span>
+        </div>
+
+        <div class="links">
+            <a href="/login">Test Login</a>
+            <a href="/about">Test About</a>
+            <a href="/contact">Test Contact</a>
+            <a href="/blog">Test Blog</a>
+            <a href="/recruitment">Test Jobs</a>
+            <a href="/api/comprehensive">Test API</a>
+        </div>
+
+        <p><small>If you can see this page, the deployment is working!</small></p>
+    </div>
+
+    <script>
+        // Update timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        
+        // Test SPA routing
+        setTimeout(() => {
+            console.log('🚀 Deployment verification page loaded successfully!');
+            console.log('📍 Current URL:', window.location.href);
+            console.log('🔗 Testing SPA routes...');
+        }, 1000);
+    </script>
+</body>
+</html> 
