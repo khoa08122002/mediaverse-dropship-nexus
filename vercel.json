@@ -4,10 +4,34 @@
   "functions": {
     "api/index.js": {
       "memory": 1024,
+      "maxDuration": 30
+    },
+    "api/health.js": {
+      "memory": 512,
       "maxDuration": 10
+    },
+    "api/test.js": {
+      "memory": 512,
+      "maxDuration": 10
+    },
+    "api/express.js": {
+      "memory": 1024,
+      "maxDuration": 30
     }
   },
   "routes": [
+    {
+      "src": "/api/express/(.*)",
+      "dest": "api/express.js"
+    },
+    {
+      "src": "/api/health",
+      "dest": "api/health.js"
+    },
+    {
+      "src": "/api/test",
+      "dest": "api/test.js"
+    },
     {
       "src": "/api/(.*)",
       "dest": "api/index.js"
