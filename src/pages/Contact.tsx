@@ -31,7 +31,10 @@ const Contact = () => {
     try {
       setLoading(true);
       await contactService.createContact({
-        ...formData,
+        fullName: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        message: formData.message,
         subject: formData.service || 'Yêu cầu tư vấn'
       });
       

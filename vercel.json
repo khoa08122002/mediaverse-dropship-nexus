@@ -45,20 +45,20 @@
       "dest": "api/test.js"
     },
     {
-      "src": "/api/express/(.*)",
-      "dest": "api/express.js"
-    },
-    {
-      "src": "/api/express",
-      "dest": "api/express.js"
-    },
-    {
       "src": "/api/express-simple/(.*)",
       "dest": "api/express-simple.js"
     },
     {
       "src": "/api/express-simple",
       "dest": "api/express-simple.js"
+    },
+    {
+      "src": "/api/express/(.*)",
+      "dest": "api/express.js"
+    },
+    {
+      "src": "/api/express",
+      "dest": "api/express.js"
     },
     {
       "src": "/api/backend/(.*)",
@@ -73,12 +73,44 @@
       "dest": "api/index.js"
     },
     {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|webm|wav|mp3|m4a|aac|oga))",
+      "src": "/assets/(.*)",
+      "dest": "dist/assets/$1"
+    },
+    {
+      "src": "/(favicon\\.ico|manifest\\.json|robots\\.txt)",
       "dest": "dist/$1"
     },
     {
+      "src": "/.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|webm|wav|mp3|m4a|aac|oga|map)$",
+      "dest": "dist/$0"
+    },
+    {
+      "src": "/(login|admin|blog|contact|about|recruitment|media-services|ecommerce)$",
+      "dest": "dist/index.html",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8"
+      }
+    },
+    {
+      "src": "/blog/(.*)",
+      "dest": "dist/index.html",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8"
+      }
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "dist/index.html",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8"
+      }
+    },
+    {
       "src": "/(.*)",
-      "dest": "dist/index.html"
+      "dest": "dist/index.html",
+      "headers": {
+        "Content-Type": "text/html; charset=utf-8"
+      }
     }
   ],
   "env": {

@@ -3,7 +3,7 @@ export type ContactPriorityType = 'HIGH' | 'MEDIUM' | 'LOW';
 
 export interface Contact {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   phone: string | null;
   company: string | null;
@@ -18,7 +18,7 @@ export interface Contact {
 }
 
 export interface CreateContactDTO {
-  name: string;
+  fullName: string;
   email: string;
   phone?: string;
   company?: string;

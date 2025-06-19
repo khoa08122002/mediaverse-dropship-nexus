@@ -468,112 +468,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Get Blog by ID (Public)
-    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/slug/') && method === 'GET') {
-      try {
-        const blogId = cleanUrl.split('/')[2];
-        
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          const blog = mockBlogs.find(b => b.id === blogId);
-          if (!blog) {
-            return res.status(404).json({ error: 'Blog not found' });
-          }
-          return res.status(200).json(blog);
-        }
-
-        const blog = await withDatabase(async (db) => {
-          return await db.blog.findUnique({
-            where: { id: blogId },
-            include: {
-              author: {
-                select: { fullName: true, email: true }
-              }
-            }
-          });
-        });
-
-        if (!blog) {
-          return res.status(404).json({ error: 'Blog not found' });
-        }
-
-        return res.status(200).json(blog);
-      } catch (error) {
-        console.error('Get blog by ID error:', error);
-        return res.status(500).json({ error: 'Failed to fetch blog' });
-      }
-    }
-
-    // Route: Get Blog by Slug (Public)
-    if (cleanUrl.startsWith('/blogs/slug/') && method === 'GET') {
-      try {
-        const slug = cleanUrl.split('/')[3];
-        
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          const blog = mockBlogs.find(b => b.slug === slug);
-          if (!blog) {
-            return res.status(404).json({ error: 'Blog not found' });
-          }
-          return res.status(200).json(blog);
-        }
-
-        const blog = await withDatabase(async (db) => {
-          return await db.blog.findUnique({
-            where: { slug },
-            include: {
-              author: {
-                select: { fullName: true, email: true }
-              }
-            }
-          });
-        });
-
-        if (!blog) {
-          return res.status(404).json({ error: 'Blog not found' });
-        }
-
-        return res.status(200).json(blog);
-      } catch (error) {
-        console.error('Get blog by slug error:', error);
-        return res.status(500).json({ error: 'Failed to fetch blog' });
-      }
-    }
-
-    // Route: Get Blog by ID (Public)
-    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/category/') && !cleanUrl.includes('/slug/') && !cleanUrl.includes('/featured') && method === 'GET') {
-      try {
-        const blogId = cleanUrl.split('/')[2];
-        
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          const blog = mockBlogs.find(b => b.id === blogId);
-          if (!blog) {
-            return res.status(404).json({ error: 'Blog not found' });
-          }
-          return res.status(200).json(blog);
-        }
-
-        const blog = await withDatabase(async (db) => {
-          return await db.blog.findUnique({
-            where: { id: blogId },
-            include: {
-              author: {
-                select: { fullName: true, email: true }
-              }
-            }
-          });
-        });
-
-        if (!blog) {
-          return res.status(404).json({ error: 'Blog not found' });
-        }
-
-        return res.status(200).json(blog);
-      } catch (error) {
-        console.error('Get blog by ID error:', error);
-        return res.status(500).json({ error: 'Failed to fetch blog' });
-      }
-    }
-
-    // Route: Get Blogs by Category (Public)
+    // Route: Get Blogs by Category (Public) - MUST be before Blog by ID
     if (cleanUrl.startsWith('/blogs/category/') && method === 'GET') {
       try {
         const category = decodeURIComponent(cleanUrl.split('/')[3]);
@@ -614,6 +509,78 @@ module.exports = async (req, res) => {
         return res.status(200).json(categoryBlogs);
       }
     }
+
+    // Route: Get Blog by Slug (Public)
+    if (cleanUrl.startsWith('/blogs/slug/') && method === 'GET') {
+      try {
+        const slug = cleanUrl.split('/')[3];
+        
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          const blog = mockBlogs.find(b => b.slug === slug);
+          if (!blog) {
+            return res.status(404).json({ error: 'Blog not found' });
+          }
+          return res.status(200).json(blog);
+        }
+
+        const blog = await withDatabase(async (db) => {
+          return await db.blog.findUnique({
+            where: { slug },
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        if (!blog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Get blog by slug error:', error);
+        return res.status(500).json({ error: 'Failed to fetch blog' });
+      }
+    }
+
+    // Route: Get Blog by ID (Public) - MUST be after specific routes
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/category/') && !cleanUrl.includes('/slug/') && !cleanUrl.includes('/featured') && !cleanUrl.includes('/views') && method === 'GET') {
+      try {
+        const blogId = cleanUrl.split('/')[2];
+        
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          const blog = mockBlogs.find(b => b.id === blogId);
+          if (!blog) {
+            return res.status(404).json({ error: 'Blog not found' });
+          }
+          return res.status(200).json(blog);
+        }
+
+        const blog = await withDatabase(async (db) => {
+          return await db.blog.findUnique({
+            where: { id: blogId },
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        if (!blog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Get blog by ID error:', error);
+        return res.status(500).json({ error: 'Failed to fetch blog' });
+      }
+    }
+
+
 
     // Route: Increment Blog Views (Public)
     if (cleanUrl.match(/^\/blogs\/[^\/]+\/views$/) && method === 'POST') {
