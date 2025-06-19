@@ -4,10 +4,26 @@ const jwt = require('jsonwebtoken');
 
 // Initialize Prisma client
 let prisma;
+let dbConnectionStatus = 'disconnected';
+
 try {
-  prisma = new PrismaClient();
+  if (process.env.DATABASE_URL) {
+    prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
+    });
+    dbConnectionStatus = 'initializing';
+    console.log('Prisma client initialized with DATABASE_URL');
+  } else {
+    console.warn('DATABASE_URL not found in environment variables');
+    dbConnectionStatus = 'no-url';
+  }
 } catch (error) {
   console.error('Prisma initialization failed:', error);
+  dbConnectionStatus = 'failed';
 }
 
 // JWT Secret (use environment variable in production)
@@ -43,12 +59,99 @@ function requireRoles(...roles) {
 // Database connection helper
 async function withDatabase(operation) {
   try {
-    return await operation(prisma);
+    if (!prisma) {
+      throw new Error('Database not initialized');
+    }
+    // Test database connection
+    await prisma.$connect();
+    dbConnectionStatus = 'connected';
+    const result = await operation(prisma);
+    return result;
   } catch (error) {
     console.error('Database operation failed:', error);
+    dbConnectionStatus = 'error';
     throw error;
   }
 }
+
+// Fallback data
+const mockJobs = [
+  {
+    id: 1,
+    title: "Frontend Developer",
+    department: "Engineering",
+    location: "Remote",
+    type: "fulltime",
+    description: "Join our team as a Frontend Developer to build amazing user experiences.",
+    requirements: "3+ years React experience, TypeScript, modern CSS",
+    benefits: "Competitive salary, remote work, health insurance",
+    salary: "$60,000 - $80,000",
+    status: "active",
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
+    applications: []
+  },
+  {
+    id: 2,
+    title: "Backend Developer",
+    department: "Engineering", 
+    location: "Ho Chi Minh City",
+    type: "fulltime",
+    description: "We're looking for a Backend Developer to build scalable APIs and services.",
+    requirements: "Node.js, PostgreSQL, Docker, API design",
+    benefits: "Great team, learning opportunities, career growth",
+    salary: "$55,000 - $75,000",
+    status: "active",
+    createdAt: new Date('2025-01-10'),
+    updatedAt: new Date('2025-01-10'),
+    applications: []
+  }
+];
+
+const mockBlogs = [
+  {
+    id: "1",
+    title: "Getting Started with React 19",
+    slug: "getting-started-react-19",
+    content: "React 19 brings exciting new features...",
+    excerpt: "Discover the latest features in React 19",
+    featuredImage: null,
+    category: "Technology",
+    tags: ["React", "JavaScript", "Frontend"],
+    readTime: "5 min",
+    isFeatured: true,
+    status: "published",
+    published: true,
+    views: 150,
+    createdAt: new Date('2025-01-15'),
+    updatedAt: new Date('2025-01-15'),
+    author: {
+      fullName: "Tech Team",
+      email: "tech@phg.com"
+    }
+  },
+  {
+    id: "2", 
+    title: "The Future of Web Development",
+    slug: "future-of-web-development",
+    content: "Web development is rapidly evolving...",
+    excerpt: "Exploring trends shaping the future of web development",
+    featuredImage: null,
+    category: "Industry",
+    tags: ["Web Development", "Trends", "Future"],
+    readTime: "8 min",
+    isFeatured: false,
+    status: "published",
+    published: true,
+    views: 89,
+    createdAt: new Date('2025-01-20'),
+    updatedAt: new Date('2025-01-20'),
+    author: {
+      fullName: "Editorial Team",
+      email: "editorial@phg.com"
+    }
+  }
+];
 
 module.exports = async (req, res) => {
   try {
@@ -106,7 +209,12 @@ module.exports = async (req, res) => {
         timestamp: new Date().toISOString(),
         service: 'comprehensive-backend',
         platform: 'vercel-express',
-        database: prisma ? 'connected' : 'disconnected'
+        database: {
+          status: dbConnectionStatus,
+          hasUrl: !!process.env.DATABASE_URL,
+          prismaClient: !!prisma,
+          fallbackMode: !prisma || dbConnectionStatus !== 'connected'
+        }
       });
     }
 
@@ -156,21 +264,35 @@ module.exports = async (req, res) => {
     // Route: Get All Jobs (Public)
     if (cleanUrl === '/recruitment/jobs' && method === 'GET') {
       try {
-        if (!prisma) {
-          return res.status(200).json([]); // Return empty array if DB not available
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          console.log('Using fallback job data - database not available');
+          return res.status(200).json({
+            data: mockJobs,
+            source: 'fallback',
+            message: 'Database not available, showing sample data'
+          });
         }
 
         const jobs = await withDatabase(async (db) => {
           return await db.job.findMany({
-            where: { status: 'ACTIVE' },
+            where: { status: 'active' },
             orderBy: { createdAt: 'desc' }
           });
         });
 
-        return res.status(200).json(jobs);
+        return res.status(200).json({
+          data: jobs,
+          source: 'database',
+          count: jobs.length
+        });
       } catch (error) {
         console.error('Get jobs error:', error);
-        return res.status(500).json({ error: 'Failed to fetch jobs' });
+        console.log('Falling back to mock data due to database error');
+        return res.status(200).json({
+          data: mockJobs,
+          source: 'fallback-error',
+          error: 'Database error, showing sample data'
+        });
       }
     }
 
@@ -208,12 +330,18 @@ module.exports = async (req, res) => {
     // Route: Get All Blogs (Public)
     if (cleanUrl === '/blogs' && method === 'GET') {
       try {
-        if (!prisma) {
-          return res.status(200).json([]); // Return empty array if DB not available
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          console.log('Using fallback blog data - database not available');
+          return res.status(200).json({
+            data: mockBlogs,
+            source: 'fallback',
+            message: 'Database not available, showing sample data'
+          });
         }
 
         const blogs = await withDatabase(async (db) => {
           return await db.blog.findMany({
+            where: { published: true },
             orderBy: { createdAt: 'desc' },
             include: {
               author: {
@@ -223,10 +351,19 @@ module.exports = async (req, res) => {
           });
         });
 
-        return res.status(200).json(blogs);
+        return res.status(200).json({
+          data: blogs,
+          source: 'database',
+          count: blogs.length
+        });
       } catch (error) {
         console.error('Get blogs error:', error);
-        return res.status(500).json({ error: 'Failed to fetch blogs' });
+        console.log('Falling back to mock data due to database error');
+        return res.status(200).json({
+          data: mockBlogs,
+          source: 'fallback-error',
+          error: 'Database error, showing sample data'
+        });
       }
     }
 
