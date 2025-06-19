@@ -74,6 +74,14 @@ module.exports = async (req, res) => {
     const url = req.url || '/';
     const method = req.method;
 
+    // DEBUG: Log the exact URL and method for debugging
+    console.log(`[DEBUG] Exact URL received: "${url}", Method: ${method}`);
+    console.log(`[DEBUG] URL type: ${typeof url}, URL length: ${url.length}`);
+
+    // Clean URL: remove query params and trailing slashes
+    const cleanUrl = url.split('?')[0].replace(/\/+$/, '') || '/';
+    console.log(`[DEBUG] Cleaned URL: "${cleanUrl}"`);
+
     // Parse request body for POST/PUT requests
     let body = {};
     if (method === 'POST' || method === 'PUT') {
@@ -85,7 +93,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: Health Check
-    if (url === '/' || url === '/health') {
+    if (cleanUrl === '/' || cleanUrl === '/health') {
       return res.status(200).json({
         status: 'ok',
         message: 'PHG Corporation API Backend',
@@ -97,7 +105,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: Auth Login
-    if (url === '/auth/login' && method === 'POST') {
+    if (cleanUrl === '/auth/login' && method === 'POST') {
       try {
         const { email, password } = body;
         
@@ -140,7 +148,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: Get All Jobs (Public)
-    if (url === '/recruitment/jobs' && method === 'GET') {
+    if (cleanUrl === '/recruitment/jobs' && method === 'GET') {
       try {
         if (!prisma) {
           return res.status(200).json([]); // Return empty array if DB not available
@@ -161,9 +169,9 @@ module.exports = async (req, res) => {
     }
 
     // Route: Get Job by ID (Public)
-    if (url.startsWith('/recruitment/jobs/') && method === 'GET') {
+    if (cleanUrl.startsWith('/recruitment/jobs/') && method === 'GET') {
       try {
-        const jobId = parseInt(url.split('/')[3]);
+        const jobId = parseInt(cleanUrl.split('/')[3]);
         
         if (!prisma) {
           return res.status(404).json({ error: 'Job not found' });
@@ -192,7 +200,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: Get All Blogs (Public)
-    if (url === '/blogs' && method === 'GET') {
+    if (cleanUrl === '/blogs' && method === 'GET') {
       try {
         if (!prisma) {
           return res.status(200).json([]); // Return empty array if DB not available
@@ -217,7 +225,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: Create Contact (Public)
-    if (url === '/contacts' && method === 'POST') {
+    if (cleanUrl === '/contacts' && method === 'POST') {
       try {
         const { fullName, email, phone, message, subject } = body;
 
@@ -248,7 +256,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: Get User Profile (Auth Required)
-    if (url === '/users/profile' && method === 'GET') {
+    if (cleanUrl === '/users/profile' && method === 'GET') {
       try {
         // Mock authentication check
         const token = req.headers.authorization?.replace('Bearer ', '');
@@ -270,7 +278,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: API Documentation/Info
-    if (url === '/docs' || url === '/swagger') {
+    if (cleanUrl === '/docs' || cleanUrl === '/swagger') {
       return res.status(200).json({
         title: 'PHG Corporation API',
         version: '1.0.0',
@@ -309,15 +317,23 @@ module.exports = async (req, res) => {
     return res.status(404).json({
       error: 'Endpoint not found',
       method: req.method,
-      url: req.url,
+      originalUrl: req.url,
+      cleanedUrl: cleanUrl,
       message: 'This API endpoint is not implemented yet',
+      debug: {
+        urlReceived: `"${url}"`,
+        urlCleaned: `"${cleanUrl}"`,
+        urlLength: url.length,
+        urlType: typeof url
+      },
       availableEndpoints: [
+        '/ (root/health)',
         '/health',
-        '/auth/login',
-        '/recruitment/jobs',
-        '/blogs',
-        '/contacts',
-        '/users/profile',
+        '/auth/login (POST)',
+        '/recruitment/jobs (GET)',
+        '/blogs (GET)',
+        '/contacts (POST)',
+        '/users/profile (GET)',
         '/docs'
       ]
     });
