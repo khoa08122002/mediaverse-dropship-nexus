@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { blogService } from '@/services/blogService';
 import type { BlogData } from '@/types/blog';
 import { toast } from 'react-hot-toast';
-import FeaturedArticle from '@/components/FeaturedArticle';
 import { User, Calendar, Clock } from 'lucide-react';
 
 const Blog = () => {
@@ -34,23 +33,30 @@ const Blog = () => {
         blogService.getAllBlogs()
       ]);
       
-      // Only show published posts
-      const publishedPosts = allPosts.filter(post => post.status === 'published');
+      // Only show published posts with safe data processing
+      const publishedPosts = Array.isArray(allPosts) ? 
+        allPosts.filter(post => post && post.status === 'published') : [];
       
-      // Parse featuredImage for all posts
+      // Process posts with safe property access
       const processedPosts = publishedPosts.map(post => ({
         ...post,
-        featuredImage: typeof post.featuredImage === 'string' 
-          ? JSON.parse(post.featuredImage)
-          : post.featuredImage
+        featuredImage: post.featuredImage || {
+          url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center",
+          alt: "Default blog image"
+        },
+        author: post.author || { fullName: "Unknown Author", email: "" },
+        tags: Array.isArray(post.tags) ? post.tags : [],
+        readTime: post.readTime || "5 min"
       }));
 
-      // Parse featuredImage for featured post if exists
+      // Process featured post with safe property access
       const processedFeatured = featured ? {
         ...featured,
-        featuredImage: typeof featured.featuredImage === 'string'
-          ? JSON.parse(featured.featuredImage)
-          : featured.featuredImage
+        featuredImage: featured.featuredImage || {
+          url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center",
+          alt: "Default featured image"
+        },
+        author: featured.author || { fullName: "Unknown Author", email: "" }
       } : null;
       
       setFeaturedPost(processedFeatured);
@@ -58,6 +64,9 @@ const Blog = () => {
     } catch (error) {
       console.error('Error fetching blog data:', error);
       toast.error('Không thể tải dữ liệu bài viết');
+      // Set empty states on error
+      setFeaturedPost(null);
+      setBlogPosts([]);
     } finally {
       setLoading(false);
     }
@@ -75,20 +84,26 @@ const Blog = () => {
         posts = await blogService.getBlogsByCategory(category);
       }
 
-      // Filter for published posts and parse featuredImage
-      const processedPosts = posts
-        .filter(post => post.status === 'published')
-        .map(post => ({
-          ...post,
-          featuredImage: typeof post.featuredImage === 'string'
-            ? JSON.parse(post.featuredImage)
-            : post.featuredImage
-        }));
+      // Filter for published posts with safe processing
+      const processedPosts = Array.isArray(posts) ? 
+        posts
+          .filter(post => post && post.status === 'published')
+          .map(post => ({
+            ...post,
+            featuredImage: post.featuredImage || {
+              url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center",
+              alt: "Default blog image"
+            },
+            author: post.author || { fullName: "Unknown Author", email: "", id: "unknown" },
+            tags: Array.isArray(post.tags) ? post.tags : [],
+            readTime: post.readTime || "5 min"
+          })) : [];
 
-      setBlogPosts(processedPosts);
+      setBlogPosts(processedPosts as any);
     } catch (error) {
       console.error('Error filtering by category:', error);
       toast.error('Không thể lọc bài viết theo danh mục');
+      setBlogPosts([]);
     } finally {
       setLoading(false);
     }

@@ -113,9 +113,12 @@ const mockBlogs = [
     id: "1",
     title: "Getting Started with React 19",
     slug: "getting-started-react-19",
-    content: "React 19 brings exciting new features...",
-    excerpt: "Discover the latest features in React 19",
-    featuredImage: null,
+    content: "React 19 brings exciting new features that make development faster and more intuitive. From automatic batching to concurrent features, this guide covers everything you need to know to upgrade your React applications.",
+    excerpt: "Discover the latest features in React 19 and how they can improve your development workflow",
+    featuredImage: {
+      url: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop&crop=center",
+      alt: "React 19 development setup"
+    },
     category: "Technology",
     tags: ["React", "JavaScript", "Frontend"],
     readTime: "5 min",
@@ -134,9 +137,12 @@ const mockBlogs = [
     id: "2", 
     title: "The Future of Web Development",
     slug: "future-of-web-development",
-    content: "Web development is rapidly evolving...",
-    excerpt: "Exploring trends shaping the future of web development",
-    featuredImage: null,
+    content: "Web development is rapidly evolving with new frameworks, tools, and methodologies. Explore the trends that will shape the next decade of web development, from AI-powered coding assistants to edge computing.",
+    excerpt: "Exploring trends shaping the future of web development in 2025 and beyond",
+    featuredImage: {
+      url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop&crop=center",
+      alt: "Future web development technologies"
+    },
     category: "Industry",
     tags: ["Web Development", "Trends", "Future"],
     readTime: "8 min",
@@ -149,6 +155,30 @@ const mockBlogs = [
     author: {
       fullName: "Editorial Team",
       email: "editorial@phg.com"
+    }
+  },
+  {
+    id: "3",
+    title: "AI-Powered E-commerce Revolution",
+    slug: "ai-powered-ecommerce-revolution",
+    content: "Artificial Intelligence is transforming e-commerce with personalized recommendations, automated customer service, and predictive analytics. Learn how to leverage AI for your online business.",
+    excerpt: "How AI is revolutionizing the e-commerce industry with smart automation and personalization",
+    featuredImage: {
+      url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=400&fit=crop&crop=center",
+      alt: "AI e-commerce technology"
+    },
+    category: "AI Marketing",
+    tags: ["AI", "E-commerce", "Automation"],
+    readTime: "6 min",
+    isFeatured: false,
+    status: "published",
+    published: true,
+    views: 203,
+    createdAt: new Date('2025-01-22'),
+    updatedAt: new Date('2025-01-22'),
+    author: {
+      fullName: "AI Research Team",
+      email: "ai@phg.com"
     }
   }
 ];
@@ -505,6 +535,48 @@ module.exports = async (req, res) => {
       } catch (error) {
         console.error('Get blog by slug error:', error);
         return res.status(500).json({ error: 'Failed to fetch blog' });
+      }
+    }
+
+    // Route: Get Blogs by Category (Public)
+    if (cleanUrl.startsWith('/blogs/category/') && method === 'GET') {
+      try {
+        const category = decodeURIComponent(cleanUrl.split('/')[3]);
+        
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          const categoryBlogs = mockBlogs.filter(b => 
+            b.category.toLowerCase() === category.toLowerCase() && 
+            b.status === 'published'
+          );
+          return res.status(200).json(categoryBlogs);
+        }
+
+        const categoryBlogs = await withDatabase(async (db) => {
+          return await db.blog.findMany({
+            where: { 
+              category: {
+                contains: category,
+                mode: 'insensitive'
+              },
+              published: true 
+            },
+            orderBy: { createdAt: 'desc' },
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        return res.status(200).json(categoryBlogs);
+      } catch (error) {
+        console.error('Get blogs by category error:', error);
+        const categoryBlogs = mockBlogs.filter(b => 
+          b.category.toLowerCase() === cleanUrl.split('/')[3]?.toLowerCase() && 
+          b.status === 'published'
+        );
+        return res.status(200).json(categoryBlogs);
       }
     }
 
