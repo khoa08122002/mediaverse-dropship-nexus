@@ -266,11 +266,10 @@ module.exports = async (req, res) => {
       try {
         if (!prisma || dbConnectionStatus !== 'connected') {
           console.log('Using fallback job data - database not available');
-          return res.status(200).json({
-            data: mockJobs,
-            source: 'fallback',
-            message: 'Database not available, showing sample data'
-          });
+          // Return array directly for frontend compatibility
+          res.setHeader('X-Data-Source', 'fallback');
+          res.setHeader('X-Data-Message', 'Database not available, showing sample data');
+          return res.status(200).json(mockJobs);
         }
 
         const jobs = await withDatabase(async (db) => {
@@ -280,19 +279,16 @@ module.exports = async (req, res) => {
           });
         });
 
-        return res.status(200).json({
-          data: jobs,
-          source: 'database',
-          count: jobs.length
-        });
+        // Return array directly for frontend compatibility
+        res.setHeader('X-Data-Source', 'database');
+        res.setHeader('X-Data-Count', jobs.length.toString());
+        return res.status(200).json(jobs);
       } catch (error) {
         console.error('Get jobs error:', error);
         console.log('Falling back to mock data due to database error');
-        return res.status(200).json({
-          data: mockJobs,
-          source: 'fallback-error',
-          error: 'Database error, showing sample data'
-        });
+        res.setHeader('X-Data-Source', 'fallback-error');
+        res.setHeader('X-Data-Message', 'Database error, showing sample data');
+        return res.status(200).json(mockJobs);
       }
     }
 
@@ -332,11 +328,10 @@ module.exports = async (req, res) => {
       try {
         if (!prisma || dbConnectionStatus !== 'connected') {
           console.log('Using fallback blog data - database not available');
-          return res.status(200).json({
-            data: mockBlogs,
-            source: 'fallback',
-            message: 'Database not available, showing sample data'
-          });
+          // Return array directly for frontend compatibility
+          res.setHeader('X-Data-Source', 'fallback');
+          res.setHeader('X-Data-Message', 'Database not available, showing sample data');
+          return res.status(200).json(mockBlogs);
         }
 
         const blogs = await withDatabase(async (db) => {
@@ -351,19 +346,16 @@ module.exports = async (req, res) => {
           });
         });
 
-        return res.status(200).json({
-          data: blogs,
-          source: 'database',
-          count: blogs.length
-        });
+        // Return array directly for frontend compatibility
+        res.setHeader('X-Data-Source', 'database');
+        res.setHeader('X-Data-Count', blogs.length.toString());
+        return res.status(200).json(blogs);
       } catch (error) {
         console.error('Get blogs error:', error);
         console.log('Falling back to mock data due to database error');
-        return res.status(200).json({
-          data: mockBlogs,
-          source: 'fallback-error',
-          error: 'Database error, showing sample data'
-        });
+        res.setHeader('X-Data-Source', 'fallback-error');
+        res.setHeader('X-Data-Message', 'Database error, showing sample data');
+        return res.status(200).json(mockBlogs);
       }
     }
 
