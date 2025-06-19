@@ -9,7 +9,7 @@ function createFallbackResponse(req, res) {
   });
 }
 
-  try {
+try {
     var express = require('express');
     var cookieParser = require('cookie-parser');
     
@@ -42,6 +42,18 @@ function createFallbackResponse(req, res) {
     });
 
     // Routes
+    app.get('/', (req, res) => {
+      console.log('Express root endpoint called');
+      res.json({
+        status: 'ok',
+        message: 'Express server is working on Vercel',
+        timestamp: new Date().toISOString(),
+        service: 'mediaverse-dropship-nexus-express',
+        platform: 'vercel-express',
+        availableEndpoints: ['/health', '/test']
+      });
+    });
+
     app.get('/health', (req, res) => {
       console.log('Express health check called');
       res.json({
@@ -68,7 +80,7 @@ function createFallbackResponse(req, res) {
         error: 'Endpoint not found',
         method: req.method,
         path: req.originalUrl,
-        message: 'This endpoint is not implemented yet'
+        message: 'Available endpoints: /, /health, /test'
       });
     });
 

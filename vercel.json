@@ -21,6 +21,10 @@
     "api/simple.js": {
       "memory": 512,
       "maxDuration": 10
+    },
+    "api/express-simple.js": {
+      "memory": 512,
+      "maxDuration": 10
     }
   },
   "routes": [
@@ -43,6 +47,10 @@
     {
       "src": "/api/express",
       "dest": "api/express.js"
+    },
+    {
+      "src": "/api/express-simple",
+      "dest": "api/express-simple.js"
     },
     {
       "src": "/api/(.*)",
