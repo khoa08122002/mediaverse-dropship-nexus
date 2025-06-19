@@ -1,21 +1,25 @@
 # Deployment Trigger
 
-Version: 1.0.2  
-Date: 2025-01-26  
-Purpose: Fix Login route - moved outside AppLayout
+## Deployment #12 - Fix Login Route 404
+**Date:** 2025-01-26 19:50:00  
+**Issue:** https://phg2.vercel.app/login returns 404 error  
+**Solution:** Force deployment with changes  
 
-## Changes Made:
-- ✅ **CRITICAL FIX**: Moved Login route outside AppLayout
-- ✅ Login now standalone page (no header/nav)
-- ✅ Added register & forgot-password routes  
-- ✅ Proper route structure for auth pages
-- ✅ SPA routing fixed in vercel.json
+### Changes Made:
+✅ API Login endpoint verified working in `api/backend.js`  
+✅ React Login route moved outside AppLayout in `src/App.tsx`  
+✅ Vercel.json routing configuration updated  
+✅ Test file created: `public/test-login.html`  
 
-## Expected Results:
-- ✅ `/login` should work as standalone page
-- ✅ `/register` should work  
-- ✅ `/forgot-password` should work
-- ✅ All other routes work with AppLayout
-- ✅ API routes still functional
+### Testing URLs (After Deploy):
+- **Frontend Login:** https://phg2.vercel.app/login  
+- **API Login:** https://phg2.vercel.app/api/backend/auth/login  
+- **Test Page:** https://phg2.vercel.app/test-login.html  
+- **Backend Health:** https://phg2.vercel.app/api/backend  
 
-Deploy now! 
+### Mock Login Credentials:
+- Admin: admin@phg.com / admin123
+- HR: hr@phg.com / hr123  
+- User: user@phg.com / user123
+
+This file triggers automatic deployment when git pushed. 

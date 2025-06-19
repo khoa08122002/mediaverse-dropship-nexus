@@ -1,0 +1,21 @@
+FORCE VERCEL DEPLOYMENT
+========================
+
+Timestamp: 2025-01-26 19:45:00
+Issue: /login route returning 404
+Reason: Changes not deployed yet
+
+Previous fixes:
+✅ Moved Login route outside AppLayout  
+✅ Fixed vercel.json routing
+✅ Added outputDirectory config
+
+EXPECTED AFTER DEPLOY:
+- https://phg2.vercel.app/login → React Login page (standalone)
+- https://phg2.vercel.app/api/backend/auth/login → API endpoint  
+
+TEST ENDPOINTS:
+- API Health: https://phg2.vercel.app/api/backend
+- Test file: https://phg2.vercel.app/test-routing.html
+
+This file will trigger auto-deployment when pushed to git. 
