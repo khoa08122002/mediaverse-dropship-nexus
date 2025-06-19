@@ -3,6 +3,12 @@ import axios from '../services/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+// Emergency fallback for production
+if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+  console.log('🚨 AuthContext Emergency: Force updating axios baseURL for production');
+  axios.defaults.baseURL = 'https://phg2.vercel.app/api/backend';
+}
+
 interface User {
   id: string;
   email: string;
