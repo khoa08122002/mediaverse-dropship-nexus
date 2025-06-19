@@ -2,6 +2,14 @@
   "version": 2,
   "buildCommand": "npm run vercel-build",
   "functions": {
+    "api/comprehensive.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "api/backend.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
     "api/index.js": {
       "memory": 1024,
       "maxDuration": 30
@@ -25,13 +33,17 @@
     "api/express-simple.js": {
       "memory": 512,
       "maxDuration": 10
-    },
-    "api/backend.js": {
-      "memory": 1024,
-      "maxDuration": 30
     }
   },
   "routes": [
+    {
+      "src": "/api/comprehensive/(.*)",
+      "dest": "api/comprehensive.js"
+    },
+    {
+      "src": "/api/comprehensive",
+      "dest": "api/comprehensive.js"
+    },
     {
       "src": "/api/backend/(.*)",
       "dest": "api/backend.js"
