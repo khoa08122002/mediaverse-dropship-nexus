@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const baseURL = import.meta.env.PROD 
-  ? 'https://mediaverse-dropship-nexus.vercel.app/api'  // Production URL
+  ? 'https://phg2.vercel.app/api/backend'  // Production URL - Vercel backend function
   : 'http://localhost:3002/api'; // Development URL
 
 const instance = axios.create({
