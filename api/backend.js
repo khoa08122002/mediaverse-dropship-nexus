@@ -78,9 +78,15 @@ module.exports = async (req, res) => {
     console.log(`[DEBUG] Exact URL received: "${url}", Method: ${method}`);
     console.log(`[DEBUG] URL type: ${typeof url}, URL length: ${url.length}`);
 
-    // Clean URL: remove query params and trailing slashes
-    const cleanUrl = url.split('?')[0].replace(/\/+$/, '') || '/';
-    console.log(`[DEBUG] Cleaned URL: "${cleanUrl}"`);
+    // Clean URL: remove query params, trailing slashes, and /api/backend prefix
+    let cleanUrl = url.split('?')[0].replace(/\/+$/, '') || '/';
+    
+    // Remove /api/backend prefix if present
+    if (cleanUrl.startsWith('/api/backend')) {
+      cleanUrl = cleanUrl.replace('/api/backend', '') || '/';
+    }
+    
+    console.log(`[DEBUG] Cleaned URL: "${cleanUrl}" (after removing /api/backend prefix)`);
 
     // Parse request body for POST/PUT requests
     let body = {};

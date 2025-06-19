@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const baseURL = process.env.NODE_ENV === 'production' 
-  ? `https://${process.env.BACKEND_URL}/api`  // In production, use Railway URL
+  ? 'https://phg2.vercel.app/api/backend'  // In production, use Vercel backend function
   : 'http://localhost:3002/api'; // In development, use localhost
 
 const axiosInstance = axios.create({

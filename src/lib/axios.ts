@@ -11,8 +11,8 @@ const publicRoutes = [
   '/blogs/search'
 ];
 
-// In development, use localhost:3002, in production use relative path
-const baseURL = import.meta.env.PROD ? '/api' : 'http://localhost:3002/api';
+// In development, use localhost:3002, in production use Vercel backend function
+const baseURL = import.meta.env.PROD ? '/api/backend' : 'http://localhost:3002/api';
 
 export const axiosInstance = axios.create({
   baseURL,
