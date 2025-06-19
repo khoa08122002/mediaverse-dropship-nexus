@@ -44,7 +44,7 @@ const Blog = () => {
           url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center",
           alt: "Default blog image"
         },
-        author: post.author || { fullName: "Unknown Author", email: "" },
+        author: post.author || { id: "unknown", fullName: "Unknown Author", email: "" },
         tags: Array.isArray(post.tags) ? post.tags : [],
         readTime: post.readTime || "5 min"
       }));
@@ -56,7 +56,7 @@ const Blog = () => {
           url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center",
           alt: "Default featured image"
         },
-        author: featured.author || { fullName: "Unknown Author", email: "" }
+        author: featured.author || { id: "unknown", fullName: "Unknown Author", email: "" }
       } : null;
       
       setFeaturedPost(processedFeatured);
@@ -94,7 +94,7 @@ const Blog = () => {
               url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center",
               alt: "Default blog image"
             },
-            author: post.author || { fullName: "Unknown Author", email: "", id: "unknown" },
+                         author: post.author || { id: "unknown", fullName: "Unknown Author", email: "" },
             tags: Array.isArray(post.tags) ? post.tags : [],
             readTime: post.readTime || "5 min"
           })) : [];
@@ -143,7 +143,7 @@ const Blog = () => {
       </section>
 
       {/* Featured Post */}
-      {featuredPost && featuredPost.status === 'published' && (
+      {featuredPost && featuredPost.status === 'published' && featuredPost.featuredImage && featuredPost.author && (
         <section className="py-12 px-4">
           <div className="container mx-auto">
             <div className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 max-w-4xl mx-auto h-[240px]">
@@ -235,12 +235,12 @@ const Blog = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {blogPosts.map((post) => (
+              {blogPosts && blogPosts.length > 0 ? blogPosts.map((post) => (
                 <article key={post.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
                   <div className="relative">
                     <img 
-                      src={post.featuredImage.url} 
-                      alt={post.featuredImage.alt}
+                      src={post.featuredImage?.url || "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center"} 
+                      alt={post.featuredImage?.alt || "Blog image"}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-4 left-4">
@@ -261,7 +261,7 @@ const Blog = () => {
                     </p>
                     
                     <div className="flex flex-wrap gap-1 mb-4">
-                      {post.tags.slice(0, 3).map((tag, idx) => (
+                      {(post.tags || []).slice(0, 3).map((tag, idx) => (
                         <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
                           {tag}
                         </span>
@@ -270,17 +270,21 @@ const Blog = () => {
                     
                     <div className="flex items-center justify-between text-sm text-gray-500">
                       <div className="flex items-center space-x-2">
-                        <span>{post.author.fullName}</span>
+                        <span>{post.author?.fullName || "Unknown Author"}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                         <span>•</span>
-                        <span>{post.readTime}</span>
+                        <span>{post.readTime || "5 min"}</span>
                       </div>
                     </div>
                   </div>
                 </article>
-              ))}
+              )) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-gray-500">Không có bài viết nào</p>
+                </div>
+              )}
             </div>
 
             {/* Load More */}

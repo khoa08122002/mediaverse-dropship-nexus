@@ -92,8 +92,20 @@ export const blogService = {
   },
 
   getBlogsByCategory: async (category: string): Promise<BlogData[]> => {
-    // Public access - no authentication required
-    const response = await axios.get(`/blogs/category/${category}`);
-    return response.data;
+    try {
+      // Public access - no authentication required
+      const response = await axios.get(`/blogs/category/${encodeURIComponent(category)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching blogs by category:', error);
+      // Fallback to getting all blogs and filtering
+      try {
+        const allBlogs = await blogService.getAllBlogs();
+        return allBlogs.filter(blog => blog.category === category);
+      } catch (fallbackError) {
+        console.error('Fallback error:', fallbackError);
+        return [];
+      }
+    }
   }
 }; 

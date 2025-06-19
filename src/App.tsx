@@ -11,7 +11,7 @@ const Index = React.lazy(() => import('./pages/Index'));
 const About = React.lazy(() => import('./pages/About'));
 const MediaServices = React.lazy(() => import('./pages/MediaServices'));
 const Ecommerce = React.lazy(() => import('./pages/Ecommerce'));
-const Blog = React.lazy(() => import('./pages/BlogSimple'));
+const Blog = React.lazy(() => import('./pages/Blog'));
 const BlogDetail = React.lazy(() => import('./pages/BlogDetail'));
 const Contact = React.lazy(() => import('./pages/Contact'));
 const Recruitment = React.lazy(() => import('./pages/Recruitment'));
