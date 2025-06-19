@@ -7,6 +7,7 @@ import { BlogModule } from './modules/blog/blog.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module';
 import { FileUploadModule } from './modules/file-upload/file-upload.module';
+import { HealthModule } from './modules/health/health.module';
 import { Public } from './modules/auth/decorators/public.decorator';
 
 @Controller()
@@ -44,6 +45,7 @@ export class AppController {
     ContactModule,
     RecruitmentModule,
     FileUploadModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [],

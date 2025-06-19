@@ -1,16 +1,16 @@
 [build]
 builder = "nixpacks"
-buildCommand = "rm -rf node_modules && npm install --production=false && npm run build:backend"
+buildCommand = "npm run railway-build"
 
 [deploy]
-startCommand = "node dist/backend/main.js"
+startCommand = "npm run railway-start"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 numReplicas = 1
-healthcheckInterval = 5
-restartPolicyMaxRetries = 3
-healthcheckInitialDelay = 10
+healthcheckInterval = 15
+restartPolicyMaxRetries = 5
+healthcheckInitialDelay = 30
 
 [deploy.envs]
 NODE_ENV = "production"
@@ -22,5 +22,15 @@ HOST = "0.0.0.0"
 PRISMA_LOG_LEVEL = "error"
 
 [nixpacks]
-start-command = "node dist/backend/main.js"
-install-command = "npm install --production=false" 
+start-command = "cd dist/backend && npm start"
+install-command = "npm install --production=false --no-optional"
+
+[deploy.phases.build]
+cmds = [
+  "npm install --production=false --no-optional",
+  "npm run railway-build",
+  "npm run predeploy"
+]
+
+[deploy.phases.start]
+cmd = "cd dist/backend && npm start" 

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, UnauthorizedException, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
@@ -26,6 +26,18 @@ export class RefreshTokenDto {
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Get('health')
+  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiResponse({ status: 200, description: 'Service is healthy' })
+  async health() {
+    return { 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      service: 'PHG Corporation API'
+    };
+  }
 
   @Public()
   @UseGuards(LocalAuthGuard)
