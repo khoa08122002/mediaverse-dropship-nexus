@@ -25,7 +25,7 @@ const router = createBrowserRouter(
     <Route element={<Providers />}>
       {/* Standalone Routes (No Layout) */}
       <Route
-        path="/login"
+        path="login"
         element={
           <Suspense fallback={<Preloader />}>
             <Login />
@@ -33,7 +33,7 @@ const router = createBrowserRouter(
         }
       />
       <Route
-        path="/register"
+        path="register"
         element={
           <Suspense fallback={<Preloader />}>
             <Login />
@@ -41,7 +41,7 @@ const router = createBrowserRouter(
         }
       />
       <Route
-        path="/forgot-password"
+        path="forgot-password"
         element={
           <Suspense fallback={<Preloader />}>
             <Login />
@@ -60,7 +60,7 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="/about"
+          path="about"
           element={
             <Suspense fallback={<Preloader />}>
               <About />
@@ -68,7 +68,7 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="/media-services"
+          path="media-services"
           element={
             <Suspense fallback={<Preloader />}>
               <MediaServices />
@@ -76,7 +76,7 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="/ecommerce"
+          path="ecommerce"
           element={
             <Suspense fallback={<Preloader />}>
               <Ecommerce />
@@ -84,7 +84,7 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="/blog"
+          path="blog"
           element={
             <ErrorBoundary>
               <Suspense fallback={<Preloader />}>
@@ -94,7 +94,7 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="/blog/:slug"
+          path="blog/:slug"
           element={
             <ErrorBoundary>
               <Suspense fallback={<Preloader />}>
@@ -104,7 +104,7 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="/contact"
+          path="contact"
           element={
             <Suspense fallback={<Preloader />}>
               <Contact />
@@ -112,7 +112,7 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="/recruitment"
+          path="recruitment"
           element={
             <Suspense fallback={<Preloader />}>
               <Recruitment />
@@ -120,7 +120,7 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="/admin/*"
+          path="admin/*"
           element={
             <Suspense fallback={<Preloader />}>
               <Admin />
