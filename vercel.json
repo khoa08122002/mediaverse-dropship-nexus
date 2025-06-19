@@ -17,6 +17,10 @@
     "api/express.js": {
       "memory": 1024,
       "maxDuration": 30
+    },
+    "api/simple.js": {
+      "memory": 512,
+      "maxDuration": 10
     }
   },
   "routes": [
