@@ -2,12 +2,12 @@
   "name": "phg-corporation-backend",
   "version": "1.0.0",
   "description": "Backend for PHG Corporation application",
-  "main": "main.ts",
+  "main": "main.js",
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
-    "start": "nest start",
+    "start": "node src/backend/main.js",
     "start:dev": "nest start --watch",
     "build": "nest build",
     "prisma:seed": "ts-node prisma/seed.ts",

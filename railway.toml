@@ -22,16 +22,15 @@ HOST = "0.0.0.0"
 PRISMA_LOG_LEVEL = "error"
 
 [nixpacks]
-start-command = "node dist/backend/main.js"
+start-command = "npm run start:prod"
 install-command = "npm install --production=false --no-optional"
 
 [deploy.phases.build]
 cmds = [
   "npm install --production=false --no-optional",
   "npm run railway-build",
-  "npm run install-backend-deps",
   "npm run predeploy"
 ]
 
 [deploy.phases.start]
-cmd = "node dist/backend/main.js" 
+cmd = "npm run start:prod" 

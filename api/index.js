@@ -1,5 +1,5 @@
 const { NestFactory } = require('@nestjs/core');
-const { AppModule } = require('../dist/backend/app.module');
+const { AppModule } = require('../dist/backend/src/backend/app.module');
 const cookieParser = require('cookie-parser');
 
 let app;
