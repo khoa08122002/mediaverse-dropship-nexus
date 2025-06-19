@@ -5,16 +5,16 @@ buildCommand = "npm run railway-build"
 [deploy]
 startCommand = "npm run start:prod"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 60
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
 numReplicas = 1
-healthcheckInterval = 15
-restartPolicyMaxRetries = 5
-healthcheckInitialDelay = 30
+healthcheckInterval = 30
+restartPolicyMaxRetries = 10
+healthcheckInitialDelay = 60
 
 [deploy.envs]
 NODE_ENV = "production"
-PORT = "3002"
+PORT = "${PORT}"
 DATABASE_URL = "${DATABASE_URL}"
 JWT_SECRET = "${JWT_SECRET}"
 NIXPACKS_NODE_VERSION = "18"

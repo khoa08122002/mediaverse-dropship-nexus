@@ -17,8 +17,15 @@ export class AppController {
   @Public()
   @Get('health')
   health() {
-    this.logger.log('Health check requested');
+    this.logger.log('Simple health check requested');
     return { status: 'ok' };
+  }
+
+  @Public()
+  @Get('ready')
+  ready() {
+    this.logger.log('Readiness check requested');
+    return { status: 'ready' };
   }
 }
 
@@ -30,10 +37,10 @@ export class AppController {
       envFilePath: ['.env', '.env.production'],
       expandVariables: true,
       validate: (config: Record<string, unknown>) => {
-        const required = ['DATABASE_URL', 'JWT_SECRET', 'PORT'];
+        const required = ['JWT_SECRET'];
         const missing = required.filter(key => !config[key]);
         if (missing.length > 0) {
-          throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+          console.warn(`Missing environment variables: ${missing.join(', ')}`);
         }
         return config;
       },

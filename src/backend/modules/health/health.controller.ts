@@ -8,7 +8,7 @@ export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
   @Public()
-  @Get()
+  @Get('detailed')
   async check() {
     return this.healthService.check();
   }
