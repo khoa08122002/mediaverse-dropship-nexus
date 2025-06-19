@@ -1,8 +1,10 @@
 import axios from 'axios';
+import { getAPIBaseURL, logEnvironmentInfo } from '../utils/environment';
 
-const baseURL = import.meta.env.PROD 
-  ? 'https://phg2.vercel.app/api/backend'  // Production URL - Vercel backend function
-  : 'http://localhost:3002/api'; // Development URL
+const baseURL = getAPIBaseURL();
+
+// Debug logging
+logEnvironmentInfo('AxiosConfig');
 
 const instance = axios.create({
   baseURL,

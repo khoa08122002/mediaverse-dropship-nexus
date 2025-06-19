@@ -1,8 +1,23 @@
 import axios from 'axios';
 
-const baseURL = process.env.NODE_ENV === 'production' 
+// Detect environment based on hostname for reliability
+const isProduction = typeof window !== 'undefined' && (
+  window.location.hostname === 'phg2.vercel.app' ||
+  window.location.hostname.includes('vercel.app') ||
+  process.env.NODE_ENV === 'production'
+);
+
+const baseURL = isProduction
   ? 'https://phg2.vercel.app/api/backend'  // In production, use Vercel backend function
   : 'http://localhost:3002/api'; // In development, use localhost
+
+// Debug logging
+console.log('Config Axios Environment Detection:', {
+  hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+  nodeEnv: process.env.NODE_ENV,
+  isProduction,
+  baseURL
+});
 
 const axiosInstance = axios.create({
   baseURL,

@@ -11,8 +11,24 @@ const publicRoutes = [
   '/blogs/search'
 ];
 
-// In development, use localhost:3002, in production use Vercel backend function
-const baseURL = import.meta.env.PROD ? '/api/backend' : 'http://localhost:3002/api';
+// Detect environment based on hostname for reliability
+const isProduction = typeof window !== 'undefined' && (
+  window.location.hostname === 'phg2.vercel.app' ||
+  window.location.hostname.includes('vercel.app') ||
+  process.env.NODE_ENV === 'production'
+);
+
+const baseURL = isProduction 
+  ? 'https://phg2.vercel.app/api/backend'  // Full URL for production
+  : 'http://localhost:3002/api'; // Development URL
+
+// Debug logging
+console.log('Lib Axios Environment Detection:', {
+  hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+  nodeEnv: process.env.NODE_ENV,
+  isProduction,
+  baseURL
+});
 
 export const axiosInstance = axios.create({
   baseURL,

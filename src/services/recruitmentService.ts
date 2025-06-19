@@ -1,4 +1,10 @@
 import axios from './axiosConfig';
+
+// Emergency fallback for production
+if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+  console.log('🚨 Emergency: Force updating axios baseURL for production');
+  axios.defaults.baseURL = 'https://phg2.vercel.app/api/backend';
+}
 import type { 
   Application,
   ApplicationStatusType,
