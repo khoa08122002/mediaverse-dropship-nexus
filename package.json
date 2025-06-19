@@ -9,7 +9,7 @@
     "build:frontend": "tsc -p tsconfig.frontend.json && vite build",
     "build:backend": "tsc -p tsconfig.backend.json",
     "postbuild:backend": "npm run prisma:generate && npm run copy-files",
-    "copy-files": "copyfiles -u 1 \"prisma/schema.prisma\" dist/backend && copyfiles \".env\" dist/backend && npm install --prefix dist/backend --production",
+    "copy-files": "copyfiles -u 1 \"prisma/schema.prisma\" dist/backend && copyfiles \".env\" dist/backend && copyfiles -u 1 \"src/backend/package.json\" dist/backend && copyfiles -u 1 \"src/backend/package-lock.json\" dist/backend && npm install --prefix dist/backend --production",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "start": "cd dist/backend && npm start",
