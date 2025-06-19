@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHG - Authentication Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { background: #f9f9f9; padding: 10px; border-radius: 3px; margin-top: 10px; white-space: pre-wrap; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔐 PHG Authentication Test</h1>
+    <p><strong>URL hiện tại:</strong> <span id="currentUrl"></span></p>
+    
+    <div class="section">
+        <h3>🔧 1. Test Login API</h3>
+        <input type="email" id="email" placeholder="Email" value="admin@phg.com">
+        <input type="password" id="password" placeholder="Password" value="admin123">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h3>👤 2. Test Protected API</h3>
+        <button onclick="testUsers()">Test /users (Admin Only)</button>
+        <button onclick="testContacts()">Test /contacts</button>
+        <button onclick="testStats()">Test /recruitment/stats</button>
+        <div id="protectedResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h3>💾 3. LocalStorage Debug</h3>
+        <button onclick="showTokens()">Show Stored Tokens</button>
+        <button onclick="clearTokens()">Clear Tokens</button>
+        <div id="tokensResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h3>🌐 4. Environment Debug</h3>
+        <button onclick="showEnvironment()">Show Environment Info</button>
+        <div id="envResult" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('currentUrl').textContent = window.location.href;
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            try {
+                resultDiv.innerHTML = '⏳ Testing login...';
+                
+                const response = await fetch('/api/backend/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Store tokens
+                    localStorage.setItem('accessToken', data.accessToken);
+                    localStorage.setItem('refreshToken', data.refreshToken);
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Login Success!\n\nUser: ${JSON.stringify(data.user, null, 2)}\nToken: ${data.accessToken.substring(0, 30)}...`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Login Failed!\n\nError: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Network Error!\n\n${error.message}`;
+            }
+        }
+
+        async function testProtectedEndpoint(endpoint, name) {
+            const resultDiv = document.getElementById('protectedResult');
+            
+            try {
+                resultDiv.innerHTML = `⏳ Testing ${name}...`;
+                
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = '❌ No access token found! Please login first.';
+                    return;
+                }
+                
+                const response = await fetch(`/api/backend${endpoint}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ ${name} Success!\n\nStatus: ${response.status}\nData: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ ${name} Failed!\n\nStatus: ${response.status}\nError: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Network Error!\n\n${error.message}`;
+            }
+        }
+
+        function testUsers() {
+            testProtectedEndpoint('/users', 'Get Users');
+        }
+
+        function testContacts() {
+            testProtectedEndpoint('/contacts', 'Get Contacts');
+        }
+
+        function testStats() {
+            testProtectedEndpoint('/recruitment/stats', 'Get Recruitment Stats');
+        }
+
+        function showTokens() {
+            const resultDiv = document.getElementById('tokensResult');
+            const accessToken = localStorage.getItem('accessToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            
+            if (accessToken || refreshToken) {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `📋 Stored Tokens:\n\nAccess Token: ${accessToken ? accessToken.substring(0, 50) + '...' : 'None'}\nRefresh Token: ${refreshToken ? refreshToken.substring(0, 50) + '...' : 'None'}\n\nFull Access Token:\n${accessToken || 'None'}`;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '❌ No tokens found in localStorage';
+            }
+        }
+
+        function clearTokens() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            document.getElementById('tokensResult').innerHTML = '✅ Tokens cleared!';
+            document.getElementById('tokensResult').className = 'result success';
+        }
+
+        function showEnvironment() {
+            const resultDiv = document.getElementById('envResult');
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = `🌐 Environment Info:
+
+Hostname: ${window.location.hostname}
+Protocol: ${window.location.protocol}
+Port: ${window.location.port}
+Full URL: ${window.location.href}
+
+User Agent: ${navigator.userAgent}
+
+API Base URL: ${window.location.hostname.includes('vercel.app') ? 'https://phg2.vercel.app/api/backend' : 'Local/Dev'}
+
+LocalStorage Available: ${typeof(Storage) !== 'undefined' ? 'Yes' : 'No'}
+Cookies Enabled: ${navigator.cookieEnabled ? 'Yes' : 'No'}`;
+        }
+
+        // Auto-show environment on load
+        showEnvironment();
+    </script>
+</body>
+</html> 

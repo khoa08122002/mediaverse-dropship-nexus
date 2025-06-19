@@ -94,7 +94,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onTabChange }) => {
         .slice(0, 2)
         .forEach(contact => {
           activities.push({
-            action: `Tin nhắn mới từ ${contact.name}`,
+            action: `Tin nhắn mới từ ${contact.fullName}`,
             time: formatTime(new Date(contact.createdAt)),
             type: 'contact'
           });
