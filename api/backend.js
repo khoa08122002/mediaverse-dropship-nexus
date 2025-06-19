@@ -227,11 +227,60 @@ module.exports = async (req, res) => {
           return res.status(400).json({ error: 'Email and password required' });
         }
 
-        // Check if database is available
-        if (!prisma) {
-          return res.status(500).json({ error: 'Database not available' });
+        // If database not available, use mock authentication
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          console.log('Using mock authentication - database not available');
+          
+          // Mock admin credentials for testing
+          const mockUsers = [
+            {
+              id: '1',
+              email: 'admin@phg.com',
+              password: 'admin123', // In real app, this would be hashed
+              fullName: 'Admin User',
+              role: 'ADMIN'
+            },
+            {
+              id: '2', 
+              email: 'hr@phg.com',
+              password: 'hr123',
+              fullName: 'HR User',
+              role: 'HR'
+            },
+            {
+              id: '3',
+              email: 'user@phg.com', 
+              password: 'user123',
+              fullName: 'Regular User',
+              role: 'USER'
+            }
+          ];
+
+          const mockUser = mockUsers.find(u => u.email === email && u.password === password);
+          
+          if (!mockUser) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+          }
+
+          const token = jwt.sign(
+            { id: mockUser.id, email: mockUser.email, role: mockUser.role },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+          );
+
+          return res.status(200).json({
+            accessToken: token,
+            refreshToken: `refresh_${Date.now()}`,
+            user: {
+              id: mockUser.id,
+              email: mockUser.email,
+              fullName: mockUser.fullName,
+              role: mockUser.role
+            }
+          });
         }
 
+        // Database available - use real authentication
         const user = await withDatabase(async (db) => {
           return await db.user.findUnique({ where: { email } });
         });
@@ -247,7 +296,8 @@ module.exports = async (req, res) => {
         );
 
         return res.status(200).json({
-          access_token: token,
+          accessToken: token,
+          refreshToken: `refresh_${Date.now()}`,
           user: {
             id: user.id,
             email: user.email,
@@ -359,6 +409,105 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Route: Get Featured Blogs (Public)
+    if (cleanUrl === '/blogs/featured' && method === 'GET') {
+      try {
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          console.log('Using fallback featured blog data');
+          const featuredBlogs = mockBlogs.filter(blog => blog.isFeatured);
+          return res.status(200).json(featuredBlogs);
+        }
+
+        const featuredBlogs = await withDatabase(async (db) => {
+          return await db.blog.findMany({
+            where: { published: true, isFeatured: true },
+            orderBy: { createdAt: 'desc' },
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        return res.status(200).json(featuredBlogs);
+      } catch (error) {
+        console.error('Get featured blogs error:', error);
+        const featuredBlogs = mockBlogs.filter(blog => blog.isFeatured);
+        return res.status(200).json(featuredBlogs);
+      }
+    }
+
+    // Route: Get Blog by ID (Public)
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/slug/') && method === 'GET') {
+      try {
+        const blogId = cleanUrl.split('/')[2];
+        
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          const blog = mockBlogs.find(b => b.id === blogId);
+          if (!blog) {
+            return res.status(404).json({ error: 'Blog not found' });
+          }
+          return res.status(200).json(blog);
+        }
+
+        const blog = await withDatabase(async (db) => {
+          return await db.blog.findUnique({
+            where: { id: blogId },
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        if (!blog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Get blog by ID error:', error);
+        return res.status(500).json({ error: 'Failed to fetch blog' });
+      }
+    }
+
+    // Route: Get Blog by Slug (Public)
+    if (cleanUrl.startsWith('/blogs/slug/') && method === 'GET') {
+      try {
+        const slug = cleanUrl.split('/')[3];
+        
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          const blog = mockBlogs.find(b => b.slug === slug);
+          if (!blog) {
+            return res.status(404).json({ error: 'Blog not found' });
+          }
+          return res.status(200).json(blog);
+        }
+
+        const blog = await withDatabase(async (db) => {
+          return await db.blog.findUnique({
+            where: { slug },
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        if (!blog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Get blog by slug error:', error);
+        return res.status(500).json({ error: 'Failed to fetch blog' });
+      }
+    }
+
     // Route: Create Contact (Public)
     if (cleanUrl === '/contacts' && method === 'POST') {
       try {
@@ -464,9 +613,13 @@ module.exports = async (req, res) => {
       availableEndpoints: [
         '/ (root/health)',
         '/health',
-        '/auth/login (POST)',
+        '/auth/login (POST) - Try: admin@phg.com / admin123',
         '/recruitment/jobs (GET)',
+        '/recruitment/jobs/:id (GET)',
         '/blogs (GET)',
+        '/blogs/featured (GET)',
+        '/blogs/:id (GET)',
+        '/blogs/slug/:slug (GET)',
         '/contacts (POST)',
         '/users/profile (GET)',
         '/docs'

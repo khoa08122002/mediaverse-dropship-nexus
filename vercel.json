@@ -73,8 +73,12 @@
       "dest": "api/index.js"
     },
     {
-      "src": "/(.*)",
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|webm|wav|mp3|m4a|aac|oga))",
       "dest": "dist/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "dist/index.html"
     }
   ],
   "env": {
