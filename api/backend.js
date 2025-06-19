@@ -538,6 +538,41 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Route: Get Blog by ID (Public)
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/category/') && !cleanUrl.includes('/slug/') && !cleanUrl.includes('/featured') && method === 'GET') {
+      try {
+        const blogId = cleanUrl.split('/')[2];
+        
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          const blog = mockBlogs.find(b => b.id === blogId);
+          if (!blog) {
+            return res.status(404).json({ error: 'Blog not found' });
+          }
+          return res.status(200).json(blog);
+        }
+
+        const blog = await withDatabase(async (db) => {
+          return await db.blog.findUnique({
+            where: { id: blogId },
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        if (!blog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Get blog by ID error:', error);
+        return res.status(500).json({ error: 'Failed to fetch blog' });
+      }
+    }
+
     // Route: Get Blogs by Category (Public)
     if (cleanUrl.startsWith('/blogs/category/') && method === 'GET') {
       try {
@@ -577,6 +612,35 @@ module.exports = async (req, res) => {
           b.status === 'published'
         );
         return res.status(200).json(categoryBlogs);
+      }
+    }
+
+    // Route: Increment Blog Views (Public)
+    if (cleanUrl.match(/^\/blogs\/[^\/]+\/views$/) && method === 'POST') {
+      try {
+        const blogId = cleanUrl.split('/')[2];
+        
+        if (!prisma || dbConnectionStatus !== 'connected') {
+          // For mock data, just return success
+          return res.status(200).json({ message: 'View count incremented', views: 1 });
+        }
+
+        const blog = await withDatabase(async (db) => {
+          return await db.blog.update({
+            where: { id: blogId },
+            data: {
+              views: {
+                increment: 1
+              }
+            }
+          });
+        });
+
+        return res.status(200).json({ message: 'View count incremented', views: blog.views });
+      } catch (error) {
+        console.error('Increment views error:', error);
+        // Return success even if failed to not block page loading
+        return res.status(200).json({ message: 'View count incremented', views: 1 });
       }
     }
 

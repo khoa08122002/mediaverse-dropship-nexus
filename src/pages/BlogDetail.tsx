@@ -28,12 +28,16 @@ const BlogDetail = () => {
       setLoading(true);
       const post = await blogService.getBlogBySlug(slug);
       
-      // Parse featuredImage
+      // Process post with safe property access
       const processedPost = {
         ...post,
-        featuredImage: typeof post.featuredImage === 'string'
-          ? JSON.parse(post.featuredImage)
-          : post.featuredImage
+        featuredImage: post.featuredImage || {
+          url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center",
+          alt: "Blog detail image"
+        },
+        author: post.author || { id: "unknown", fullName: "Unknown Author", email: "" },
+        tags: Array.isArray(post.tags) ? post.tags : [],
+        readTime: post.readTime || "5 min"
       };
       
       setBlogPost(processedPost);
@@ -42,12 +46,15 @@ const BlogDetail = () => {
       if (post.category) {
         const categoryPosts = await blogService.getBlogsByCategory(post.category);
         const processedRelatedPosts = categoryPosts
-          .filter(p => p.id !== post.id)
+          .filter(p => p && p.id !== post.id)
           .map(p => ({
             ...p,
-            featuredImage: typeof p.featuredImage === 'string'
-              ? JSON.parse(p.featuredImage)
-              : p.featuredImage
+            featuredImage: p.featuredImage || {
+              url: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center",
+              alt: "Related post image"
+            },
+            author: p.author || { id: "unknown", fullName: "Unknown Author", email: "" },
+            tags: Array.isArray(p.tags) ? p.tags : []
           }))
           .slice(0, 3);
           
@@ -110,7 +117,7 @@ const BlogDetail = () => {
               <div className="flex flex-wrap items-center gap-6 text-gray-600 mb-6">
                 <div className="flex items-center">
                   <User className="w-4 h-4 mr-2" />
-                  <span>{blogPost.author.fullName}</span>
+                  <span>{blogPost.author?.fullName || "Unknown Author"}</span>
                 </div>
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-2" />
@@ -118,12 +125,12 @@ const BlogDetail = () => {
                 </div>
                 <div className="flex items-center">
                   <Clock className="w-4 h-4 mr-2" />
-                  <span>{blogPost.readTime}</span>
+                  <span>{blogPost.readTime || "5 min"}</span>
                 </div>
               </div>
               
               <div className="flex flex-wrap gap-2 mb-6">
-                {blogPost.tags.map((tag, index) => (
+                {(blogPost.tags || []).map((tag, index) => (
                   <span key={index} className="inline-flex items-center px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">
                     <Tag className="w-3 h-3 mr-1" />
                     {tag}
@@ -141,8 +148,8 @@ const BlogDetail = () => {
           <div className="max-w-4xl mx-auto">
             <div className="relative rounded-2xl overflow-hidden">
               <img 
-                src={blogPost.featuredImage.url} 
-                alt={blogPost.featuredImage.alt}
+                src={blogPost.featuredImage?.url || "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center"} 
+                alt={blogPost.featuredImage?.alt || "Blog featured image"}
                 className="w-full h-64 md:h-96 object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
@@ -193,10 +200,10 @@ const BlogDetail = () => {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Về tác giả</h3>
                     <div className="flex items-center space-x-3 mb-3">
                       <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        {blogPost.author.fullName.charAt(0)}
+                        {(blogPost.author?.fullName || "U").charAt(0)}
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-900">{blogPost.author.fullName}</div>
+                        <div className="font-semibold text-gray-900">{blogPost.author?.fullName || "Unknown Author"}</div>
                         <div className="text-sm text-gray-600">AI Marketing Expert</div>
                       </div>
                     </div>
@@ -231,8 +238,8 @@ const BlogDetail = () => {
                   <article key={post.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
                     <div className="relative">
                       <img 
-                        src={post.featuredImage.url} 
-                        alt={post.featuredImage.alt}
+                        src={post.featuredImage?.url || "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop&crop=center"} 
+                        alt={post.featuredImage?.alt || "Related post image"}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-4 left-4">
