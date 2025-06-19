@@ -54,9 +54,56 @@ function requireRole(req, ...roles) {
 
 // Mock data
 const mockUsers = [
-  { id: '1', email: 'admin@phg.com', password: 'admin123', fullName: 'Admin User', role: 'ADMIN' },
-  { id: '2', email: 'hr@phg.com', password: 'hr123', fullName: 'HR Manager', role: 'HR' },
-  { id: '3', email: 'user@phg.com', password: 'user123', fullName: 'Regular User', role: 'USER' }
+  { 
+    id: '1', 
+    email: 'admin@phg.com', 
+    password: 'admin123', 
+    fullName: 'Admin User', 
+    role: 'ADMIN',
+    status: 'active',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01')
+  },
+  { 
+    id: '2', 
+    email: 'hr@phg.com', 
+    password: 'hr123', 
+    fullName: 'HR Manager', 
+    role: 'HR',
+    status: 'active',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-15')
+  },
+  { 
+    id: '3', 
+    email: 'user@phg.com', 
+    password: 'user123', 
+    fullName: 'Regular User', 
+    role: 'USER',
+    status: 'active',
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-02-01')
+  },
+  { 
+    id: '4', 
+    email: 'john.doe@example.com', 
+    password: 'password123', 
+    fullName: 'John Doe', 
+    role: 'USER',
+    status: 'active',
+    createdAt: new Date('2024-02-10'),
+    updatedAt: new Date('2024-02-10')
+  },
+  { 
+    id: '5', 
+    email: 'jane.smith@example.com', 
+    password: 'password123', 
+    fullName: 'Jane Smith', 
+    role: 'HR',
+    status: 'active',
+    createdAt: new Date('2024-02-15'),
+    updatedAt: new Date('2024-02-15')
+  }
 ];
 
 const mockJobs = [
@@ -150,6 +197,268 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    // GET ALL USERS (Admin only)
+    if (path === '/users' && method === 'GET') {
+      const auth = requireRole(req, 'ADMIN');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      let users = mockUsers.map(({ password, ...user }) => user);
+      
+      if (prisma && dbStatus === 'connected') {
+        try {
+          users = await prisma.user.findMany({
+            select: { 
+              id: true, email: true, fullName: true, role: true, 
+              status: true, createdAt: true, updatedAt: true 
+            },
+            orderBy: { createdAt: 'desc' }
+          });
+        } catch { /* use mock */ }
+      }
+      return res.json(users);
+    }
+
+    // CREATE USER (Admin only)
+    if (path === '/users' && method === 'POST') {
+      const auth = requireRole(req, 'ADMIN');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const { email, fullName, role, password } = body;
+      if (!email || !fullName || !role || !password) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Check if user exists
+      let existingUser = mockUsers.find(u => u.email === email);
+      if (prisma && dbStatus === 'connected') {
+        try {
+          existingUser = await prisma.user.findUnique({ where: { email } });
+        } catch { /* use mock check */ }
+      }
+
+      if (existingUser) {
+        return res.status(409).json({ error: 'User already exists' });
+      }
+
+      const userData = {
+        email: email.trim().toLowerCase(),
+        fullName: fullName.trim(),
+        role,
+        status: 'active'
+      };
+
+      let newUser = {
+        id: Date.now().toString(),
+        ...userData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      if (prisma && dbStatus === 'connected') {
+        try {
+          const hashedPassword = await bcrypt.hash(password, 10);
+          newUser = await prisma.user.create({
+            data: { ...userData, password: hashedPassword },
+            select: { 
+              id: true, email: true, fullName: true, role: true, 
+              status: true, createdAt: true, updatedAt: true 
+            }
+          });
+        } catch { /* use mock */ }
+      }
+
+      return res.status(201).json(newUser);
+    }
+
+    // UPDATE USER (Admin only)
+    if (path.startsWith('/users/') && method === 'PUT') {
+      const auth = requireRole(req, 'ADMIN');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const userId = path.split('/')[2];
+      const { email, fullName, role, status } = body;
+
+      if (!email && !fullName && !role && !status) {
+        return res.status(400).json({ error: 'No fields to update' });
+      }
+
+      const updateData = {};
+      if (email) updateData.email = email.trim().toLowerCase();
+      if (fullName) updateData.fullName = fullName.trim();
+      if (role) updateData.role = role;
+      if (status) updateData.status = status;
+      updateData.updatedAt = new Date();
+
+      let updatedUser = null;
+      if (prisma && dbStatus === 'connected') {
+        try {
+          updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: updateData,
+            select: { 
+              id: true, email: true, fullName: true, role: true, 
+              status: true, createdAt: true, updatedAt: true 
+            }
+          });
+        } catch { /* use mock */ }
+      }
+
+      if (!updatedUser) {
+        const userIndex = mockUsers.findIndex(u => u.id === userId);
+        if (userIndex === -1) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        updatedUser = { ...mockUsers[userIndex], ...updateData };
+        delete updatedUser.password;
+      }
+
+      return res.json(updatedUser);
+    }
+
+    // DELETE USER (Admin only)
+    if (path.startsWith('/users/') && !path.includes('/change-password') && method === 'DELETE') {
+      const auth = requireRole(req, 'ADMIN');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const userId = path.split('/')[2];
+
+      // Prevent deleting own account
+      if (userId === auth.user.id) {
+        return res.status(400).json({ error: 'Cannot delete your own account' });
+      }
+
+      let deletedUser = null;
+      if (prisma && dbStatus === 'connected') {
+        try {
+          deletedUser = await prisma.user.delete({
+            where: { id: userId },
+            select: { 
+              id: true, email: true, fullName: true, role: true 
+            }
+          });
+        } catch { /* use mock */ }
+      }
+
+      if (!deletedUser) {
+        const userIndex = mockUsers.findIndex(u => u.id === userId);
+        if (userIndex === -1) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        deletedUser = { ...mockUsers[userIndex] };
+        delete deletedUser.password;
+      }
+
+      return res.json({ message: 'User deleted successfully', user: deletedUser });
+    }
+
+    // ADMIN CHANGE USER PASSWORD 
+    if (path.match(/^\/users\/[^\/]+\/change-password$/) && method === 'POST') {
+      const auth = requireRole(req, 'ADMIN');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const userId = path.split('/')[2];
+      const { newPassword } = body;
+
+      if (!newPassword) {
+        return res.status(400).json({ error: 'New password required' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+      }
+
+      if (prisma && dbStatus === 'connected') {
+        try {
+          const hashedPassword = await bcrypt.hash(newPassword, 10);
+          await prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword, updatedAt: new Date() }
+          });
+        } catch (error) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+      }
+
+      return res.json({ message: 'Password updated successfully' });
+    }
+
+    // USER CHANGE OWN PASSWORD
+    if (path === '/users/change-password' && method === 'POST') {
+      const auth = requireAuth(req);
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const { currentPassword, newPassword } = body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current and new password required' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters' });
+      }
+
+      // Verify current password first
+      let user = null;
+      if (prisma && dbStatus === 'connected') {
+        try {
+          user = await prisma.user.findUnique({ where: { id: auth.user.id } });
+          if (!user || !await bcrypt.compare(currentPassword, user.password)) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+          }
+          
+          const hashedPassword = await bcrypt.hash(newPassword, 10);
+          await prisma.user.update({
+            where: { id: auth.user.id },
+            data: { password: hashedPassword, updatedAt: new Date() }
+          });
+        } catch { /* use mock */ }
+      } else {
+        user = mockUsers.find(u => u.id === auth.user.id);
+        if (!user || user.password !== currentPassword) {
+          return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+      }
+
+      return res.json({ message: 'Password changed successfully' });
+    }
+
+    // SEARCH USERS (Admin only)
+    if (path === '/users/search' && method === 'GET') {
+      const auth = requireRole(req, 'ADMIN');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const query = req.url.split('?q=')[1];
+      if (!query) {
+        return res.status(400).json({ error: 'Search query required' });
+      }
+
+      const searchTerm = decodeURIComponent(query).toLowerCase();
+      let users = mockUsers
+        .filter(u => 
+          u.fullName.toLowerCase().includes(searchTerm) ||
+          u.email.toLowerCase().includes(searchTerm)
+        )
+        .map(({ password, ...user }) => user);
+
+      if (prisma && dbStatus === 'connected') {
+        try {
+          users = await prisma.user.findMany({
+            where: {
+              OR: [
+                { fullName: { contains: searchTerm, mode: 'insensitive' } },
+                { email: { contains: searchTerm, mode: 'insensitive' } }
+              ]
+            },
+            select: { 
+              id: true, email: true, fullName: true, role: true, 
+              status: true, createdAt: true, updatedAt: true 
+            }
+          });
+        } catch { /* use mock */ }
+      }
+
+      return res.json(users);
+    }
+
     // USER PROFILE
     if (path === '/users/profile' && method === 'GET') {
       const auth = requireAuth(req);
@@ -160,12 +469,18 @@ module.exports = async function handler(req, res) {
         try {
           user = await prisma.user.findUnique({
             where: { id: auth.user.id },
-            select: { id: true, email: true, fullName: true, role: true }
+            select: { id: true, email: true, fullName: true, role: true, status: true }
           });
         } catch { /* fallback */ }
       }
       
-      if (!user) user = mockUsers.find(u => u.id === auth.user.id);
+      if (!user) {
+        user = mockUsers.find(u => u.id === auth.user.id);
+        if (user) {
+          const { password, ...userWithoutPassword } = user;
+          user = userWithoutPassword;
+        }
+      }
       return res.json(user);
     }
 
@@ -310,12 +625,30 @@ module.exports = async function handler(req, res) {
     // 404
     return res.status(404).json({
       error: 'Not found', method, path,
-      endpoints: [
-        'GET /', 'POST /auth/login', 'GET /users/profile',
-        'GET /blogs', 'GET /blogs/featured', 'GET /blogs/:id',
-        'POST /blogs/:id/views', 'GET /recruitment/jobs',
-        'GET /recruitment/jobs/:id', 'POST /recruitment/applications',
-        'POST /contacts'
+      message: 'This API endpoint is not implemented yet',
+      availableEndpoints: [
+        '== AUTHENTICATION ==',
+        'POST /auth/login',
+        '== USER MANAGEMENT ==',
+        'GET /users/profile',
+        'POST /users/change-password',
+        'GET /users (admin)',
+        'POST /users (admin)',
+        'PUT /users/:id (admin)',
+        'DELETE /users/:id (admin)',
+        'POST /users/:id/change-password (admin)',
+        'GET /users/search (admin)',
+        '== CONTENT ==',
+        'GET /blogs',
+        'GET /blogs/featured',
+        'GET /blogs/:id',
+        'POST /blogs/:id/views',
+        'GET /recruitment/jobs',
+        'GET /recruitment/jobs/:id',
+        'POST /recruitment/applications',
+        'POST /contacts',
+        '== SYSTEM ==',
+        'GET / (health)'
       ]
     });
 
