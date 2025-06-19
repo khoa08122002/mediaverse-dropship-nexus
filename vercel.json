@@ -33,34 +33,6 @@
   },
   "routes": [
     {
-      "src": "/api/simple",
-      "dest": "api/simple.js"
-    },
-    {
-      "src": "/api/health",
-      "dest": "api/health.js"
-    },
-    {
-      "src": "/api/test",
-      "dest": "api/test.js"
-    },
-    {
-      "src": "/api/express-simple/(.*)",
-      "dest": "api/express-simple.js"
-    },
-    {
-      "src": "/api/express-simple",
-      "dest": "api/express-simple.js"
-    },
-    {
-      "src": "/api/express/(.*)",
-      "dest": "api/express.js"
-    },
-    {
-      "src": "/api/express",
-      "dest": "api/express.js"
-    },
-    {
       "src": "/api/backend/(.*)",
       "dest": "api/backend.js"
     },
@@ -73,44 +45,24 @@
       "dest": "api/index.js"
     },
     {
+      "src": "/test-routing.html",
+      "dest": "public/test-routing.html"
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "dist/assets/$1"
     },
     {
-      "src": "/(favicon\\.ico|manifest\\.json|robots\\.txt)",
+      "src": "/(favicon\\.ico|manifest\\.json|robots\\.txt|logo\\.png|avatar\\.jpg|placeholder\\.svg)",
       "dest": "dist/$1"
     },
     {
-      "src": "/.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|webm|wav|mp3|m4a|aac|oga|map)$",
+      "src": "/.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|mp4|webm|wav|mp3|m4a|aac|oga|map|txt|json)$",
       "dest": "dist/$0"
     },
     {
-      "src": "/(login|admin|blog|contact|about|recruitment|media-services|ecommerce)$",
-      "dest": "dist/index.html",
-      "headers": {
-        "Content-Type": "text/html; charset=utf-8"
-      }
-    },
-    {
-      "src": "/blog/(.*)",
-      "dest": "dist/index.html",
-      "headers": {
-        "Content-Type": "text/html; charset=utf-8"
-      }
-    },
-    {
-      "src": "/admin/(.*)",
-      "dest": "dist/index.html",
-      "headers": {
-        "Content-Type": "text/html; charset=utf-8"
-      }
-    },
-    {
       "src": "/(.*)",
-      "dest": "dist/index.html",
-      "headers": {
-        "Content-Type": "text/html; charset=utf-8"
-      }
+      "dest": "dist/index.html"
     }
   ],
   "env": {
