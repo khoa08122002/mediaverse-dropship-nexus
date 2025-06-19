@@ -23,6 +23,33 @@ const ApplicantProfile = React.lazy(() => import('./components/admin/ApplicantPr
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<Providers />}>
+      {/* Standalone Routes (No Layout) */}
+      <Route
+        path="login"
+        element={
+          <Suspense fallback={<Preloader />}>
+            <Login />
+          </Suspense>
+        }
+      />
+      <Route
+        path="register"
+        element={
+          <Suspense fallback={<Preloader />}>
+            <Login />
+          </Suspense>
+        }
+      />
+      <Route
+        path="forgot-password"
+        element={
+          <Suspense fallback={<Preloader />}>
+            <Login />
+          </Suspense>
+        }
+      />
+      
+      {/* Routes with AppLayout */}
       <Route element={<AppLayout />}>
         <Route
           path="/"
@@ -97,14 +124,6 @@ const router = createBrowserRouter(
           element={
             <Suspense fallback={<Preloader />}>
               <Admin />
-            </Suspense>
-          }
-        />
-        <Route
-          path="login"
-          element={
-            <Suspense fallback={<Preloader />}>
-              <Login />
             </Suspense>
           }
         />
