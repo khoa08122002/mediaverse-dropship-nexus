@@ -452,7 +452,7 @@ const BlogManager = () => {
                 Nội dung
               </label>
               <Editor
-                apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
+                tinymceScriptSrc="/tinymce/tinymce.js"
                 onInit={(evt, editor) => editorRef.current = editor}
                 value={newBlog.content}
                 onEditorChange={(content) => setNewBlog({...newBlog, content})}
@@ -469,7 +469,6 @@ const BlogManager = () => {
                     'alignright alignjustify | bullist numlist outdent indent | ' +
                     'removeformat | help',
                   content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-                  language: 'vi',
                   skin: 'oxide',
                   content_css: 'default',
                   images_upload_handler: handleImageUpload

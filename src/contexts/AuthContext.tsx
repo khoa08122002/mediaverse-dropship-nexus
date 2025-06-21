@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 // Emergency fallback for production
 if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
   console.log('🚨 AuthContext Emergency: Force updating axios baseURL for production');
-  axios.defaults.baseURL = 'https://phg2.vercel.app/api/backend';
+  axios.defaults.baseURL = 'https://phg2.vercel.app/api/comprehensive';
 }
 
 interface User {

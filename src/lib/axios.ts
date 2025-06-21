@@ -19,7 +19,7 @@ const isProduction = typeof window !== 'undefined' && (
 );
 
 const baseURL = isProduction 
-  ? 'https://phg2.vercel.app/api/backend'  // Full URL for production
+  ? 'https://phg2.vercel.app/api/comprehensive'  // Full URL for production
   : 'http://localhost:3002/api'; // Development URL
 
 // Debug logging

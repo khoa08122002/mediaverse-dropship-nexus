@@ -28,11 +28,11 @@ export const getAPIBaseURL = () => {
   
   // Force production URL for Vercel domains
   if (env.isVercelDomain) {
-    return 'https://phg2.vercel.app/api/backend';
+    return 'https://phg2.vercel.app/api/comprehensive';
   }
   
   return env.isProduction 
-    ? 'https://phg2.vercel.app/api/backend'
+    ? 'https://phg2.vercel.app/api/comprehensive'
     : 'http://localhost:3002/api';
 };
 

@@ -8,7 +8,7 @@ const isProduction = typeof window !== 'undefined' && (
 );
 
 const baseURL = isProduction
-  ? 'https://phg2.vercel.app/api/backend'  // In production, use Vercel backend function
+  ? 'https://phg2.vercel.app/api/comprehensive'  // In production, use Vercel backend function
   : 'http://localhost:3002/api'; // In development, use localhost
 
 // Debug logging
