@@ -864,8 +864,64 @@ module.exports = async function handler(req, res) {
       return res.json(applications);
     }
 
+    // GET SINGLE APPLICATION (Admin/HR only)
+    if (path.match(/^\/recruitment\/applications\/\d+$/) && method === 'GET') {
+      const auth = requireRole(req, 'ADMIN', 'HR');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const applicationId = parseInt(path.split('/')[3]);
+      let application = null;
+
+      if (prisma && dbStatus === 'connected') {
+        try {
+          application = await prisma.application.findUnique({
+            where: { id: applicationId },
+            include: { job: { select: { title: true, id: true } } }
+          });
+        } catch {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+      }
+
+      if (!application) {
+        return res.status(404).json({ error: 'Application not found' });
+      }
+
+      return res.json(application);
+    }
+
     // UPDATE APPLICATION STATUS (Admin/HR only)
-    if (path.startsWith('/recruitment/applications/') && method === 'PUT') {
+    if (path.match(/^\/recruitment\/applications\/\d+\/status$/) && method === 'PUT') {
+      const auth = requireRole(req, 'ADMIN', 'HR');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const applicationId = parseInt(path.split('/')[3]);
+      const { status } = body;
+
+      if (!status) {
+        return res.status(400).json({ error: 'Status is required' });
+      }
+
+      const updateData = { status, updatedAt: new Date() };
+
+      let updatedApplication = null;
+      if (prisma && dbStatus === 'connected') {
+        try {
+          updatedApplication = await prisma.application.update({
+            where: { id: applicationId },
+            data: updateData,
+            include: { job: { select: { title: true, id: true } } }
+          });
+        } catch {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+      }
+
+      return res.json(updatedApplication || { id: applicationId, ...updateData });
+    }
+
+    // UPDATE APPLICATION (Admin/HR only)
+    if (path.startsWith('/recruitment/applications/') && !path.includes('/status') && !path.includes('/cv') && method === 'PUT') {
       const auth = requireRole(req, 'ADMIN', 'HR');
       if (auth.error) return res.status(auth.status).json({ error: auth.error });
 
@@ -895,6 +951,20 @@ module.exports = async function handler(req, res) {
       return res.json(updatedApplication || { id: applicationId, ...updateData });
     }
 
+    // DOWNLOAD CV (Admin/HR only)
+    if (path.match(/^\/recruitment\/applications\/\d+\/cv$/) && method === 'GET') {
+      const auth = requireRole(req, 'ADMIN', 'HR');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      const applicationId = parseInt(path.split('/')[3]);
+      
+      // For Vercel, we can't serve actual files easily, so return a mock response
+      return res.status(404).json({ 
+        error: 'CV file not found',
+        message: 'CV download is not available in this demo environment'
+      });
+    }
+
     // DELETE APPLICATION (Admin only)
     if (path.startsWith('/recruitment/applications/') && method === 'DELETE') {
       const auth = requireRole(req, 'ADMIN');
@@ -911,6 +981,53 @@ module.exports = async function handler(req, res) {
       }
 
       return res.json({ message: 'Application deleted successfully' });
+    }
+
+    // RECRUITMENT STATS (Admin/HR only)
+    if (path === '/recruitment/stats' && method === 'GET') {
+      const auth = requireRole(req, 'ADMIN', 'HR');
+      if (auth.error) return res.status(auth.status).json({ error: auth.error });
+
+      let stats = {
+        activeJobs: 2,
+        totalApplications: 0,
+        pendingReview: 0,
+        interviewed: 0,
+        hired: 0,
+        recentApplications: []
+      };
+
+      if (prisma && dbStatus === 'connected') {
+        try {
+          const [activeJobs, totalApplications, pendingApplications] = await Promise.all([
+            prisma.job.count({ where: { status: 'active' } }),
+            prisma.application.count(),
+            prisma.application.count({ where: { status: 'pending' } })
+          ]);
+
+          const recentApplications = await prisma.application.findMany({
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            include: {
+              job: { select: { title: true } }
+            }
+          });
+
+          stats = {
+            activeJobs,
+            totalApplications,
+            pendingReview: pendingApplications,
+            interviewed: await prisma.application.count({ where: { status: 'interviewed' } }),
+            hired: await prisma.application.count({ where: { status: 'accepted' } }),
+            recentApplications
+          };
+        } catch (error) {
+          console.error('Get recruitment stats error:', error);
+          // Use mock data on error
+        }
+      }
+
+      return res.json(stats);
     }
 
     // CREATE CONTACT
@@ -1129,9 +1246,13 @@ module.exports = async function handler(req, res) {
         '== APPLICATION MANAGEMENT ==',
         'POST /recruitment/applications',
         'GET /recruitment/applications (admin/hr)',
+        'GET /recruitment/applications/:id (admin/hr)',
         'GET /recruitment/jobs/:id/applications (admin/hr)',
         'PUT /recruitment/applications/:id (admin/hr)',
+        'PUT /recruitment/applications/:id/status (admin/hr)',
+        'GET /recruitment/applications/:id/cv (admin/hr)',
         'DELETE /recruitment/applications/:id (admin)',
+        'GET /recruitment/stats (admin/hr)',
         '== CONTACT MANAGEMENT ==',
         'POST /contacts',
         'GET /contacts (admin/hr)',
