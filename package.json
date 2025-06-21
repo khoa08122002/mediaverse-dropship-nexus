@@ -22,7 +22,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "vercel-build": "npm run clean && npm run build:backend && npm run build:frontend",
+    "vercel-build": "node scripts/vercel-build.js",
     "railway-build": "npm run build",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
@@ -33,7 +33,8 @@
     "postinstall": "npm run prisma:generate",
     "test:health": "cross-env NODE_ENV=production node scripts/test-health.js",
     "test:prod": "npm run build && npm run predeploy && npm run start:prod",
-    "test:prod-health": "node scripts/test-prod-health.js"
+    "test:prod-health": "node scripts/test-prod-health.js",
+    "test:db": "node scripts/test-db.js"
   },
   "dependencies": {
     "@eslint/config-array": "^0.20.1",

@@ -128,7 +128,7 @@ model Application {
 
 model Contact {
   id        String         @id @default(uuid())
-  name      String
+  fullName  String
   email     String
   phone     String?
   company   String?
