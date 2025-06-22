@@ -108,7 +108,7 @@ async function main() {
     update: {},
     create: {
       id: 'contact-1',
-      fullName: 'Nguyễn Văn A',
+      name: 'Nguyễn Văn A',
       email: 'nguyenvana@example.com',
       phone: '0123456789',
       company: 'ABC Company',
@@ -126,7 +126,7 @@ async function main() {
     update: {},
     create: {
       id: 'contact-2',
-      fullName: 'Trần Thị B',
+      name: 'Trần Thị B',
       email: 'tranthib@example.com',
       phone: '0987654321',
       company: 'XYZ Corp',
@@ -143,7 +143,7 @@ async function main() {
   console.log(`👤 Created users: ${admin.email}, ${hr.email}, ${user.email}`);
   console.log(`💼 Created jobs: ${job1.title}, ${job2.title}`);
   console.log(`📝 Created blog: ${blog.title}`);
-  console.log(`📞 Created contacts: ${contact1.fullName}, ${contact2.fullName}`);
+  console.log(`📞 Created contacts: ${contact1.name}, ${contact2.name}`);
 }
 
 main()

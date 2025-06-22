@@ -1,14 +1,100 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  fullName  String
+  lastLogin DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  role      Role      @default(USER)
+  status    Status    @default(ACTIVE)
+  blogs     Blog[]
+
+  @@map("users")
+}
+
+model Blog {
+  id            String   @id @default(uuid())
+  title         String
+  slug          String   @unique
+  content       String
+  excerpt       String
+  featuredImage String?
+  category      String
+  tags          String[]
+  readTime      String?
+  isFeatured    Boolean  @default(false)
+  status        String   @default("draft")
+  published     Boolean  @default(false)
+  views         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  authorId      String
+  author        User     @relation(fields: [authorId], references: [id])
+
+  @@map("blogs")
+}
+
+model Job {
+  id           Int           @id @default(autoincrement())
+  title        String
+  department   String
+  location     String
+  type         JobType       @default(fulltime)
+  description  String
+  requirements String
+  benefits     String?
+  salary       String?
+  status       JobStatus     @default(active)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+
+  @@map("jobs")
+}
+
+model Application {
+  id          Int               @id @default(autoincrement())
+  fullName    String
+  email       String
+  phone       String
+  coverLetter String?
+  cvFile      String?
+  status      ApplicationStatus @default(pending)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  jobId       Int
+  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("applications")
+}
+
+model Contact {
+  id        String          @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  service   String?
+  budget    String?
+  subject   String
+  message   String
+  status    ContactStatus   @default(NEW)
+  priority  ContactPriority @default(MEDIUM)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@map("contacts")
 }
 
 enum Role {
@@ -54,92 +140,3 @@ enum ApplicationStatus {
   accepted
   rejected
 }
-
-model User {
-  id        String     @id @default(uuid())
-  email     String     @unique
-  password  String
-  fullName  String
-  role      Role       @default(USER)
-  status    Status     @default(ACTIVE)
-  lastLogin DateTime?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  blogs     Blog[]
-
-  @@map("users")
-}
-
-model Blog {
-  id            String   @id @default(uuid())
-  title         String
-  slug          String   @unique
-  content       String   @db.Text
-  excerpt       String
-  featuredImage String?
-  category      String
-  tags          String[]
-  readTime      String?
-  isFeatured    Boolean  @default(false)
-  status        String   @default("draft")
-  published     Boolean  @default(false)
-  views         Int      @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  author        User     @relation(fields: [authorId], references: [id])
-  authorId      String
-
-  @@map("blogs")
-}
-
-model Job {
-  id           Int           @id @default(autoincrement())
-  title        String
-  department   String
-  location     String
-  type         JobType      @default(fulltime)
-  description  String        @db.Text
-  requirements String        @db.Text
-  benefits     String?       @db.Text
-  salary       String?
-  status       JobStatus    @default(active)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  applications Application[]
-
-  @@map("jobs")
-}
-
-model Application {
-  id           Int              @id @default(autoincrement())
-  fullName     String
-  email        String
-  phone        String
-  coverLetter  String?          @db.Text
-  cvFile       String?
-  status       ApplicationStatus @default(pending)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  job          Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  jobId        Int
-
-  @@map("applications")
-}
-
-model Contact {
-  id        String         @id @default(uuid())
-  fullName  String
-  email     String
-  phone     String?
-  company   String?
-  service   String?
-  budget    String?
-  subject   String
-  message   String         @db.Text
-  status    ContactStatus  @default(NEW)
-  priority  ContactPriority @default(MEDIUM)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-
-  @@map("contacts")
-} 

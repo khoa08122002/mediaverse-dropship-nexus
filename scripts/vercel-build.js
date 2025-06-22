@@ -7,6 +7,13 @@ console.log('🚀 Starting Vercel build process...');
 try {
   console.log('📦 Installing dependencies...');
   
+  console.log('🔍 Validating environment variables...');
+  try {
+    execSync('node scripts/validate-env.js', { stdio: 'inherit' });
+  } catch (envError) {
+    console.log('⚠️ Environment validation failed, but continuing build...');
+  }
+  
   console.log('🔧 Generating Prisma Client...');
   execSync('npx prisma generate', { stdio: 'inherit' });
   

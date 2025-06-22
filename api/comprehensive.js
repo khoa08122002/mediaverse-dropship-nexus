@@ -1032,14 +1032,14 @@ module.exports = async function handler(req, res) {
 
     // CREATE CONTACT
     if (path === '/contacts' && method === 'POST') {
-      const { fullName, email, phone, subject, message } = body;
+      const { name, email, phone, subject, message } = body;
       
-      if (!fullName || !email || !message) {
+      if (!name || !email || !message) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
       const data = {
-        fullName: fullName.trim(), email: email.trim(),
+        name: name.trim(), email: email.trim(),
         phone: phone?.trim() || '', subject: subject?.trim() || '',
         message: message.trim(), status: 'pending'
       };

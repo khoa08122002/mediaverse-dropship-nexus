@@ -128,7 +128,7 @@ const ContactManager = () => {
 
   const filteredContacts = contacts.filter(contact => {
     const matchesSearch = 
-      contact.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       contact.subject.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'all' || contact.status === filterStatus;
@@ -343,7 +343,7 @@ const ContactManager = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2 mb-1">
                       <div className={`w-2 h-2 rounded-full ${getPriorityColor(contact.priority)}`}></div>
-                      <h3 className="font-medium text-gray-800">{contact.fullName}</h3>
+                      <h3 className="font-medium text-gray-800">{contact.name}</h3>
                       {contact.company && (
                         <span className="text-sm text-gray-500">- {contact.company}</span>
                       )}
@@ -404,7 +404,7 @@ const ContactManager = () => {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="text-sm font-medium text-gray-600 block mb-1">Họ tên</label>
-                    <p className="text-lg text-gray-800">{selectedContact.fullName}</p>
+                    <p className="text-lg text-gray-800">{selectedContact.name}</p>
                   </div>
                   
                   <div>
