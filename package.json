@@ -46,6 +46,7 @@
     "deploy:emergency": "node scripts/emergency-deploy.js",
     "deploy:normal": "node scripts/vercel-build.js",
     "vercel-build:normal": "node scripts/vercel-build.js",
+    "fix:spa": "node scripts/fix-spa-routing.js",
     "test:supabase": "node scripts/test-supabase.js",
     "db:reset": "prisma migrate reset --force",
     "db:push": "prisma db push",
