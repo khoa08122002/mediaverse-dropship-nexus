@@ -1,0 +1,28 @@
+# Development files
+.env.local
+.env.development
+*.log
+
+# Test files
+**/__tests__/**
+**/*.test.*
+**/*.spec.*
+jest.config.js
+coverage/
+
+# Development tools
+.vscode/
+.idea/
+
+# Local uploads (use cloud storage in production)
+uploads/cv/
+uploads/temp/
+
+# Documentation
+*.md
+!README.md
+
+# Cache and temporary files
+.cache/
+tmp/
+temp/
