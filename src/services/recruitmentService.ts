@@ -1,10 +1,6 @@
 import axios from './axiosConfig';
 
-// Emergency fallback for production - Use current domain's API
-if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-  console.log('🚨 Emergency: Using current domain API endpoint');
-  axios.defaults.baseURL = `${window.location.origin}/api/comprehensive`;
-}
+// Remove hardcoded URLs - use environment configuration
 import type { 
   Application,
   ApplicationStatusType,

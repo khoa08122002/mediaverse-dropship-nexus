@@ -26,14 +26,14 @@ export const getEnvironment = () => {
 export const getAPIBaseURL = () => {
   const env = getEnvironment();
   
-  // Force production URL for Vercel domains
+  // Use current domain with backend endpoint for real database
   if (env.isVercelDomain) {
-    return 'https://phg2.vercel.app/api/comprehensive';
+    return `${window.location.origin}/api/backend`;
   }
   
   return env.isProduction 
-    ? 'https://phg2.vercel.app/api/comprehensive'
-    : 'http://localhost:3002/api';
+    ? `${window.location.origin}/api/backend`
+    : 'http://localhost:3000/api';
 };
 
 export const logEnvironmentInfo = (source: string) => {
