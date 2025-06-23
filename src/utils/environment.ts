@@ -26,14 +26,13 @@ export const getEnvironment = () => {
 export const getAPIBaseURL = () => {
   const env = getEnvironment();
   
-  // Use current domain with backend endpoint for real database
-  if (env.isVercelDomain) {
-    return `${window.location.origin}/api/backend`;
+  // TEMPORARY FIX: Use working API endpoint until deployment is restored
+  // The old phg2.vercel.app has working Supabase connection
+  if (env.isProduction || env.isVercelDomain) {
+    return 'https://phg2.vercel.app/api/comprehensive';
   }
   
-  return env.isProduction 
-    ? `${window.location.origin}/api/backend`
-    : 'http://localhost:3000/api';
+  return 'http://localhost:3000/api';
 };
 
 export const logEnvironmentInfo = (source: string) => {

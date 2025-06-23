@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from '../services/axiosConfig';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { validateDataConsistency } from '../utils/clearCache';
 
@@ -30,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const checkAuthStatus = async () => {
     try {
@@ -37,6 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (!accessToken || !refreshToken) {
+        // If trying to access admin without auth, redirect to login
+        if (location.pathname === '/admin') {
+          navigate('/login');
+        }
         setLoading(false);
         return;
       }
@@ -44,7 +49,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Try to get user profile with current token
       try {
         const response = await axios.get('/users/profile');
-        setUser(response.data);
+        const userData = response.data;
+        setUser(userData);
+        
+        // Check if user is trying to access admin page
+        if (location.pathname === '/admin') {
+          if (userData.role !== 'ADMIN' && userData.role !== 'HR') {
+            // Unauthorized for admin, redirect to login
+            navigate('/login');
+            toast.error('Bạn không có quyền truy cập trang quản trị');
+            return;
+          }
+        }
       } catch (profileError) {
         // If profile fetch fails, try to refresh token
         try {
@@ -53,16 +69,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           localStorage.setItem('accessToken', newAccessToken);
           setUser(userData);
+          
+          // Check admin access after token refresh
+          if (location.pathname === '/admin') {
+            if (userData.role !== 'ADMIN' && userData.role !== 'HR') {
+              navigate('/login');
+              toast.error('Bạn không có quyền truy cập trang quản trị');
+              return;
+            }
+          }
         } catch (refreshError) {
           console.error('Token refresh failed:', refreshError);
           // If refresh fails, clear everything
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           setUser(null);
+          
+          // Redirect to login if trying to access admin
+          if (location.pathname === '/admin') {
+            navigate('/login');
+          }
         }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      // On error, redirect to login if trying to access admin
+      if (location.pathname === '/admin') {
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -72,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Validate and clear inconsistent cache first
     validateDataConsistency();
     checkAuthStatus();
-  }, []);
+  }, [location.pathname]); // Re-run when route changes
 
   const login = async (email: string, password: string) => {
     try {
@@ -88,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('refreshToken', refreshToken);
       setUser(userData);
 
+      // Proper role-based routing
       if (userData.role === 'ADMIN' || userData.role === 'HR') {
         navigate('/admin');
       } else {
