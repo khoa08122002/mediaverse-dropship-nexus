@@ -56,6 +56,31 @@ function requireRoles(...roles) {
   };
 }
 
+// Helper function to parse request body
+async function parseBody(req) {
+  return new Promise((resolve) => {
+    if (req.body) {
+      resolve(req.body);
+      return;
+    }
+    
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      try {
+        const parsed = body ? JSON.parse(body) : {};
+        resolve(parsed);
+      } catch (error) {
+        console.error('Body parsing error:', error);
+        resolve({});
+      }
+    });
+  });
+}
+
 // Database connection helper
 async function withDatabase(operation) {
   try {
@@ -77,6 +102,13 @@ async function withDatabase(operation) {
 module.exports = async (req, res) => {
   try {
     console.log(`Backend API: ${req.method} ${req.url}`);
+    console.log(`[DEBUG] Headers:`, JSON.stringify(req.headers, null, 2));
+    console.log(`[DEBUG] Environment:`, {
+      NODE_ENV: process.env.NODE_ENV,
+      hasDbUrl: !!process.env.DATABASE_URL,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      dbStatus: dbConnectionStatus
+    });
 
     // Set CORS headers
     const corsOrigins = process.env.NODE_ENV === 'production'
@@ -116,9 +148,11 @@ module.exports = async (req, res) => {
     let body = {};
     if (method === 'POST' || method === 'PUT') {
       try {
-        body = req.body || {};
+        body = await parseBody(req);
+        console.log('[DEBUG] Parsed body:', JSON.stringify(body, null, 2));
       } catch (error) {
         console.error('Body parsing error:', error);
+        body = {};
       }
     }
 
@@ -142,31 +176,57 @@ module.exports = async (req, res) => {
     // Route: Auth Login - DATABASE ONLY
     if (cleanUrl === '/auth/login' && method === 'POST') {
       try {
+        console.log('[DEBUG] Login attempt started');
         const { email, password } = body;
         
+        console.log('[DEBUG] Login data:', { email: email, hasPassword: !!password });
+        
         if (!email || !password) {
+          console.log('[DEBUG] Missing email or password');
           return res.status(400).json({ error: 'Email and password required' });
         }
 
         // ONLY DATABASE - NO MOCK DATA
         if (!prisma) {
-          return res.status(503).json({ error: 'Database not available - check configuration' });
+          console.log('[DEBUG] Prisma client not available');
+          return res.status(503).json({ 
+            error: 'Database not available - check configuration',
+            details: {
+              hasUrl: !!process.env.DATABASE_URL,
+              dbStatus: dbConnectionStatus
+            }
+          });
         }
 
+        console.log('[DEBUG] Attempting to find user by email');
         const user = await withDatabase(async (db) => {
           return await db.user.findUnique({ where: { email } });
         });
 
-        if (!user || !await bcrypt.compare(password, user.password)) {
+        console.log('[DEBUG] User found:', !!user);
+        
+        if (!user) {
+          console.log('[DEBUG] User not found');
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        console.log('[DEBUG] Comparing password');  
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        console.log('[DEBUG] Password match:', passwordMatch);
+        
+        if (!passwordMatch) {
+          console.log('[DEBUG] Password does not match');
+          return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        console.log('[DEBUG] Creating JWT token');
         const token = jwt.sign(
           { id: user.id, email: user.email, role: user.role },
           JWT_SECRET,
           { expiresIn: '1h' }
         );
 
+        console.log('[DEBUG] Login successful');
         return res.status(200).json({
           accessToken: token,
           refreshToken: `refresh_${Date.now()}`,
@@ -178,8 +238,15 @@ module.exports = async (req, res) => {
           }
         });
       } catch (error) {
-        console.error('Login error:', error);
-        return res.status(500).json({ error: 'Login failed - database error' });
+        console.error('Login error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        return res.status(500).json({ 
+          error: 'Login failed - database error',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
       }
     }
 
@@ -366,10 +433,13 @@ module.exports = async (req, res) => {
     // Route: Create Contact - DATABASE ONLY
     if (cleanUrl === '/contacts' && method === 'POST') {
       try {
-        const { fullName, email, phone, message, subject } = body;
+        const { fullName, name, email, phone, message, subject, company, service, budget } = body;
+        
+        // Use name or fullName (backwards compatibility)
+        const contactName = name || fullName;
 
-        if (!fullName || !email || !message) {
-          return res.status(400).json({ error: 'Missing required fields' });
+        if (!contactName || !email || !message) {
+          return res.status(400).json({ error: 'Missing required fields: name, email, message' });
         }
 
         if (!prisma) {
@@ -378,7 +448,16 @@ module.exports = async (req, res) => {
 
         const contact = await withDatabase(async (db) => {
           return await db.contact.create({
-            data: { fullName, email, phone, message, subject }
+            data: { 
+              name: contactName, 
+              email, 
+              phone, 
+              message, 
+              subject: subject || 'Contact Form Submission',
+              company,
+              service,
+              budget
+            }
           });
         });
 
