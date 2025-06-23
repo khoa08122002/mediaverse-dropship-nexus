@@ -26,10 +26,10 @@ export const getEnvironment = () => {
 export const getAPIBaseURL = () => {
   const env = getEnvironment();
   
-  // TEMPORARY FIX: Use working API endpoint until deployment is restored
-  // The old phg2.vercel.app has working Supabase connection
+  // USE CLEANED BACKEND API (NO MOCK DATA)
+  // The cleaned api/backend.js only uses database, no fallback to mock data
   if (env.isProduction || env.isVercelDomain) {
-    return 'https://phg2.vercel.app/api/comprehensive';
+    return `${window.location.origin}/api/backend`;
   }
   
   return 'http://localhost:3000/api';
@@ -42,6 +42,7 @@ export const logEnvironmentInfo = (source: string) => {
   console.log(`${source} Environment Detection:`, {
     ...env,
     baseURL,
-    source
+    source,
+    apiType: 'database-only'
   });
 }; 
