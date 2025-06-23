@@ -60,7 +60,7 @@ function requireRoles(...roles) {
 async function withDatabase(operation) {
   try {
     if (!prisma) {
-      throw new Error('Database not initialized');
+      throw new Error('Database not initialized - check DATABASE_URL environment variable');
     }
     // Test database connection
     await prisma.$connect();
@@ -73,115 +73,6 @@ async function withDatabase(operation) {
     throw error;
   }
 }
-
-// Fallback data
-const mockJobs = [
-  {
-    id: 1,
-    title: "Frontend Developer",
-    department: "Engineering",
-    location: "Remote",
-    type: "fulltime",
-    description: "Join our team as a Frontend Developer to build amazing user experiences.",
-    requirements: "3+ years React experience, TypeScript, modern CSS",
-    benefits: "Competitive salary, remote work, health insurance",
-    salary: "$60,000 - $80,000",
-    status: "active",
-    createdAt: new Date('2025-01-01'),
-    updatedAt: new Date('2025-01-01'),
-    applications: []
-  },
-  {
-    id: 2,
-    title: "Backend Developer",
-    department: "Engineering", 
-    location: "Ho Chi Minh City",
-    type: "fulltime",
-    description: "We're looking for a Backend Developer to build scalable APIs and services.",
-    requirements: "Node.js, PostgreSQL, Docker, API design",
-    benefits: "Great team, learning opportunities, career growth",
-    salary: "$55,000 - $75,000",
-    status: "active",
-    createdAt: new Date('2025-01-10'),
-    updatedAt: new Date('2025-01-10'),
-    applications: []
-  }
-];
-
-const mockBlogs = [
-  {
-    id: "1",
-    title: "Getting Started with React 19",
-    slug: "getting-started-react-19",
-    content: "React 19 brings exciting new features that make development faster and more intuitive. From automatic batching to concurrent features, this guide covers everything you need to know to upgrade your React applications.",
-    excerpt: "Discover the latest features in React 19 and how they can improve your development workflow",
-    featuredImage: {
-      url: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop&crop=center",
-      alt: "React 19 development setup"
-    },
-    category: "Technology",
-    tags: ["React", "JavaScript", "Frontend"],
-    readTime: "5 min",
-    isFeatured: true,
-    status: "published",
-    published: true,
-    views: 150,
-    createdAt: new Date('2025-01-15'),
-    updatedAt: new Date('2025-01-15'),
-    author: {
-      fullName: "Tech Team",
-      email: "tech@phg.com"
-    }
-  },
-  {
-    id: "2", 
-    title: "The Future of Web Development",
-    slug: "future-of-web-development",
-    content: "Web development is rapidly evolving with new frameworks, tools, and methodologies. Explore the trends that will shape the next decade of web development, from AI-powered coding assistants to edge computing.",
-    excerpt: "Exploring trends shaping the future of web development in 2025 and beyond",
-    featuredImage: {
-      url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop&crop=center",
-      alt: "Future web development technologies"
-    },
-    category: "Industry",
-    tags: ["Web Development", "Trends", "Future"],
-    readTime: "8 min",
-    isFeatured: false,
-    status: "published",
-    published: true,
-    views: 89,
-    createdAt: new Date('2025-01-20'),
-    updatedAt: new Date('2025-01-20'),
-    author: {
-      fullName: "Editorial Team",
-      email: "editorial@phg.com"
-    }
-  },
-  {
-    id: "3",
-    title: "AI-Powered E-commerce Revolution",
-    slug: "ai-powered-ecommerce-revolution",
-    content: "Artificial Intelligence is transforming e-commerce with personalized recommendations, automated customer service, and predictive analytics. Learn how to leverage AI for your online business.",
-    excerpt: "How AI is revolutionizing the e-commerce industry with smart automation and personalization",
-    featuredImage: {
-      url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=400&fit=crop&crop=center",
-      alt: "AI e-commerce technology"
-    },
-    category: "AI Marketing",
-    tags: ["AI", "E-commerce", "Automation"],
-    readTime: "6 min",
-    isFeatured: false,
-    status: "published",
-    published: true,
-    views: 203,
-    createdAt: new Date('2025-01-22'),
-    updatedAt: new Date('2025-01-22'),
-    author: {
-      fullName: "AI Research Team",
-      email: "ai@phg.com"
-    }
-  }
-];
 
 module.exports = async (req, res) => {
   try {
@@ -235,20 +126,20 @@ module.exports = async (req, res) => {
     if (cleanUrl === '/' || cleanUrl === '/health') {
       return res.status(200).json({
         status: 'ok',
-        message: 'PHG Corporation API Backend',
+        message: 'PHG Corporation API Backend - DATABASE ONLY',
         timestamp: new Date().toISOString(),
-        service: 'comprehensive-backend',
+        service: 'database-backend',
         platform: 'vercel-express',
         database: {
           status: dbConnectionStatus,
           hasUrl: !!process.env.DATABASE_URL,
           prismaClient: !!prisma,
-          fallbackMode: !prisma || dbConnectionStatus !== 'connected'
+          mockDataRemoved: true
         }
       });
     }
 
-    // Route: Auth Login
+    // Route: Auth Login - DATABASE ONLY
     if (cleanUrl === '/auth/login' && method === 'POST') {
       try {
         const { email, password } = body;
@@ -257,60 +148,11 @@ module.exports = async (req, res) => {
           return res.status(400).json({ error: 'Email and password required' });
         }
 
-        // If database not available, use mock authentication
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          console.log('Using mock authentication - database not available');
-          
-          // Mock admin credentials for testing
-          const mockUsers = [
-            {
-              id: '1',
-              email: 'admin@phg.com',
-              password: 'admin123', // In real app, this would be hashed
-              fullName: 'Admin User',
-              role: 'ADMIN'
-            },
-            {
-              id: '2', 
-              email: 'hr@phg.com',
-              password: 'hr123',
-              fullName: 'HR User',
-              role: 'HR'
-            },
-            {
-              id: '3',
-              email: 'user@phg.com', 
-              password: 'user123',
-              fullName: 'Regular User',
-              role: 'USER'
-            }
-          ];
-
-          const mockUser = mockUsers.find(u => u.email === email && u.password === password);
-          
-          if (!mockUser) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-          }
-
-          const token = jwt.sign(
-            { id: mockUser.id, email: mockUser.email, role: mockUser.role },
-            JWT_SECRET,
-            { expiresIn: '1h' }
-          );
-
-          return res.status(200).json({
-            accessToken: token,
-            refreshToken: `refresh_${Date.now()}`,
-            user: {
-              id: mockUser.id,
-              email: mockUser.email,
-              fullName: mockUser.fullName,
-              role: mockUser.role
-            }
-          });
+        // ONLY DATABASE - NO MOCK DATA
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available - check configuration' });
         }
 
-        // Database available - use real authentication
         const user = await withDatabase(async (db) => {
           return await db.user.findUnique({ where: { email } });
         });
@@ -337,19 +179,15 @@ module.exports = async (req, res) => {
         });
       } catch (error) {
         console.error('Login error:', error);
-        return res.status(500).json({ error: 'Login failed' });
+        return res.status(500).json({ error: 'Login failed - database error' });
       }
     }
 
-    // Route: Get All Jobs (Public)
+    // Route: Get All Jobs - DATABASE ONLY
     if (cleanUrl === '/recruitment/jobs' && method === 'GET') {
       try {
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          console.log('Using fallback job data - database not available');
-          // Return array directly for frontend compatibility
-          res.setHeader('X-Data-Source', 'fallback');
-          res.setHeader('X-Data-Message', 'Database not available, showing sample data');
-          return res.status(200).json(mockJobs);
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available' });
         }
 
         const jobs = await withDatabase(async (db) => {
@@ -359,26 +197,58 @@ module.exports = async (req, res) => {
           });
         });
 
-        // Return array directly for frontend compatibility
         res.setHeader('X-Data-Source', 'database');
         res.setHeader('X-Data-Count', jobs.length.toString());
         return res.status(200).json(jobs);
       } catch (error) {
         console.error('Get jobs error:', error);
-        console.log('Falling back to mock data due to database error');
-        res.setHeader('X-Data-Source', 'fallback-error');
-        res.setHeader('X-Data-Message', 'Database error, showing sample data');
-        return res.status(200).json(mockJobs);
+        return res.status(500).json({ error: 'Failed to fetch jobs from database' });
       }
     }
 
-    // Route: Get Job by ID (Public)
+    // Route: Create Job - DATABASE ONLY
+    if (cleanUrl === '/recruitment/jobs' && method === 'POST') {
+      try {
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { title, department, location, type, description, requirements, benefits, salary } = body;
+
+        if (!title || !department || !location || !type) {
+          return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const job = await withDatabase(async (db) => {
+          return await db.job.create({
+            data: {
+              title,
+              department,
+              location,
+              type,
+              description,
+              requirements,
+              benefits,
+              salary,
+              status: 'active'
+            }
+          });
+        });
+
+        return res.status(201).json(job);
+      } catch (error) {
+        console.error('Create job error:', error);
+        return res.status(500).json({ error: 'Failed to create job' });
+      }
+    }
+
+    // Route: Get Job by ID - DATABASE ONLY
     if (cleanUrl.startsWith('/recruitment/jobs/') && method === 'GET') {
       try {
         const jobId = parseInt(cleanUrl.split('/')[3]);
         
         if (!prisma) {
-          return res.status(404).json({ error: 'Job not found' });
+          return res.status(503).json({ error: 'Database not available' });
         }
 
         const job = await withDatabase(async (db) => {
@@ -403,15 +273,11 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Get All Blogs (Public)
+    // Route: Get All Blogs - DATABASE ONLY
     if (cleanUrl === '/blogs' && method === 'GET') {
       try {
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          console.log('Using fallback blog data - database not available');
-          // Return array directly for frontend compatibility
-          res.setHeader('X-Data-Source', 'fallback');
-          res.setHeader('X-Data-Message', 'Database not available, showing sample data');
-          return res.status(200).json(mockBlogs);
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available' });
         }
 
         const blogs = await withDatabase(async (db) => {
@@ -426,26 +292,56 @@ module.exports = async (req, res) => {
           });
         });
 
-        // Return array directly for frontend compatibility
         res.setHeader('X-Data-Source', 'database');
         res.setHeader('X-Data-Count', blogs.length.toString());
         return res.status(200).json(blogs);
       } catch (error) {
         console.error('Get blogs error:', error);
-        console.log('Falling back to mock data due to database error');
-        res.setHeader('X-Data-Source', 'fallback-error');
-        res.setHeader('X-Data-Message', 'Database error, showing sample data');
-        return res.status(200).json(mockBlogs);
+        return res.status(500).json({ error: 'Failed to fetch blogs from database' });
       }
     }
 
-    // Route: Get Featured Blogs (Public)
+    // Route: Create Blog - DATABASE ONLY
+    if (cleanUrl === '/blogs' && method === 'POST') {
+      try {
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { title, slug, content, excerpt, category, tags, isFeatured, authorId } = body;
+
+        if (!title || !content || !authorId) {
+          return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const blog = await withDatabase(async (db) => {
+          return await db.blog.create({
+            data: {
+              title,
+              slug: slug || title.toLowerCase().replace(/\s+/g, '-'),
+              content,
+              excerpt,
+              category,
+              tags,
+              isFeatured: !!isFeatured,
+              published: true,
+              authorId
+            }
+          });
+        });
+
+        return res.status(201).json(blog);
+      } catch (error) {
+        console.error('Create blog error:', error);
+        return res.status(500).json({ error: 'Failed to create blog' });
+      }
+    }
+
+    // Route: Get Featured Blogs - DATABASE ONLY
     if (cleanUrl === '/blogs/featured' && method === 'GET') {
       try {
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          console.log('Using fallback featured blog data');
-          const featuredBlogs = mockBlogs.filter(blog => blog.isFeatured);
-          return res.status(200).json(featuredBlogs);
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available' });
         }
 
         const featuredBlogs = await withDatabase(async (db) => {
@@ -463,155 +359,11 @@ module.exports = async (req, res) => {
         return res.status(200).json(featuredBlogs);
       } catch (error) {
         console.error('Get featured blogs error:', error);
-        const featuredBlogs = mockBlogs.filter(blog => blog.isFeatured);
-        return res.status(200).json(featuredBlogs);
+        return res.status(500).json({ error: 'Failed to fetch featured blogs' });
       }
     }
 
-    // Route: Get Blogs by Category (Public) - MUST be before Blog by ID
-    if (cleanUrl.startsWith('/blogs/category/') && method === 'GET') {
-      try {
-        const category = decodeURIComponent(cleanUrl.split('/')[3]);
-        
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          const categoryBlogs = mockBlogs.filter(b => 
-            b.category.toLowerCase() === category.toLowerCase() && 
-            b.status === 'published'
-          );
-          return res.status(200).json(categoryBlogs);
-        }
-
-        const categoryBlogs = await withDatabase(async (db) => {
-          return await db.blog.findMany({
-            where: { 
-              category: {
-                contains: category,
-                mode: 'insensitive'
-              },
-              published: true 
-            },
-            orderBy: { createdAt: 'desc' },
-            include: {
-              author: {
-                select: { fullName: true, email: true }
-              }
-            }
-          });
-        });
-
-        return res.status(200).json(categoryBlogs);
-      } catch (error) {
-        console.error('Get blogs by category error:', error);
-        const categoryBlogs = mockBlogs.filter(b => 
-          b.category.toLowerCase() === cleanUrl.split('/')[3]?.toLowerCase() && 
-          b.status === 'published'
-        );
-        return res.status(200).json(categoryBlogs);
-      }
-    }
-
-    // Route: Get Blog by Slug (Public)
-    if (cleanUrl.startsWith('/blogs/slug/') && method === 'GET') {
-      try {
-        const slug = cleanUrl.split('/')[3];
-        
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          const blog = mockBlogs.find(b => b.slug === slug);
-          if (!blog) {
-            return res.status(404).json({ error: 'Blog not found' });
-          }
-          return res.status(200).json(blog);
-        }
-
-        const blog = await withDatabase(async (db) => {
-          return await db.blog.findUnique({
-            where: { slug },
-            include: {
-              author: {
-                select: { fullName: true, email: true }
-              }
-            }
-          });
-        });
-
-        if (!blog) {
-          return res.status(404).json({ error: 'Blog not found' });
-        }
-
-        return res.status(200).json(blog);
-      } catch (error) {
-        console.error('Get blog by slug error:', error);
-        return res.status(500).json({ error: 'Failed to fetch blog' });
-      }
-    }
-
-    // Route: Get Blog by ID (Public) - MUST be after specific routes
-    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/category/') && !cleanUrl.includes('/slug/') && !cleanUrl.includes('/featured') && !cleanUrl.includes('/views') && method === 'GET') {
-      try {
-        const blogId = cleanUrl.split('/')[2];
-        
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          const blog = mockBlogs.find(b => b.id === blogId);
-          if (!blog) {
-            return res.status(404).json({ error: 'Blog not found' });
-          }
-          return res.status(200).json(blog);
-        }
-
-        const blog = await withDatabase(async (db) => {
-          return await db.blog.findUnique({
-            where: { id: blogId },
-            include: {
-              author: {
-                select: { fullName: true, email: true }
-              }
-            }
-          });
-        });
-
-        if (!blog) {
-          return res.status(404).json({ error: 'Blog not found' });
-        }
-
-        return res.status(200).json(blog);
-      } catch (error) {
-        console.error('Get blog by ID error:', error);
-        return res.status(500).json({ error: 'Failed to fetch blog' });
-      }
-    }
-
-
-
-    // Route: Increment Blog Views (Public)
-    if (cleanUrl.match(/^\/blogs\/[^\/]+\/views$/) && method === 'POST') {
-      try {
-        const blogId = cleanUrl.split('/')[2];
-        
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          // For mock data, just return success
-          return res.status(200).json({ message: 'View count incremented', views: 1 });
-        }
-
-        const blog = await withDatabase(async (db) => {
-          return await db.blog.update({
-            where: { id: blogId },
-            data: {
-              views: {
-                increment: 1
-              }
-            }
-          });
-        });
-
-        return res.status(200).json({ message: 'View count incremented', views: blog.views });
-      } catch (error) {
-        console.error('Increment views error:', error);
-        // Return success even if failed to not block page loading
-        return res.status(200).json({ message: 'View count incremented', views: 1 });
-      }
-    }
-
-    // Route: Create Contact (Public)
+    // Route: Create Contact - DATABASE ONLY
     if (cleanUrl === '/contacts' && method === 'POST') {
       try {
         const { fullName, email, phone, message, subject } = body;
@@ -621,12 +373,7 @@ module.exports = async (req, res) => {
         }
 
         if (!prisma) {
-          // Log the contact attempt even if DB is not available
-          console.log('Contact attempt (DB not available):', { fullName, email, subject });
-          return res.status(200).json({ 
-            message: 'Contact received (will be processed when database is available)',
-            id: Date.now() 
-          });
+          return res.status(503).json({ error: 'Database not available' });
         }
 
         const contact = await withDatabase(async (db) => {
@@ -642,50 +389,16 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Get All Contacts (Auth Required)
+    // Route: Get All Contacts - DATABASE ONLY (Auth Required)
     if (cleanUrl === '/contacts' && method === 'GET') {
       try {
-        // Simple auth check
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) {
           return res.status(401).json({ error: 'Authentication required' });
         }
 
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          // Return mock contact data
-          const mockContacts = [
-            {
-              id: '1',
-              fullName: 'Nguyễn Văn A',
-              email: 'nguyenvana@example.com',
-              phone: '0123456789',
-              company: null,
-              service: 'Tuyển dụng',
-              budget: null,
-              subject: 'Hỏi về tuyển dụng',
-              message: 'Tôi muốn biết thêm thông tin về vị trí Software Engineer',
-              status: 'NEW',
-              priority: 'MEDIUM',
-              createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-              updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-              id: '2',
-              fullName: 'Trần Thị B',
-              email: 'tranthib@example.com',
-              phone: '0987654321',
-              company: 'ABC Company',
-              service: 'Sản phẩm',
-              budget: '10-50 triệu',
-              subject: 'Câu hỏi về sản phẩm',
-              message: 'Tôi cần hỗ trợ về sản phẩm X',
-              status: 'REPLIED',
-              priority: 'HIGH',
-              createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-              updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-            }
-          ];
-          return res.status(200).json(mockContacts);
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available' });
         }
 
         const contacts = await withDatabase(async (db) => {
@@ -701,142 +414,16 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Get Recruitment Stats (Auth Required)
-    if (cleanUrl === '/recruitment/stats' && method === 'GET') {
-      try {
-        // Simple auth check
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        if (!token) {
-          return res.status(401).json({ error: 'Authentication required' });
-        }
-
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          // Return mock stats
-          const mockStats = {
-            activeJobs: 5,
-            totalApplications: 23,
-            pendingReview: 8,
-            interviewed: 6,
-            hired: 3,
-            recentApplications: [
-              {
-                id: '1',
-                applicantName: 'Nguyễn Văn A',
-                job: { title: 'Frontend Developer' },
-                status: 'pending',
-                createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-              },
-              {
-                id: '2', 
-                applicantName: 'Trần Thị B',
-                job: { title: 'Backend Developer' },
-                status: 'reviewing',
-                createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-              }
-            ]
-          };
-          return res.status(200).json(mockStats);
-        }
-
-        const [activeJobs, totalApplications, pendingApplications] = await Promise.all([
-          withDatabase(async (db) => db.job.count({ where: { status: 'active' } })),
-          withDatabase(async (db) => db.application.count()),
-          withDatabase(async (db) => db.application.count({ where: { status: 'pending' } }))
-        ]);
-
-        const recentApplications = await withDatabase(async (db) => {
-          return await db.application.findMany({
-            take: 5,
-            orderBy: { createdAt: 'desc' },
-            include: {
-              job: { select: { title: true } }
-            }
-          });
-        });
-
-        return res.status(200).json({
-          activeJobs,
-          totalApplications,
-          pendingReview: pendingApplications,
-          interviewed: 0,
-          hired: 0,
-          recentApplications
-        });
-      } catch (error) {
-        console.error('Get recruitment stats error:', error);
-        // Return mock data on error
-        return res.status(200).json({
-          activeJobs: 5,
-          totalApplications: 23,
-          pendingReview: 8,
-          interviewed: 6,
-          hired: 3,
-          recentApplications: []
-        });
-      }
-    }
-
-    // Route: Get All Users (Admin Only)
+    // Route: Get All Users - DATABASE ONLY (Admin Only)
     if (cleanUrl === '/users' && method === 'GET') {
       try {
-        // Simple auth check
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) {
           return res.status(401).json({ error: 'Authentication required' });
         }
 
-        // TODO: Add proper role verification for admin
-        
-        if (!prisma || dbConnectionStatus !== 'connected') {
-          // Return mock user data
-          const mockUsers = [
-            {
-              id: '1',
-              email: 'admin@phg.com',
-              fullName: 'Admin User',
-              role: 'ADMIN',
-              status: 'ACTIVE',
-              createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-              updatedAt: new Date().toISOString()
-            },
-            {
-              id: '2',
-              email: 'hr@phg.com', 
-              fullName: 'HR Manager',
-              role: 'HR',
-              status: 'ACTIVE',
-              createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
-              updatedAt: new Date().toISOString()
-            },
-            {
-              id: '3',
-              email: 'user@phg.com',
-              fullName: 'Regular User',
-              role: 'USER',
-              status: 'ACTIVE',
-              createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-              updatedAt: new Date().toISOString()
-            },
-            {
-              id: '4',
-              email: 'editor@phg.com',
-              fullName: 'Content Editor',
-              role: 'USER',
-              status: 'ACTIVE',
-              createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-              updatedAt: new Date().toISOString()
-            },
-            {
-              id: '5',
-              email: 'test@phg.com',
-              fullName: 'Test User',
-              role: 'USER', 
-              status: 'INACTIVE',
-              createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          ];
-          return res.status(200).json(mockUsers);
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available' });
         }
 
         const users = await withDatabase(async (db) => {
@@ -861,100 +448,75 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Get User Profile (Auth Required)
-    if (cleanUrl === '/users/profile' && method === 'GET') {
+    // Route: Create User - DATABASE ONLY (Admin Only)
+    if (cleanUrl === '/users' && method === 'POST') {
       try {
-        // Mock authentication check
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) {
           return res.status(401).json({ error: 'Authentication required' });
         }
 
-        // Simplified user profile response
-        return res.status(200).json({
-          id: 1,
-          email: 'user@example.com',
-          fullName: 'Test User',
-          role: 'USER'
+        if (!prisma) {
+          return res.status(503).json({ error: 'Database not available' });
+        }
+
+        const { email, password, fullName, role } = body;
+
+        if (!email || !password || !fullName) {
+          return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 12);
+
+        const user = await withDatabase(async (db) => {
+          return await db.user.create({
+            data: {
+              email,
+              password: hashedPassword,
+              fullName,
+              role: role || 'USER',
+              status: 'ACTIVE'
+            },
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              status: true,
+              createdAt: true
+            }
+          });
         });
+
+        return res.status(201).json(user);
       } catch (error) {
-        console.error('Get profile error:', error);
-        return res.status(500).json({ error: 'Failed to get profile' });
+        console.error('Create user error:', error);
+        return res.status(500).json({ error: 'Failed to create user' });
       }
     }
 
-    // Route: API Documentation/Info
-    if (cleanUrl === '/docs' || cleanUrl === '/swagger') {
-      return res.status(200).json({
-        title: 'PHG Corporation API',
-        version: '1.0.0',
-        description: 'Comprehensive backend API for PHG Corporation',
-        endpoints: {
-          auth: [
-            'POST /auth/login',
-            'POST /auth/refresh',
-            'POST /auth/change-password'
-          ],
-          recruitment: [
-            'GET /recruitment/jobs',
-            'GET /recruitment/jobs/:id',
-            'POST /recruitment/jobs',
-            'GET /recruitment/applications'
-          ],
-          blogs: [
-            'GET /blogs',
-            'GET /blogs/:id',
-            'POST /blogs',
-            'GET /blogs/featured'
-          ],
-          contacts: [
-            'POST /contacts',
-            'GET /contacts'
-          ],
-          users: [
-            'GET /users/profile',
-            'POST /users/change-password'
-          ]
-        }
-      });
-    }
-
-    // Default 404 response
-    return res.status(404).json({
-      error: 'Endpoint not found',
-      method: req.method,
-      originalUrl: req.url,
-      cleanedUrl: cleanUrl,
-      message: 'This API endpoint is not implemented yet',
-      debug: {
-        urlReceived: `"${url}"`,
-        urlCleaned: `"${cleanUrl}"`,
-        urlLength: url.length,
-        urlType: typeof url
-      },
-      availableEndpoints: [
-        '/ (root/health)',
-        '/health',
-        '/auth/login (POST) - Try: admin@phg.com / admin123',
-        '/recruitment/jobs (GET)',
-        '/recruitment/jobs/:id (GET)',
-        '/blogs (GET)',
-        '/blogs/featured (GET)',
-        '/blogs/:id (GET)',
-        '/blogs/slug/:slug (GET)',
-        '/contacts (POST)',
-        '/users/profile (GET)',
-        '/docs'
+    // Fallback for unknown routes
+    return res.status(404).json({ 
+      error: 'Route not found',
+      availableRoutes: [
+        'GET /health',
+        'POST /auth/login',
+        'GET /recruitment/jobs',
+        'POST /recruitment/jobs',
+        'GET /blogs',
+        'POST /blogs',
+        'POST /contacts',
+        'GET /contacts (auth required)',
+        'GET /users (auth required)',
+        'POST /users (auth required)'
       ]
     });
 
   } catch (error) {
-    console.error('Backend API error:', error);
-    
-    return res.status(500).json({
-      error: 'Internal Server Error',
-      message: error.message,
-      timestamp: new Date().toISOString()
+    console.error('API Error:', error);
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
     });
   }
 }; 
