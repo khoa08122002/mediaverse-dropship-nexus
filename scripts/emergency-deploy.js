@@ -4,6 +4,8 @@ console.log('🚨 Emergency Deployment Script');
 console.log('==============================\n');
 
 const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 try {
   console.log('📦 Installing dependencies (already done by npm install)...');
@@ -14,32 +16,12 @@ try {
   console.log('⏭️ SKIPPING ALL DATABASE OPERATIONS');
   console.log('💡 Database will be handled via runtime initialization');
   
+  // Fix for Vercel: Use production DATABASE_URL with pgbouncer
+  console.log('🔧 Setting up Vercel-compatible environment...');
+  process.env.DATABASE_URL = "postgresql://postgres.qwtockcawgwpvpxiewov:Dangkhoa08122002%40%40@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
+  process.env.NODE_ENV = "production";
   
-    // TailwindCSS fallback - disable if causing issues
-    try {
-        console.log('🔧 Checking TailwindCSS configuration...');
-        const postcssPath = path.join(process.cwd(), 'postcss.config.cjs');
-        if (fs.existsSync(postcssPath)) {
-            const originalConfig = fs.readFileSync(postcssPath, 'utf8');
-            
-            // Create fallback PostCSS config without TailwindCSS
-            const fallbackConfig = `module.exports = {
-  plugins: {
-    // TailwindCSS disabled for emergency deployment
-    // tailwindcss: {},
-    autoprefixer: {},
-  },
-}`;
-            
-            console.log('💡 Creating TailwindCSS-free PostCSS config for emergency build...');
-            fs.writeFileSync(postcssPath + '.backup', originalConfig);
-            fs.writeFileSync(postcssPath, fallbackConfig);
-        }
-    } catch (error) {
-        console.log('⚠️  TailwindCSS fallback failed, continuing...', error.message);
-    }
-
-    console.log('🏗️ Building frontend with emergency settings...');
+  console.log('🏗️ Building frontend with emergency settings...');
   
   // Try different build approaches
   try {
@@ -67,6 +49,13 @@ try {
   console.log('2. Database will auto-initialize on first API call');
   console.log('3. Run manual migration if needed: npm run migrate:safe');
   console.log('4. Verify all endpoints are working');
+  
+  console.log('\n🔧 VERCEL ENVIRONMENT SETUP:');
+  console.log('============================');
+  console.log('Add these to Vercel Environment Variables:');
+  console.log('DATABASE_URL=' + process.env.DATABASE_URL);
+  console.log('NODE_ENV=production');
+  console.log('JWT_SECRET=54cfb5d06aa37675a0593b8acc7f8f9bb78f852def8cf6114fab47851ce6f6ae7a4d2473c155c7d93c1735948ed485dd4f2e83f5659d582381a934eb9a29315a');
   
 } catch (error) {
   console.error('❌ Emergency build failed:', error.message);
