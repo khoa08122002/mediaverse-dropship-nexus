@@ -69,3 +69,51 @@ Previous Issue:
 Resolution:
 Eliminated dependency conflicts by ensuring CSS build tools 
 are available in production environment. 
+
+# FORCE REDEPLOY TRIGGER - Database Connection Fix
+Deployment triggers for critical fixes.
+
+Last deployment: 2025-01-06 (Multiple updates)
+
+## CRITICAL DATABASE CONNECTION FIX
+
+### Issue Identified:
+- Backend API (`api/backend.js`) HAS Supabase connection code
+- BUT falls back to mock data when DATABASE_URL not properly configured
+- Frontend was calling multiple endpoints causing data conflicts
+
+### Changes Made:
+1. Fixed all hardcoded URLs in frontend to use current domain's backend
+2. Removed hardcoded `https://phg2.vercel.app` references
+3. Configured proper environment variables for database connection
+4. Added connection pooling parameter `?pgbouncer=true`
+
+### Files Changed:
+- src/utils/environment.ts ✅
+- src/services/userService.ts ✅
+- src/contexts/AuthContext.tsx ✅
+- src/services/recruitmentService.ts ✅
+- src/lib/axios.ts ✅
+- src/config/axios.ts ✅
+
+### Expected Result:
+- Single data source (Supabase database)
+- No more mock data fallback
+- Data persistence across page reloads
+- All CRUD operations saved to real database
+
+### Environment Variables Required for Vercel:
+```
+DATABASE_URL: postgresql://postgres.qwtockcawgwpvpxiewov:Dangkhoa08122002%40%40@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+JWT_SECRET: 54cfb5d06aa37675a0593b8acc7f8f9bb78f852def8cf6114fab47851ce6f6ae7a4d2473c155c7d93c1735948ed485dd4f2e83f5659d582381a934eb9a29315a
+NODE_ENV: production
+```
+
+Deploy timestamp: 2025-01-06T10:30:00Z
+Build target: Production with database connectivity
+
+## DEPLOYMENT TRIGGERS:
+- 2025-01-06T10:30:00Z: Database connection fix + hardcoded URLs fix
+
+Changes committed and pushed to main branch.
+Ready for Vercel deployment. 
