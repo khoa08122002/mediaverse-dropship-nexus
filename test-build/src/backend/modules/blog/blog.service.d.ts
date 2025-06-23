@@ -1,0 +1,60 @@
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateBlogDto, UpdateBlogDto } from './dto/blog.dto';
+export declare class BlogService {
+    private prisma;
+    constructor(prisma: PrismaService);
+    private parseBlogFeaturedImage;
+    private parseBlogsFeaturedImage;
+    findAll(): Promise<any[]>;
+    findOne(id: string): Promise<any>;
+    findBySlug(slug: string): Promise<any>;
+    getFeatured(): Promise<any[]>;
+    getByTag(tag: string): Promise<any[]>;
+    getByCategory(category: string): Promise<any[]>;
+    create(createBlogDto: CreateBlogDto, authorId: string): Promise<any>;
+    update(id: string, updateBlogDto: UpdateBlogDto, user: any): Promise<any>;
+    delete(id: string): Promise<{
+        title: string;
+        status: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tags: string[];
+        content: string;
+        excerpt: string;
+        featuredImage: string | null;
+        category: string;
+        readTime: string | null;
+        isFeatured: boolean;
+        published: boolean;
+        slug: string;
+        views: number;
+        authorId: string;
+    }>;
+    search(query: string): Promise<any[]>;
+    getPopularTags(): Promise<{
+        tag: string;
+        count: number;
+    }[]>;
+    incrementViews(id: string): Promise<{
+        title: string;
+        status: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tags: string[];
+        content: string;
+        excerpt: string;
+        featuredImage: string | null;
+        category: string;
+        readTime: string | null;
+        isFeatured: boolean;
+        published: boolean;
+        slug: string;
+        views: number;
+        authorId: string;
+    }>;
+    getFeaturedBlogs(): Promise<any[]>;
+    findByTag(tag: string): Promise<any[]>;
+    findByCategory(category: string): Promise<any[]>;
+}
