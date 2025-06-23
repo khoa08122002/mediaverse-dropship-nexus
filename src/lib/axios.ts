@@ -19,8 +19,8 @@ const isProduction = typeof window !== 'undefined' && (
 );
 
 const baseURL = isProduction 
-  ? 'https://phg2.vercel.app/api/comprehensive'  // Full URL for production
-  : 'http://localhost:3002/api'; // Development URL
+  ? `${window.location.origin}/api/backend`  // Use current domain's backend
+  : 'http://localhost:3000/api'; // Development URL
 
 // Debug logging
 console.log('Lib Axios Environment Detection:', {

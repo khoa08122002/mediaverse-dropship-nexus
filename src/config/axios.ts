@@ -8,8 +8,8 @@ const isProduction = typeof window !== 'undefined' && (
 );
 
 const baseURL = isProduction
-  ? 'https://phg2.vercel.app/api/comprehensive'  // In production, use Vercel backend function
-  : 'http://localhost:3002/api'; // In development, use localhost
+  ? `${window.location.origin}/api/backend`  // Use current domain's backend
+  : 'http://localhost:3000/api'; // In development, use localhost
 
 // Debug logging
 console.log('Config Axios Environment Detection:', {
