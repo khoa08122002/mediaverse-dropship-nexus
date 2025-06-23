@@ -2,11 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from '../services/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { validateDataConsistency } from '../utils/clearCache';
 
-// Emergency fallback for production
+// Emergency fallback for production - Use current domain's API
 if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-  console.log('🚨 AuthContext Emergency: Force updating axios baseURL for production');
-  axios.defaults.baseURL = 'https://phg2.vercel.app/api/comprehensive';
+  console.log('🚨 AuthContext Emergency: Using current domain API endpoint');
+  axios.defaults.baseURL = `${window.location.origin}/api/comprehensive`;
 }
 
 interface User {
@@ -72,6 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // Validate and clear inconsistent cache first
+    validateDataConsistency();
     checkAuthStatus();
   }, []);
 

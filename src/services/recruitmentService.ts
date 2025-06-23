@@ -1,9 +1,9 @@
 import axios from './axiosConfig';
 
-// Emergency fallback for production
+// Emergency fallback for production - Use current domain's API
 if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
-  console.log('🚨 Emergency: Force updating axios baseURL for production');
-  axios.defaults.baseURL = 'https://phg2.vercel.app/api/comprehensive';
+  console.log('🚨 Emergency: Using current domain API endpoint');
+  axios.defaults.baseURL = `${window.location.origin}/api/comprehensive`;
 }
 import type { 
   Application,
