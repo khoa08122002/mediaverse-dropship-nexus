@@ -3,43 +3,11 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "functions": {
-    "api/comprehensive.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    },
     "api/backend.js": {
       "memory": 1024,
       "maxDuration": 30
     },
-    "api/index.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    },
-    "api/health.js": {
-      "memory": 512,
-      "maxDuration": 10
-    },
-    "api/test.js": {
-      "memory": 512,
-      "maxDuration": 10
-    },
-    "api/express.js": {
-      "memory": 1024,
-      "maxDuration": 30
-    },
-    "api/simple.js": {
-      "memory": 512,
-      "maxDuration": 10
-    },
-    "api/express-simple.js": {
-      "memory": 512,
-      "maxDuration": 10
-    },
     "api/test-db.js": {
-      "memory": 512,
-      "maxDuration": 15
-    },
-    "api/init-admin.js": {
       "memory": 512,
       "maxDuration": 15
     },
@@ -49,14 +17,6 @@
     }
   },
   "routes": [
-    {
-      "src": "/api/comprehensive/(.*)",
-      "dest": "api/comprehensive.js"
-    },
-    {
-      "src": "/api/comprehensive",
-      "dest": "api/comprehensive.js"
-    },
     {
       "src": "/api/backend/(.*)",
       "dest": "api/backend.js"
@@ -71,7 +31,7 @@
     },
     {
       "src": "/api/init-admin",
-      "dest": "api/init-admin.js"
+      "dest": "api/test-db.js"
     },
     {
       "src": "/api/ping",
@@ -79,7 +39,7 @@
     },
     {
       "src": "/api/(.*)",
-      "dest": "api/index.js"
+      "dest": "api/backend.js"
     },
     {
       "src": "/assets/(.*)",

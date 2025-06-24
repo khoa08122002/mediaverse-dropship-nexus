@@ -20,25 +20,36 @@ module.exports = async (req, res) => {
       return res.status(200).end();
     }
 
-    console.log('Testing database connection...');
+    const url = req.url || '/';
+    const action = url.includes('init-admin') ? 'init-admin' : 'test-db';
     
-    // Test database operations using singleton
-    const result = await withDatabase(async (db) => {
-      console.log('Database connected successfully');
+    console.log(`Action: ${action}`);
+    
+    if (action === 'init-admin') {
+      // Admin initialization only
+      const result = await withDatabase(async (db) => {
+        console.log('Database connected for admin initialization');
 
-      // Check if admin user exists
-      const adminUser = await db.user.findUnique({
-        where: { email: 'admin@phg.com' }
-      });
+        const existingAdmin = await db.user.findUnique({
+          where: { email: 'admin@phg.com' }
+        });
 
-      console.log('Admin user exists:', !!adminUser);
+        if (existingAdmin) {
+          return {
+            exists: true,
+            admin: {
+              email: existingAdmin.email,
+              fullName: existingAdmin.fullName,
+              role: existingAdmin.role,
+              created: false
+            }
+          };
+        }
 
-      // If no admin user, create one
-      let adminCreated = false;
-      if (!adminUser) {
         console.log('Creating admin user...');
         const adminPassword = await bcrypt.hash('admin123', 10);
-        const newAdmin = await db.user.create({
+        
+        const adminUser = await db.user.create({
           data: {
             email: 'admin@phg.com',
             password: adminPassword,
@@ -47,43 +58,97 @@ module.exports = async (req, res) => {
             status: 'ACTIVE'
           }
         });
-        console.log('Admin user created:', newAdmin.email);
-        adminCreated = true;
+
+        return {
+          exists: false,
+          admin: {
+            id: adminUser.id,
+            email: adminUser.email,
+            fullName: adminUser.fullName,
+            role: adminUser.role,
+            created: true
+          }
+        };
+      });
+
+      if (result.exists) {
+        return res.status(200).json({
+          status: 'success',
+          message: 'Admin user already exists',
+          data: result.admin
+        });
       }
 
-      // Test user count
-      const userCount = await db.user.count();
-      const jobCount = await db.job.count();
-      const blogCount = await db.blog.count();
-      const contactCount = await db.contact.count();
+      return res.status(201).json({
+        status: 'success',
+        message: 'Admin user created successfully',
+        data: result.admin
+      });
+    
+    } else {
+      // Database test with admin check
+      const result = await withDatabase(async (db) => {
+        console.log('Database connected successfully');
 
-      return {
-        adminExists: !!adminUser,
-        adminCreated,
-        counts: {
-          users: userCount,
-          jobs: jobCount,
-          blogs: blogCount,
-          contacts: contactCount
-        }
-      };
-    });
+        // Check if admin user exists
+        const adminUser = await db.user.findUnique({
+          where: { email: 'admin@phg.com' }
+        });
 
-    return res.status(200).json({
-      status: 'success',
-      message: 'Database test completed',
-      data: {
-        connected: true,
-        adminExists: result.adminExists,
-        adminCreated: result.adminCreated,
-        counts: result.counts,
-        environment: {
-          nodeEnv: process.env.NODE_ENV,
-          hasDbUrl: !!process.env.DATABASE_URL,
-          hasJwtSecret: !!process.env.JWT_SECRET
+        console.log('Admin user exists:', !!adminUser);
+
+        // If no admin user, create one
+        let adminCreated = false;
+        if (!adminUser) {
+          console.log('Creating admin user...');
+          const adminPassword = await bcrypt.hash('admin123', 10);
+          const newAdmin = await db.user.create({
+            data: {
+              email: 'admin@phg.com',
+              password: adminPassword,
+              fullName: 'Admin User',
+              role: 'ADMIN',
+              status: 'ACTIVE'
+            }
+          });
+          console.log('Admin user created:', newAdmin.email);
+          adminCreated = true;
         }
-      }
-    });
+
+        // Test user count
+        const userCount = await db.user.count();
+        const jobCount = await db.job.count();
+        const blogCount = await db.blog.count();
+        const contactCount = await db.contact.count();
+
+        return {
+          adminExists: !!adminUser,
+          adminCreated,
+          counts: {
+            users: userCount,
+            jobs: jobCount,
+            blogs: blogCount,
+            contacts: contactCount
+          }
+        };
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Database test completed',
+        data: {
+          connected: true,
+          adminExists: result.adminExists,
+          adminCreated: result.adminCreated,
+          counts: result.counts,
+          environment: {
+            nodeEnv: process.env.NODE_ENV,
+            hasDbUrl: !!process.env.DATABASE_URL,
+            hasJwtSecret: !!process.env.JWT_SECRET
+          }
+        }
+      });
+    }
 
   } catch (error) {
     console.error('Database test error:', error);
