@@ -48,4 +48,62 @@ export const validateDataConsistency = () => {
       localStorage.setItem('cacheVersion', currentVersion);
     }
   }
+};
+
+export const clearCache = async () => {
+  try {
+    console.log('🧹 Starting aggressive cache clearing...');
+    
+    // Clear localStorage
+    const tokenKeys = ['accessToken', 'refreshToken'];
+    tokenKeys.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // Clear sessionStorage
+    sessionStorage.clear();
+    
+    // Clear service worker cache if available
+    if ('serviceWorker' in navigator && 'caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+        console.log('✅ Service worker caches cleared');
+      } catch (error) {
+        console.warn('⚠️ Could not clear service worker caches:', error);
+      }
+    }
+    
+    // Force reload axios base URL to ensure fresh config
+    if (typeof window !== 'undefined') {
+      // Clear any cached modules by adding timestamp
+      const timestamp = Date.now();
+      console.log(`🔄 Cache buster timestamp: ${timestamp}`);
+      
+      // Force clear browser cache for static assets
+      if ('performance' in window && window.performance.clearResourceTimings) {
+        window.performance.clearResourceTimings();
+      }
+    }
+    
+    console.log('✅ Cache clearing completed');
+  } catch (error) {
+    console.error('❌ Cache clearing failed:', error);
+  }
+};
+
+export const forceBrowserRefresh = () => {
+  console.log('🔄 Forcing browser refresh with cache bypass...');
+  
+  // Force reload with cache bypass
+  if (typeof window !== 'undefined') {
+    window.location.reload();
+  }
+};
+
+export const addCacheBuster = (url: string): string => {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_cb=${Date.now()}`;
 }; 

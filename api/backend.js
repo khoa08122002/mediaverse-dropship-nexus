@@ -183,108 +183,189 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Auth Login - DATABASE ONLY
+    // Route: Auth Login - DATABASE ONLY with Enhanced Error Handling
     if (cleanUrl === '/auth/login' && method === 'POST') {
       try {
-        console.log('[DEBUG] Login attempt started');
+        console.log('[AUTH-LOGIN] Login attempt started');
         const { email, password } = body;
         
-        console.log('[DEBUG] Login data:', { email: email, hasPassword: !!password });
+        console.log('[AUTH-LOGIN] Login data:', { email: email, hasPassword: !!password });
         
         if (!email || !password) {
-          console.log('[DEBUG] Missing email or password');
+          console.log('[AUTH-LOGIN] Missing email or password');
           return res.status(400).json({ error: 'Email and password required' });
         }
 
-        // ONLY DATABASE - NO MOCK DATA
-        const hasPrisma = updateDbStatus();
-        if (!hasPrisma) {
-          console.log('[DEBUG] Prisma client not available');
-          return res.status(503).json({ 
-            error: 'Database not available - check configuration',
-            details: {
-              hasUrl: !!process.env.DATABASE_URL,
-              dbStatus: dbConnectionStatus
+        // ENHANCED DATABASE CONNECTION CHECK
+        const dbHealth = await checkDatabaseHealth();
+        console.log('[AUTH-LOGIN] Database health check:', dbHealth);
+        
+        if (!dbHealth.healthy) {
+          console.log('[AUTH-LOGIN] Database unhealthy, attempting reset...');
+          try {
+            await resetPrisma();
+            // Wait a moment for connection to stabilize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Check again
+            const retryHealth = await checkDatabaseHealth();
+            if (!retryHealth.healthy) {
+              return res.status(503).json({ 
+                error: 'Database temporarily unavailable',
+                details: 'Please try again in a few moments',
+                timestamp: new Date().toISOString()
+              });
             }
-          });
+          } catch (resetError) {
+            console.error('[AUTH-LOGIN] Database reset failed:', resetError);
+            return res.status(503).json({ 
+              error: 'Database connection failed',
+              details: 'Please try again in a few moments'
+            });
+          }
         }
 
-        console.log('[DEBUG] Attempting to find user by email');
+        console.log('[AUTH-LOGIN] Attempting to find user by email with enhanced retry');
         let user;
         try {
+          // Use enhanced withDatabase with specific retry logic for auth
           user = await withDatabase(async (db) => {
-            console.log('[DEBUG] Executing findUnique query for email:', email);
-            const foundUser = await db.user.findUnique({ where: { email } });
-            console.log('[DEBUG] Query result:', foundUser ? 'User found' : 'User not found');
+            console.log('[AUTH-LOGIN] Executing findUnique query for email:', email);
+            
+            // Add timeout wrapper for this specific query
+            const queryTimeout = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('User query timeout')), 15000)
+            );
+            
+            const userQuery = db.user.findUnique({ 
+              where: { email },
+              select: {
+                id: true,
+                email: true,
+                password: true,
+                fullName: true,
+                role: true,
+                status: true
+              }
+            });
+            
+            const foundUser = await Promise.race([userQuery, queryTimeout]);
+            console.log('[AUTH-LOGIN] Query result:', foundUser ? 'User found' : 'User not found');
             return foundUser;
-          });
+          }, 3); // Max 3 retries for auth
         } catch (dbError) {
-          console.error('[DEBUG] Database query error:', dbError);
-          return res.status(500).json({ 
-            error: 'Database query failed',
-            details: dbError.message 
+          console.error('[AUTH-LOGIN] Database query error:', {
+            message: dbError.message,
+            code: dbError.code,
+            name: dbError.name,
+            stack: dbError.stack?.substring(0, 500)
           });
+          
+          // Enhanced error response based on error type
+          if (dbError.message.includes('timeout')) {
+            return res.status(503).json({ 
+              error: 'Database response timeout',
+              details: 'Please try again in a few moments',
+              code: 'DB_TIMEOUT'
+            });
+          } else if (dbError.message.includes('prepared statement')) {
+            return res.status(503).json({ 
+              error: 'Database connection conflict',
+              details: 'Please try again immediately',
+              code: 'DB_CONFLICT'
+            });
+          } else {
+            return res.status(500).json({ 
+              error: 'Database query failed',
+              details: process.env.NODE_ENV === 'development' ? dbError.message : 'Please try again',
+              code: 'DB_ERROR'
+            });
+          }
         }
 
-        console.log('[DEBUG] User found:', !!user);
+        console.log('[AUTH-LOGIN] User found:', !!user);
         
         if (!user) {
-          console.log('[DEBUG] User not found');
+          console.log('[AUTH-LOGIN] User not found');
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        console.log('[DEBUG] User details:', {
+        // Check if user is active
+        if (user.status !== 'ACTIVE') {
+          console.log('[AUTH-LOGIN] User account inactive');
+          return res.status(401).json({ error: 'Account is inactive' });
+        }
+
+        console.log('[AUTH-LOGIN] User details:', {
           id: user.id,
           email: user.email,
           hasPassword: !!user.password,
-          role: user.role
+          role: user.role,
+          status: user.status
         });
 
-        console.log('[DEBUG] Comparing password');  
+        console.log('[AUTH-LOGIN] Comparing password');  
         let passwordMatch;
         try {
           passwordMatch = await bcrypt.compare(password, user.password);
-          console.log('[DEBUG] Password match:', passwordMatch);
+          console.log('[AUTH-LOGIN] Password match:', passwordMatch);
         } catch (bcryptError) {
-          console.error('[DEBUG] Password comparison error:', bcryptError);
+          console.error('[AUTH-LOGIN] Password comparison error:', bcryptError);
           return res.status(500).json({ 
-            error: 'Password comparison failed',
-            details: bcryptError.message 
+            error: 'Authentication processing failed',
+            details: 'Please try again'
           });
         }
         
         if (!passwordMatch) {
-          console.log('[DEBUG] Password does not match');
+          console.log('[AUTH-LOGIN] Password does not match');
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        console.log('[DEBUG] Creating JWT token');
+        console.log('[AUTH-LOGIN] Creating JWT token');
         const token = jwt.sign(
           { id: user.id, email: user.email, role: user.role },
           JWT_SECRET,
-          { expiresIn: '1h' }
+          { expiresIn: '24h' } // Extended token life for better UX
         );
 
-        console.log('[DEBUG] Login successful');
+        // Update last login timestamp (fire and forget)
+        try {
+          withDatabase(async (db) => {
+            await db.user.update({
+              where: { id: user.id },
+              data: { lastLogin: new Date() }
+            });
+          }).catch(err => console.log('[AUTH-LOGIN] Last login update failed:', err.message));
+        } catch (error) {
+          // Ignore last login update errors
+        }
+
+        console.log('[AUTH-LOGIN] Login successful');
         return res.status(200).json({
           accessToken: token,
-          refreshToken: `refresh_${Date.now()}`,
+          refreshToken: `refresh_${Date.now()}_${user.id}`,
           user: {
             id: user.id,
             email: user.email,
             fullName: user.fullName,
-            role: user.role
-          }
+            role: user.role,
+            status: user.status
+          },
+          loginTime: new Date().toISOString()
         });
       } catch (error) {
-        console.error('Login error details:', {
+        console.error('[AUTH-LOGIN] Critical error:', {
           message: error.message,
           stack: error.stack,
-          name: error.name
+          name: error.name,
+          timestamp: new Date().toISOString()
         });
         return res.status(500).json({ 
-          error: 'Login failed - database error',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+          error: 'Authentication service temporarily unavailable',
+          details: 'Please refresh the page and try again',
+          code: 'AUTH_SERVICE_ERROR',
+          timestamp: new Date().toISOString()
         });
       }
     }
