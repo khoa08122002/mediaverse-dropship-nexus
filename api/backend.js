@@ -252,6 +252,219 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Route: Refresh Token - DATABASE ONLY
+    if (cleanUrl === '/auth/refresh' && method === 'POST') {
+      try {
+        const { refreshToken } = body;
+        
+        if (!refreshToken) {
+          return res.status(400).json({ error: 'Refresh token required' });
+        }
+
+        // For now, just verify the existing token and issue a new one
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: 'Invalid token' });
+        }
+
+        // Create new token
+        const newToken = jwt.sign(
+          { id: auth.user.id, email: auth.user.email, role: auth.user.role },
+          JWT_SECRET,
+          { expiresIn: '1h' }
+        );
+
+        return res.status(200).json({
+          accessToken: newToken,
+          refreshToken: `refresh_${Date.now()}`
+        });
+      } catch (error) {
+        console.error('Refresh token error:', error);
+        return res.status(500).json({ error: 'Token refresh failed' });
+      }
+    }
+
+    // Route: Get User Profile - DATABASE ONLY (Auth Required)
+    if (cleanUrl === '/users/profile' && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        const user = await withDatabase(async (db) => {
+          return await db.user.findUnique({
+            where: { id: auth.user.id },
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              status: true,
+              createdAt: true,
+              lastLogin: true
+            }
+          });
+        });
+
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        return res.status(200).json(user);
+      } catch (error) {
+        console.error('Get profile error:', error);
+        return res.status(500).json({ error: 'Failed to fetch profile' });
+      }
+    }
+
+    // Route: Update User Profile - DATABASE ONLY (Auth Required)
+    if (cleanUrl === '/users/profile' && method === 'PUT') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        const { fullName, email, currentPassword, newPassword } = body;
+        
+        let updateData = {};
+        
+        if (fullName) updateData.fullName = fullName;
+        
+        if (email) {
+          if (!isValidEmail(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+          }
+          updateData.email = email;
+        }
+        
+        // Handle password change
+        if (newPassword) {
+          if (!currentPassword) {
+            return res.status(400).json({ error: 'Current password required to change password' });
+          }
+          
+          if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+          }
+          
+          // Verify current password
+          const user = await withDatabase(async (db) => {
+            return await db.user.findUnique({ where: { id: auth.user.id } });
+          });
+          
+          const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+          if (!passwordMatch) {
+            return res.status(400).json({ error: 'Current password is incorrect' });
+          }
+          
+          updateData.password = await bcrypt.hash(newPassword, 12);
+        }
+
+        const updatedUser = await withDatabase(async (db) => {
+          return await db.user.update({
+            where: { id: auth.user.id },
+            data: updateData,
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              status: true,
+              updatedAt: true
+            }
+          });
+        });
+
+        return res.status(200).json(updatedUser);
+      } catch (error) {
+        console.error('Update profile error:', error);
+        if (error.code === 'P2002') {
+          return res.status(400).json({ error: 'Email already exists' });
+        }
+        return res.status(500).json({ error: 'Failed to update profile' });
+      }
+    }
+
+    // Route: Get Recruitment Stats - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl === '/recruitment/stats' && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const stats = await withDatabase(async (db) => {
+          const [
+            totalJobs,
+            activeJobs,
+            totalApplications,
+            pendingApplications,
+            totalUsers,
+            totalContacts
+          ] = await Promise.all([
+            db.job.count(),
+            db.job.count({ where: { status: 'active' } }),
+            db.application.count(),
+            db.application.count({ where: { status: 'pending' } }),
+            db.user.count(),
+            db.contact.count()
+          ]);
+
+          // Get recent applications
+          const recentApplications = await db.application.findMany({
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            include: {
+              job: {
+                select: { title: true }
+              }
+            }
+          });
+
+          // Get job applications by status
+          const applicationsByStatus = await db.application.groupBy({
+            by: ['status'],
+            _count: { status: true }
+          });
+
+          return {
+            overview: {
+              totalJobs,
+              activeJobs,
+              totalApplications,
+              pendingApplications,
+              totalUsers,
+              totalContacts
+            },
+            recentApplications,
+            applicationsByStatus: applicationsByStatus.reduce((acc, item) => {
+              acc[item.status] = item._count.status;
+              return acc;
+            }, {})
+          };
+        });
+
+        return res.status(200).json(stats);
+      } catch (error) {
+        console.error('Get recruitment stats error:', error);
+        return res.status(500).json({ error: 'Failed to fetch recruitment stats' });
+      }
+    }
+
     // Route: Get All Jobs - DATABASE ONLY
     if (cleanUrl === '/recruitment/jobs' && method === 'GET') {
       try {
@@ -422,8 +635,10 @@ module.exports = async (req, res) => {
     // Route: Get All Blogs - DATABASE ONLY
     if (cleanUrl === '/blogs' && method === 'GET') {
       try {
+        console.log('[DEBUG] Fetching blogs...');
         const blogs = await withDatabase(async (db) => {
-          return await db.blog.findMany({
+          console.log('[DEBUG] Executing blog query...');
+          const result = await db.blog.findMany({
             where: { published: true },
             orderBy: { createdAt: 'desc' },
             include: {
@@ -432,14 +647,23 @@ module.exports = async (req, res) => {
               }
             }
           });
+          console.log('[DEBUG] Blog query result:', result.length, 'blogs found');
+          return result;
         });
 
         res.setHeader('X-Data-Source', 'database');
         res.setHeader('X-Data-Count', blogs.length.toString());
         return res.status(200).json(blogs);
       } catch (error) {
-        console.error('Get blogs error:', error);
-        return res.status(500).json({ error: 'Failed to fetch blogs from database' });
+        console.error('Get blogs error details:', {
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        });
+        return res.status(500).json({ 
+          error: 'Failed to fetch blogs from database',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
       }
     }
 
@@ -1131,9 +1355,15 @@ module.exports = async (req, res) => {
       message: `No endpoint found for ${method} ${cleanUrl}`,
       availableRoutes: {
         auth: [
-          'POST /auth/login'
+          'POST /auth/login',
+          'POST /auth/refresh'
         ],
-        jobs: [
+        profile: [
+          'GET /users/profile (Auth)',
+          'PUT /users/profile (Auth)'
+        ],
+        recruitment: [
+          'GET /recruitment/stats (HR/Admin)',
           'GET /recruitment/jobs',
           'POST /recruitment/jobs (HR/Admin)',
           'GET /recruitment/jobs/{id}',
