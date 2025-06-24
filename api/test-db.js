@@ -1,24 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
-
-let prisma;
-
-try {
-  if (process.env.DATABASE_URL) {
-    prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-    });
-    console.log('Prisma client initialized for testing');
-  } else {
-    console.warn('DATABASE_URL not found in environment variables');
-  }
-} catch (error) {
-  console.error('Prisma initialization failed:', error);
-}
+const { getPrismaClient, withDatabase } = require('./prisma-singleton');
 
 module.exports = async (req, res) => {
   try {
@@ -41,62 +22,61 @@ module.exports = async (req, res) => {
 
     console.log('Testing database connection...');
     
-    if (!prisma) {
-      return res.status(503).json({
-        error: 'Database not initialized',
-        details: {
-          hasUrl: !!process.env.DATABASE_URL,
-          url: process.env.DATABASE_URL ? 'Present' : 'Missing'
-        }
+    // Test database operations using singleton
+    const result = await withDatabase(async (db) => {
+      console.log('Database connected successfully');
+
+      // Check if admin user exists
+      const adminUser = await db.user.findUnique({
+        where: { email: 'admin@phg.com' }
       });
-    }
 
-    // Test basic connection
-    await prisma.$connect();
-    console.log('Database connected successfully');
+      console.log('Admin user exists:', !!adminUser);
 
-    // Check if admin user exists
-    const adminUser = await prisma.user.findUnique({
-      where: { email: 'admin@phg.com' }
+      // If no admin user, create one
+      let adminCreated = false;
+      if (!adminUser) {
+        console.log('Creating admin user...');
+        const adminPassword = await bcrypt.hash('admin123', 10);
+        const newAdmin = await db.user.create({
+          data: {
+            email: 'admin@phg.com',
+            password: adminPassword,
+            fullName: 'Admin User',
+            role: 'ADMIN',
+            status: 'ACTIVE'
+          }
+        });
+        console.log('Admin user created:', newAdmin.email);
+        adminCreated = true;
+      }
+
+      // Test user count
+      const userCount = await db.user.count();
+      const jobCount = await db.job.count();
+      const blogCount = await db.blog.count();
+      const contactCount = await db.contact.count();
+
+      return {
+        adminExists: !!adminUser,
+        adminCreated,
+        counts: {
+          users: userCount,
+          jobs: jobCount,
+          blogs: blogCount,
+          contacts: contactCount
+        }
+      };
     });
-
-    console.log('Admin user exists:', !!adminUser);
-
-    // If no admin user, create one
-    if (!adminUser) {
-      console.log('Creating admin user...');
-      const adminPassword = await bcrypt.hash('admin123', 10);
-      const newAdmin = await prisma.user.create({
-        data: {
-          email: 'admin@phg.com',
-          password: adminPassword,
-          fullName: 'Admin User',
-          role: 'ADMIN',
-          status: 'ACTIVE'
-        }
-      });
-      console.log('Admin user created:', newAdmin.email);
-    }
-
-    // Test user count
-    const userCount = await prisma.user.count();
-    const jobCount = await prisma.job.count();
-    const blogCount = await prisma.blog.count();
-    const contactCount = await prisma.contact.count();
 
     return res.status(200).json({
       status: 'success',
       message: 'Database test completed',
       data: {
         connected: true,
-        adminExists: !!adminUser,
-        adminCreated: !adminUser,
-        counts: {
-          users: userCount,
-          jobs: jobCount,
-          blogs: blogCount,
-          contacts: contactCount
-        },
+        adminExists: result.adminExists,
+        adminCreated: result.adminCreated,
+        counts: result.counts,
         environment: {
           nodeEnv: process.env.NODE_ENV,
           hasDbUrl: !!process.env.DATABASE_URL,
@@ -116,8 +96,6 @@ module.exports = async (req, res) => {
       }
     });
   } finally {
-    if (prisma) {
-      await prisma.$disconnect();
-    }
+    // Prisma singleton handles disconnection automatically
   }
 }; 

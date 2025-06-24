@@ -1,30 +1,8 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { getPrismaClient, withDatabase } = require('./prisma-singleton');
 
-// Initialize Prisma client
-let prisma;
 let dbConnectionStatus = 'disconnected';
-
-try {
-  if (process.env.DATABASE_URL) {
-    prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-    });
-    dbConnectionStatus = 'initializing';
-    console.log('Prisma client initialized with DATABASE_URL');
-  } else {
-    console.warn('DATABASE_URL not found in environment variables');
-    dbConnectionStatus = 'no-url';
-  }
-} catch (error) {
-  console.error('Prisma initialization failed:', error);
-  dbConnectionStatus = 'failed';
-}
 
 // JWT Secret (use environment variable in production)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key';
@@ -81,21 +59,15 @@ async function parseBody(req) {
   });
 }
 
-// Database connection helper
-async function withDatabase(operation) {
+// Get database status
+function updateDbStatus() {
   try {
-    if (!prisma) {
-      throw new Error('Database not initialized - check DATABASE_URL environment variable');
-    }
-    // Test database connection
-    await prisma.$connect();
+    const prisma = getPrismaClient();
     dbConnectionStatus = 'connected';
-    const result = await operation(prisma);
-    return result;
+    return true;
   } catch (error) {
-    console.error('Database operation failed:', error);
     dbConnectionStatus = 'error';
-    throw error;
+    return false;
   }
 }
 
@@ -167,7 +139,7 @@ module.exports = async (req, res) => {
         database: {
           status: dbConnectionStatus,
           hasUrl: !!process.env.DATABASE_URL,
-          prismaClient: !!prisma,
+          prismaClient: updateDbStatus(),
           mockDataRemoved: true
         }
       });
@@ -187,7 +159,8 @@ module.exports = async (req, res) => {
         }
 
         // ONLY DATABASE - NO MOCK DATA
-        if (!prisma) {
+        const hasPrisma = updateDbStatus();
+        if (!hasPrisma) {
           console.log('[DEBUG] Prisma client not available');
           return res.status(503).json({ 
             error: 'Database not available - check configuration',
@@ -281,10 +254,6 @@ module.exports = async (req, res) => {
     // Route: Get All Jobs - DATABASE ONLY
     if (cleanUrl === '/recruitment/jobs' && method === 'GET') {
       try {
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
-        }
-
         const jobs = await withDatabase(async (db) => {
           return await db.job.findMany({
             where: { status: 'active' },
@@ -304,10 +273,6 @@ module.exports = async (req, res) => {
     // Route: Create Job - DATABASE ONLY
     if (cleanUrl === '/recruitment/jobs' && method === 'POST') {
       try {
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
-        }
-
         const { title, department, location, type, description, requirements, benefits, salary } = body;
 
         if (!title || !department || !location || !type) {
@@ -342,10 +307,6 @@ module.exports = async (req, res) => {
       try {
         const jobId = parseInt(cleanUrl.split('/')[3]);
         
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
-        }
-
         const job = await withDatabase(async (db) => {
           return await db.job.findUnique({
             where: { id: jobId },
@@ -371,10 +332,6 @@ module.exports = async (req, res) => {
     // Route: Get All Blogs - DATABASE ONLY
     if (cleanUrl === '/blogs' && method === 'GET') {
       try {
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
-        }
-
         const blogs = await withDatabase(async (db) => {
           return await db.blog.findMany({
             where: { published: true },
@@ -399,10 +356,6 @@ module.exports = async (req, res) => {
     // Route: Create Blog - DATABASE ONLY
     if (cleanUrl === '/blogs' && method === 'POST') {
       try {
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
-        }
-
         const { title, slug, content, excerpt, category, tags, isFeatured, authorId } = body;
 
         if (!title || !content || !authorId) {
@@ -435,10 +388,6 @@ module.exports = async (req, res) => {
     // Route: Get Featured Blogs - DATABASE ONLY
     if (cleanUrl === '/blogs/featured' && method === 'GET') {
       try {
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
-        }
-
         const featuredBlogs = await withDatabase(async (db) => {
           return await db.blog.findMany({
             where: { published: true, isFeatured: true },
@@ -468,10 +417,6 @@ module.exports = async (req, res) => {
 
         if (!contactName || !email || !message) {
           return res.status(400).json({ error: 'Missing required fields: name, email, message' });
-        }
-
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
         }
 
         const contact = await withDatabase(async (db) => {
@@ -504,10 +449,6 @@ module.exports = async (req, res) => {
           return res.status(401).json({ error: 'Authentication required' });
         }
 
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
-        }
-
         const contacts = await withDatabase(async (db) => {
           return await db.contact.findMany({
             orderBy: { createdAt: 'desc' }
@@ -527,10 +468,6 @@ module.exports = async (req, res) => {
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) {
           return res.status(401).json({ error: 'Authentication required' });
-        }
-
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
         }
 
         const users = await withDatabase(async (db) => {
@@ -561,10 +498,6 @@ module.exports = async (req, res) => {
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) {
           return res.status(401).json({ error: 'Authentication required' });
-        }
-
-        if (!prisma) {
-          return res.status(503).json({ error: 'Database not available' });
         }
 
         const { email, password, fullName, role } = body;

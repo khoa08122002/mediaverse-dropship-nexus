@@ -1,24 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
-
-let prisma;
-
-try {
-  if (process.env.DATABASE_URL) {
-    prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-    });
-    console.log('Prisma client initialized for admin init');
-  } else {
-    console.warn('DATABASE_URL not found in environment variables');
-  }
-} catch (error) {
-  console.error('Prisma initialization failed:', error);
-}
+const { getPrismaClient, withDatabase } = require('./prisma-singleton');
 
 module.exports = async (req, res) => {
   try {
@@ -41,64 +22,66 @@ module.exports = async (req, res) => {
 
     console.log('Initializing admin user...');
     
-    if (!prisma) {
-      return res.status(503).json({
-        error: 'Database not initialized',
-        details: {
-          hasUrl: !!process.env.DATABASE_URL,
-          url: process.env.DATABASE_URL ? 'Present' : 'Missing'
+    const result = await withDatabase(async (db) => {
+      console.log('Database connected successfully');
+
+      // Check if admin user already exists
+      const existingAdmin = await db.user.findUnique({
+        where: { email: 'admin@phg.com' }
+      });
+
+      if (existingAdmin) {
+        return {
+          exists: true,
+          admin: {
+            email: existingAdmin.email,
+            fullName: existingAdmin.fullName,
+            role: existingAdmin.role,
+            created: false
+          }
+        };
+      }
+
+      // Create admin user
+      console.log('Creating admin user...');
+      const adminPassword = await bcrypt.hash('admin123', 10);
+      
+      const adminUser = await db.user.create({
+        data: {
+          email: 'admin@phg.com',
+          password: adminPassword,
+          fullName: 'Admin User',
+          role: 'ADMIN',
+          status: 'ACTIVE'
         }
       });
-    }
 
-    // Connect to database
-    await prisma.$connect();
-    console.log('Database connected successfully');
+      console.log('Admin user created successfully');
 
-    // Check if admin user already exists
-    const existingAdmin = await prisma.user.findUnique({
-      where: { email: 'admin@phg.com' }
+      return {
+        exists: false,
+        admin: {
+          id: adminUser.id,
+          email: adminUser.email,
+          fullName: adminUser.fullName,
+          role: adminUser.role,
+          created: true
+        }
+      };
     });
 
-    if (existingAdmin) {
+    if (result.exists) {
       return res.status(200).json({
         status: 'success',
         message: 'Admin user already exists',
-        data: {
-          email: existingAdmin.email,
-          fullName: existingAdmin.fullName,
-          role: existingAdmin.role,
-          created: false
-        }
+        data: result.admin
       });
     }
-
-    // Create admin user
-    console.log('Creating admin user...');
-    const adminPassword = await bcrypt.hash('admin123', 10);
-    
-    const adminUser = await prisma.user.create({
-      data: {
-        email: 'admin@phg.com',
-        password: adminPassword,
-        fullName: 'Admin User',
-        role: 'ADMIN',
-        status: 'ACTIVE'
-      }
-    });
-
-    console.log('Admin user created successfully');
 
     return res.status(201).json({
       status: 'success',
       message: 'Admin user created successfully',
-      data: {
-        id: adminUser.id,
-        email: adminUser.email,
-        fullName: adminUser.fullName,
-        role: adminUser.role,
-        created: true
-      }
+      data: result.admin
     });
 
   } catch (error) {
@@ -112,8 +95,6 @@ module.exports = async (req, res) => {
       }
     });
   } finally {
-    if (prisma) {
-      await prisma.$disconnect();
-    }
+    // Prisma singleton handles disconnection automatically
   }
 }; 
