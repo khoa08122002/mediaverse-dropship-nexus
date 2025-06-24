@@ -8,30 +8,28 @@ let dbConnectionStatus = 'disconnected';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key';
 
 // Middleware to verify JWT token
-function verifyToken(req, res, next) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  
+function verifyToken(token) {
   if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
+    return { valid: false, error: 'Access token required' };
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
+    return { valid: true, user: decoded };
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid token' });
+    return { valid: false, error: 'Invalid token' };
   }
 }
 
-// Middleware to check roles
-function requireRoles(...roles) {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
-    }
-    next();
-  };
+// Check if user has required role
+function hasRole(user, roles) {
+  return user && roles.includes(user.role);
+}
+
+// Email validation helper
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 // Helper function to parse request body
@@ -90,10 +88,13 @@ module.exports = async (req, res) => {
     const origin = req.headers.origin;
     if (corsOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      // Allow all origins in production for debugging (remove this later)
+      res.setHeader('Access-Control-Allow-Origin', '*');
     }
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
 
     if (req.method === 'OPTIONS') {
       return res.status(200).end();
@@ -307,12 +308,16 @@ module.exports = async (req, res) => {
       try {
         const jobId = parseInt(cleanUrl.split('/')[3]);
         
+        if (isNaN(jobId)) {
+          return res.status(400).json({ error: 'Invalid job ID' });
+        }
+        
         const job = await withDatabase(async (db) => {
           return await db.job.findUnique({
             where: { id: jobId },
             include: {
               applications: {
-                select: { id: true }
+                select: { id: true, fullName: true, email: true, status: true, createdAt: true }
               }
             }
           });
@@ -326,6 +331,91 @@ module.exports = async (req, res) => {
       } catch (error) {
         console.error('Get job error:', error);
         return res.status(500).json({ error: 'Failed to fetch job' });
+      }
+    }
+
+    // Route: Update Job by ID - DATABASE ONLY (Auth Required)
+    if (cleanUrl.startsWith('/recruitment/jobs/') && method === 'PUT') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const jobId = parseInt(cleanUrl.split('/')[3]);
+        
+        if (isNaN(jobId)) {
+          return res.status(400).json({ error: 'Invalid job ID' });
+        }
+
+        const { title, department, location, type, description, requirements, benefits, salary, status } = body;
+
+        const job = await withDatabase(async (db) => {
+          return await db.job.update({
+            where: { id: jobId },
+            data: {
+              ...(title && { title }),
+              ...(department && { department }),
+              ...(location && { location }),
+              ...(type && { type }),
+              ...(description && { description }),
+              ...(requirements && { requirements }),
+              ...(benefits && { benefits }),
+              ...(salary && { salary }),
+              ...(status && { status })
+            }
+          });
+        });
+
+        return res.status(200).json(job);
+      } catch (error) {
+        console.error('Update job error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'Job not found' });
+        }
+        return res.status(500).json({ error: 'Failed to update job' });
+      }
+    }
+
+    // Route: Delete Job by ID - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/recruitment/jobs/') && method === 'DELETE') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const jobId = parseInt(cleanUrl.split('/')[3]);
+        
+        if (isNaN(jobId)) {
+          return res.status(400).json({ error: 'Invalid job ID' });
+        }
+
+        await withDatabase(async (db) => {
+          return await db.job.delete({
+            where: { id: jobId }
+          });
+        });
+
+        return res.status(200).json({ message: 'Job deleted successfully' });
+      } catch (error) {
+        console.error('Delete job error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'Job not found' });
+        }
+        return res.status(500).json({ error: 'Failed to delete job' });
       }
     }
 
@@ -353,27 +443,34 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Create Blog - DATABASE ONLY
+    // Route: Create Blog - DATABASE ONLY (Auth Required)
     if (cleanUrl === '/blogs' && method === 'POST') {
       try {
-        const { title, slug, content, excerpt, category, tags, isFeatured, authorId } = body;
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
 
-        if (!title || !content || !authorId) {
-          return res.status(400).json({ error: 'Missing required fields' });
+        const { title, slug, content, excerpt, category, tags, isFeatured } = body;
+
+        if (!title || !content) {
+          return res.status(400).json({ error: 'Title and content are required' });
         }
 
         const blog = await withDatabase(async (db) => {
           return await db.blog.create({
             data: {
               title,
-              slug: slug || title.toLowerCase().replace(/\s+/g, '-'),
+              slug: slug || title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
               content,
               excerpt,
-              category,
-              tags,
+              category: category || 'General',
+              tags: tags || [],
               isFeatured: !!isFeatured,
               published: true,
-              authorId
+              authorId: auth.user.id
             }
           });
         });
@@ -381,7 +478,155 @@ module.exports = async (req, res) => {
         return res.status(201).json(blog);
       } catch (error) {
         console.error('Create blog error:', error);
+        if (error.code === 'P2002') {
+          return res.status(400).json({ error: 'Blog slug already exists' });
+        }
         return res.status(500).json({ error: 'Failed to create blog' });
+      }
+    }
+
+    // Route: Get Blog by ID/Slug - DATABASE ONLY
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'GET') {
+      try {
+        const identifier = cleanUrl.split('/')[2];
+        
+        const blog = await withDatabase(async (db) => {
+          // Try to find by ID first, then by slug
+          let where = {};
+          if (!isNaN(identifier)) {
+            where = { id: identifier };
+          } else {
+            where = { slug: identifier };
+          }
+
+          return await db.blog.findUnique({
+            where,
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        if (!blog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        // Increment view count
+        await withDatabase(async (db) => {
+          await db.blog.update({
+            where: { id: blog.id },
+            data: { views: { increment: 1 } }
+          });
+        });
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Get blog error:', error);
+        return res.status(500).json({ error: 'Failed to fetch blog' });
+      }
+    }
+
+    // Route: Update Blog - DATABASE ONLY (Auth Required)
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'PUT') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        const blogId = cleanUrl.split('/')[2];
+        const { title, slug, content, excerpt, category, tags, isFeatured, published } = body;
+
+        const blog = await withDatabase(async (db) => {
+          // Check if user owns the blog or is admin
+          const existingBlog = await db.blog.findUnique({
+            where: { id: blogId }
+          });
+
+          if (!existingBlog) {
+            throw new Error('Blog not found');
+          }
+
+          if (existingBlog.authorId !== auth.user.id && !hasRole(auth.user, ['ADMIN'])) {
+            throw new Error('Unauthorized');
+          }
+
+          return await db.blog.update({
+            where: { id: blogId },
+            data: {
+              ...(title && { title }),
+              ...(slug && { slug: slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') }),
+              ...(content && { content }),
+              ...(excerpt && { excerpt }),
+              ...(category && { category }),
+              ...(tags && { tags }),
+              ...(typeof isFeatured === 'boolean' && { isFeatured }),
+              ...(typeof published === 'boolean' && { published })
+            }
+          });
+        });
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Update blog error:', error);
+        if (error.message === 'Blog not found') {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+        if (error.message === 'Unauthorized') {
+          return res.status(403).json({ error: 'You can only edit your own blogs' });
+        }
+        if (error.code === 'P2002') {
+          return res.status(400).json({ error: 'Blog slug already exists' });
+        }
+        return res.status(500).json({ error: 'Failed to update blog' });
+      }
+    }
+
+    // Route: Delete Blog - DATABASE ONLY (Auth Required)
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'DELETE') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        const blogId = cleanUrl.split('/')[2];
+
+        await withDatabase(async (db) => {
+          // Check if user owns the blog or is admin
+          const existingBlog = await db.blog.findUnique({
+            where: { id: blogId }
+          });
+
+          if (!existingBlog) {
+            throw new Error('Blog not found');
+          }
+
+          if (existingBlog.authorId !== auth.user.id && !hasRole(auth.user, ['ADMIN'])) {
+            throw new Error('Unauthorized');
+          }
+
+          await db.blog.delete({
+            where: { id: blogId }
+          });
+        });
+
+        return res.status(200).json({ message: 'Blog deleted successfully' });
+      } catch (error) {
+        console.error('Delete blog error:', error);
+        if (error.message === 'Blog not found') {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+        if (error.message === 'Unauthorized') {
+          return res.status(403).json({ error: 'You can only delete your own blogs' });
+        }
+        return res.status(500).json({ error: 'Failed to delete blog' });
       }
     }
 
@@ -445,8 +690,14 @@ module.exports = async (req, res) => {
     if (cleanUrl === '/contacts' && method === 'GET') {
       try {
         const token = req.headers.authorization?.replace('Bearer ', '');
-        if (!token) {
-          return res.status(401).json({ error: 'Authentication required' });
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
         }
 
         const contacts = await withDatabase(async (db) => {
@@ -462,12 +713,230 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Route: Update Contact Status - DATABASE ONLY (Auth Required)
+    if (cleanUrl.startsWith('/contacts/') && method === 'PUT') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const contactId = cleanUrl.split('/')[2];
+        const { status, priority } = body;
+
+        const contact = await withDatabase(async (db) => {
+          return await db.contact.update({
+            where: { id: contactId },
+            data: {
+              ...(status && { status }),
+              ...(priority && { priority })
+            }
+          });
+        });
+
+        return res.status(200).json(contact);
+      } catch (error) {
+        console.error('Update contact error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'Contact not found' });
+        }
+        return res.status(500).json({ error: 'Failed to update contact' });
+      }
+    }
+
+    // Route: Delete Contact - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/contacts/') && method === 'DELETE') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const contactId = cleanUrl.split('/')[2];
+
+        await withDatabase(async (db) => {
+          await db.contact.delete({
+            where: { id: contactId }
+          });
+        });
+
+        return res.status(200).json({ message: 'Contact deleted successfully' });
+      } catch (error) {
+        console.error('Delete contact error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'Contact not found' });
+        }
+        return res.status(500).json({ error: 'Failed to delete contact' });
+      }
+    }
+
+    // Route: Submit Job Application - DATABASE ONLY
+    if (cleanUrl === '/applications' && method === 'POST') {
+      try {
+        const { jobId, fullName, email, phone, coverLetter, cvFile } = body;
+
+        if (!jobId || !fullName || !email) {
+          return res.status(400).json({ error: 'Job ID, full name, and email are required' });
+        }
+
+        // Check if job exists and is active
+        const job = await withDatabase(async (db) => {
+          return await db.job.findUnique({
+            where: { id: parseInt(jobId) }
+          });
+        });
+
+        if (!job || job.status !== 'active') {
+          return res.status(404).json({ error: 'Job not found or not active' });
+        }
+
+        const application = await withDatabase(async (db) => {
+          return await db.application.create({
+            data: {
+              jobId: parseInt(jobId),
+              fullName,
+              email,
+              phone,
+              coverLetter,
+              cvFile,
+              status: 'pending'
+            }
+          });
+        });
+
+        return res.status(201).json(application);
+      } catch (error) {
+        console.error('Create application error:', error);
+        return res.status(500).json({ error: 'Failed to submit application' });
+      }
+    }
+
+    // Route: Get All Applications - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl === '/applications' && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const applications = await withDatabase(async (db) => {
+          return await db.application.findMany({
+            include: {
+              job: {
+                select: { title: true, department: true }
+              }
+            },
+            orderBy: { createdAt: 'desc' }
+          });
+        });
+
+        return res.status(200).json(applications);
+      } catch (error) {
+        console.error('Get applications error:', error);
+        return res.status(500).json({ error: 'Failed to fetch applications' });
+      }
+    }
+
+    // Route: Update Application Status - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl.startsWith('/applications/') && method === 'PUT') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const applicationId = parseInt(cleanUrl.split('/')[2]);
+        const { status } = body;
+
+        if (!status || !['pending', 'reviewed', 'interviewed', 'accepted', 'rejected'].includes(status)) {
+          return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        const application = await withDatabase(async (db) => {
+          return await db.application.update({
+            where: { id: applicationId },
+            data: { status }
+          });
+        });
+
+        return res.status(200).json(application);
+      } catch (error) {
+        console.error('Update application error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+        return res.status(500).json({ error: 'Failed to update application' });
+      }
+    }
+
+    // Route: Delete Application - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/applications/') && method === 'DELETE') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const applicationId = parseInt(cleanUrl.split('/')[2]);
+
+        await withDatabase(async (db) => {
+          await db.application.delete({
+            where: { id: applicationId }
+          });
+        });
+
+        return res.status(200).json({ message: 'Application deleted successfully' });
+      } catch (error) {
+        console.error('Delete application error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+        return res.status(500).json({ error: 'Failed to delete application' });
+      }
+    }
+
     // Route: Get All Users - DATABASE ONLY (Admin Only)
     if (cleanUrl === '/users' && method === 'GET') {
       try {
         const token = req.headers.authorization?.replace('Bearer ', '');
-        if (!token) {
-          return res.status(401).json({ error: 'Authentication required' });
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
         }
 
         const users = await withDatabase(async (db) => {
@@ -496,14 +965,30 @@ module.exports = async (req, res) => {
     if (cleanUrl === '/users' && method === 'POST') {
       try {
         const token = req.headers.authorization?.replace('Bearer ', '');
-        if (!token) {
-          return res.status(401).json({ error: 'Authentication required' });
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
         }
 
         const { email, password, fullName, role } = body;
 
         if (!email || !password || !fullName) {
-          return res.status(400).json({ error: 'Missing required fields' });
+          return res.status(400).json({ error: 'Email, password, and full name are required' });
+        }
+
+        // Validate email format
+        if (!isValidEmail(email)) {
+          return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Validate password strength
+        if (password.length < 6) {
+          return res.status(400).json({ error: 'Password must be at least 6 characters long' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
@@ -531,25 +1016,161 @@ module.exports = async (req, res) => {
         return res.status(201).json(user);
       } catch (error) {
         console.error('Create user error:', error);
+        if (error.code === 'P2002') {
+          return res.status(400).json({ error: 'Email already exists' });
+        }
         return res.status(500).json({ error: 'Failed to create user' });
+      }
+    }
+
+    // Route: Update User - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/users/') && method === 'PUT') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const userId = cleanUrl.split('/')[2];
+        const { email, fullName, role, status, password } = body;
+
+        let updateData = {};
+        
+        if (email) {
+          if (!isValidEmail(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+          }
+          updateData.email = email;
+        }
+        
+        if (fullName) updateData.fullName = fullName;
+        if (role) updateData.role = role;
+        if (status) updateData.status = status;
+        
+        if (password) {
+          if (password.length < 6) {
+            return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+          }
+          updateData.password = await bcrypt.hash(password, 12);
+        }
+
+        const user = await withDatabase(async (db) => {
+          return await db.user.update({
+            where: { id: userId },
+            data: updateData,
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              status: true,
+              updatedAt: true
+            }
+          });
+        });
+
+        return res.status(200).json(user);
+      } catch (error) {
+        console.error('Update user error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        if (error.code === 'P2002') {
+          return res.status(400).json({ error: 'Email already exists' });
+        }
+        return res.status(500).json({ error: 'Failed to update user' });
+      }
+    }
+
+    // Route: Delete User - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/users/') && method === 'DELETE') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const userId = cleanUrl.split('/')[2];
+
+        // Prevent admin from deleting themselves
+        if (userId === auth.user.id) {
+          return res.status(400).json({ error: 'Cannot delete your own account' });
+        }
+
+        await withDatabase(async (db) => {
+          await db.user.delete({
+            where: { id: userId }
+          });
+        });
+
+        return res.status(200).json({ message: 'User deleted successfully' });
+      } catch (error) {
+        console.error('Delete user error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'User not found' });
+        }
+        return res.status(500).json({ error: 'Failed to delete user' });
       }
     }
 
     // Fallback for unknown routes
     return res.status(404).json({ 
       error: 'Route not found',
-      availableRoutes: [
-        'GET /health',
-        'POST /auth/login',
-        'GET /recruitment/jobs',
-        'POST /recruitment/jobs',
-        'GET /blogs',
-        'POST /blogs',
-        'POST /contacts',
-        'GET /contacts (auth required)',
-        'GET /users (auth required)',
-        'POST /users (auth required)'
-      ]
+      message: `No endpoint found for ${method} ${cleanUrl}`,
+      availableRoutes: {
+        auth: [
+          'POST /auth/login'
+        ],
+        jobs: [
+          'GET /recruitment/jobs',
+          'POST /recruitment/jobs (HR/Admin)',
+          'GET /recruitment/jobs/{id}',
+          'PUT /recruitment/jobs/{id} (HR/Admin)',
+          'DELETE /recruitment/jobs/{id} (Admin)'
+        ],
+        applications: [
+          'POST /applications',
+          'GET /applications (HR/Admin)',
+          'PUT /applications/{id} (HR/Admin)',
+          'DELETE /applications/{id} (Admin)'
+        ],
+        blogs: [
+          'GET /blogs',
+          'POST /blogs (Auth)',
+          'GET /blogs/featured',
+          'GET /blogs/{id-or-slug}',
+          'PUT /blogs/{id} (Owner/Admin)',
+          'DELETE /blogs/{id} (Owner/Admin)'
+        ],
+        contacts: [
+          'POST /contacts',
+          'GET /contacts (HR/Admin)',
+          'PUT /contacts/{id} (HR/Admin)',
+          'DELETE /contacts/{id} (Admin)'
+        ],
+        users: [
+          'GET /users (Admin)',
+          'POST /users (Admin)',
+          'PUT /users/{id} (Admin)',
+          'DELETE /users/{id} (Admin)'
+        ],
+        health: [
+          'GET /',
+          'GET /health'
+        ]
+      }
     });
 
   } catch (error) {
