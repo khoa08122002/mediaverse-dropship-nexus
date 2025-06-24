@@ -1777,6 +1777,38 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Route: Get All Applications via Recruitment path - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl === '/recruitment/applications' && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const applications = await withDatabase(async (db) => {
+          return await db.application.findMany({
+            include: {
+              job: {
+                select: { title: true, department: true }
+              }
+            },
+            orderBy: { createdAt: 'desc' }
+          });
+        });
+
+        return res.status(200).json(applications);
+      } catch (error) {
+        console.error('Get recruitment applications error:', error);
+        return res.status(500).json({ error: 'Failed to fetch applications' });
+      }
+    }
+
     // Fallback for unknown routes
     return res.status(404).json({ 
       error: 'Route not found',
