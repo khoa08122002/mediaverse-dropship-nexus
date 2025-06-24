@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { getPrismaClient, withDatabase } = require('./prisma-singleton');
+const { getPrismaClient, withDatabase, resetPrisma, checkDatabaseHealth } = require('./prisma-singleton');
 
 let dbConnectionStatus = 'disconnected';
 
@@ -131,6 +131,8 @@ module.exports = async (req, res) => {
 
     // Route: Health Check
     if (cleanUrl === '/' || cleanUrl === '/health') {
+      const dbHealth = await checkDatabaseHealth();
+      
       return res.status(200).json({
         status: 'ok',
         message: 'PHG Corporation API Backend - DATABASE ONLY',
@@ -138,12 +140,47 @@ module.exports = async (req, res) => {
         service: 'database-backend',
         platform: 'vercel-express',
         database: {
-          status: dbConnectionStatus,
+          status: dbHealth.healthy ? 'connected' : 'error',
           hasUrl: !!process.env.DATABASE_URL,
           prismaClient: updateDbStatus(),
-          mockDataRemoved: true
+          mockDataRemoved: true,
+          healthCheck: dbHealth
         }
       });
+    }
+
+    // Route: Database Reset (Emergency) - Admin Only
+    if (cleanUrl === '/database/reset' && method === 'POST') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        console.log('[RESET] Force resetting database connection...');
+        await resetPrisma();
+        
+        // Test new connection
+        const healthCheck = await checkDatabaseHealth();
+        
+        return res.status(200).json({
+          status: 'success',
+          message: 'Database connection reset completed',
+          healthCheck
+        });
+      } catch (error) {
+        console.error('Database reset error:', error);
+        return res.status(500).json({ 
+          error: 'Database reset failed',
+          details: error.message 
+        });
+      }
     }
 
     // Route: Auth Login - DATABASE ONLY
@@ -1399,6 +1436,9 @@ module.exports = async (req, res) => {
         health: [
           'GET /',
           'GET /health'
+        ],
+        admin: [
+          'POST /database/reset (Admin)'
         ]
       }
     });
