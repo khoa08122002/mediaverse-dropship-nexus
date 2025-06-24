@@ -1,15 +1,21 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
+// For local development (SQLite)
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
+
+// For production (Supabase/PostgreSQL) - uncomment for production
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }
 
 model User {
-  id        String    @id @default(uuid())
+  id        String    @id @default(cuid())
   email     String    @unique
   password  String
   fullName  String
@@ -24,14 +30,14 @@ model User {
 }
 
 model Blog {
-  id            String   @id @default(uuid())
+  id            String   @id @default(cuid())
   title         String
   slug          String   @unique
   content       String
   excerpt       String
   featuredImage String?
   category      String
-  tags          String[]
+  tags          String   // Comma-separated tags for SQLite
   readTime      String?
   isFeatured    Boolean  @default(false)
   status        String   @default("draft")
@@ -80,7 +86,7 @@ model Application {
 }
 
 model Contact {
-  id        String          @id @default(uuid())
+  id        String          @id @default(cuid())
   name      String
   email     String
   phone     String?

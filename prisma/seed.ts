@@ -92,7 +92,7 @@ async function main() {
       excerpt: 'Discover the latest React 19 features and improvements',
       featuredImage: '/placeholder-blog.jpg',
       category: 'Technology',
-      tags: ['React', 'JavaScript', 'Web Development'],
+      tags: 'React,JavaScript,Web Development', // Comma-separated for SQLite
       readTime: '5 min read',
       isFeatured: true,
       status: 'published',
