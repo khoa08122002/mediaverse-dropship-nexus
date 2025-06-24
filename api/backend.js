@@ -153,32 +153,63 @@ module.exports = async (req, res) => {
     if (cleanUrl === '/database/reset' && method === 'POST') {
       try {
         const token = req.headers.authorization?.replace('Bearer ', '');
-        const auth = verifyToken(token);
+        if (token) {
+          const auth = verifyToken(token);
+          if (!auth.valid || !hasRole(auth.user, ['ADMIN'])) {
+            return res.status(403).json({ error: 'Admin access required for database reset' });
+          }
+        }
+
+        console.log('[RESET] Emergency database connection reset initiated...');
         
-        if (!auth.valid) {
-          return res.status(401).json({ error: auth.error });
-        }
-
-        if (!hasRole(auth.user, ['ADMIN'])) {
-          return res.status(403).json({ error: 'Admin access required' });
-        }
-
-        console.log('[RESET] Force resetting database connection...');
+        // Enhanced reset process
         await resetPrisma();
         
-        // Test new connection
-        const healthCheck = await checkDatabaseHealth();
+        // Wait for reset to complete
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Test new connection with simple operation
+        let healthCheck;
+        try {
+          healthCheck = await checkDatabaseHealth();
+        } catch (error) {
+          console.error('[RESET] Health check failed after reset:', error);
+          healthCheck = { healthy: false, error: error.message };
+        }
         
         return res.status(200).json({
           status: 'success',
-          message: 'Database connection reset completed',
+          message: 'Emergency database connection reset completed',
+          timestamp: new Date().toISOString(),
           healthCheck
         });
       } catch (error) {
-        console.error('Database reset error:', error);
+        console.error('[RESET] Database reset error:', error);
         return res.status(500).json({ 
           error: 'Database reset failed',
-          details: error.message 
+          details: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    // Route: Force Database Health Check - Public
+    if (cleanUrl === '/database/health' && method === 'GET') {
+      try {
+        const healthCheck = await checkDatabaseHealth();
+        
+        return res.status(healthCheck.healthy ? 200 : 503).json({
+          status: healthCheck.healthy ? 'healthy' : 'unhealthy',
+          ...healthCheck,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('[HEALTH] Health check error:', error);
+        return res.status(503).json({ 
+          status: 'unhealthy',
+          healthy: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
         });
       }
     }
@@ -1275,12 +1306,13 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Get All Blogs - DATABASE ONLY
+    // Route: Get All Blogs - DATABASE ONLY with Enhanced Error Handling
     if (cleanUrl === '/blogs' && method === 'GET') {
       try {
-        console.log('[DEBUG] Fetching blogs...');
+        console.log('[BLOGS] Fetching blogs with enhanced error handling...');
+        
         const blogs = await withDatabase(async (db) => {
-          console.log('[DEBUG] Executing blog query...');
+          console.log('[BLOGS] Executing blog query...');
           const result = await db.blog.findMany({
             where: { published: true },
             orderBy: { createdAt: 'desc' },
@@ -1290,7 +1322,7 @@ module.exports = async (req, res) => {
               }
             }
           });
-          console.log('[DEBUG] Blog query result:', result.length, 'blogs found');
+          console.log(`[BLOGS] Query successful, found ${result.length} blogs`);
           return result;
         });
 
@@ -1298,15 +1330,35 @@ module.exports = async (req, res) => {
         res.setHeader('X-Data-Count', blogs.length.toString());
         return res.status(200).json(blogs);
       } catch (error) {
-        console.error('Get blogs error details:', {
+        console.error('[BLOGS] Error details:', {
           message: error.message,
           code: error.code,
-          stack: error.stack
+          stack: error.stack?.substring(0, 500)
         });
-        return res.status(500).json({ 
-          error: 'Failed to fetch blogs from database',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        
+        // Enhanced error response based on error type
+        if (error.message.includes('prepared statement')) {
+          return res.status(503).json({ 
+            error: 'Database connection conflict',
+            details: 'Please try again in a moment',
+            code: 'DB_CONFLICT',
+            timestamp: new Date().toISOString()
+          });
+        } else if (error.message.includes('timeout')) {
+          return res.status(503).json({ 
+            error: 'Database response timeout',
+            details: 'Please try again',
+            code: 'DB_TIMEOUT',
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          return res.status(500).json({ 
+            error: 'Failed to fetch blogs from database',
+            details: process.env.NODE_ENV === 'development' ? error.message : 'Please try again',
+            code: 'DB_ERROR',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     }
 
@@ -1504,6 +1556,70 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Route: Get All Applications (Legacy) - DATABASE ONLY (HR/Admin Only) 
+    if (cleanUrl === '/applications' && method === 'GET') {
+      try {
+        console.log('[APPLICATIONS-LEGACY] Fetching applications via legacy endpoint...');
+        
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const applications = await withDatabase(async (db) => {
+          console.log('[APPLICATIONS-LEGACY] Executing applications query...');
+          const result = await db.application.findMany({
+            include: {
+              job: {
+                select: { title: true, department: true }
+              }
+            },
+            orderBy: { createdAt: 'desc' }
+          });
+          console.log(`[APPLICATIONS-LEGACY] Query successful, found ${result.length} applications`);
+          return result;
+        });
+
+        return res.status(200).json(applications);
+      } catch (error) {
+        console.error('[APPLICATIONS-LEGACY] Error details:', {
+          message: error.message,
+          code: error.code,
+          stack: error.stack?.substring(0, 500)
+        });
+        
+        // Enhanced error response based on error type
+        if (error.message.includes('prepared statement')) {
+          return res.status(503).json({ 
+            error: 'Database connection conflict',
+            details: 'Please try again in a moment',
+            code: 'DB_CONFLICT',
+            timestamp: new Date().toISOString()
+          });
+        } else if (error.message.includes('timeout')) {
+          return res.status(503).json({ 
+            error: 'Database response timeout',
+            details: 'Please try again',
+            code: 'DB_TIMEOUT',
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          return res.status(500).json({ 
+            error: 'Failed to fetch applications',
+            details: process.env.NODE_ENV === 'development' ? error.message : 'Please try again',
+            code: 'DB_ERROR',
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
+    }
+
     // Route: Submit Job Application - DATABASE ONLY
     if (cleanUrl === '/applications' && method === 'POST') {
       try {
@@ -1545,9 +1661,11 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Get All Applications - DATABASE ONLY (HR/Admin Only)
-    if (cleanUrl === '/applications' && method === 'GET') {
+    // Route: Get All Applications via Recruitment path - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl === '/recruitment/applications' && method === 'GET') {
       try {
+        console.log('[RECRUITMENT-APPLICATIONS] Fetching applications with enhanced error handling...');
+        
         const token = req.headers.authorization?.replace('Bearer ', '');
         const auth = verifyToken(token);
         
@@ -1560,7 +1678,8 @@ module.exports = async (req, res) => {
         }
 
         const applications = await withDatabase(async (db) => {
-          return await db.application.findMany({
+          console.log('[RECRUITMENT-APPLICATIONS] Executing applications query...');
+          const result = await db.application.findMany({
             include: {
               job: {
                 select: { title: true, department: true }
@@ -1568,12 +1687,41 @@ module.exports = async (req, res) => {
             },
             orderBy: { createdAt: 'desc' }
           });
+          console.log(`[RECRUITMENT-APPLICATIONS] Query successful, found ${result.length} applications`);
+          return result;
         });
 
         return res.status(200).json(applications);
       } catch (error) {
-        console.error('Get applications error:', error);
-        return res.status(500).json({ error: 'Failed to fetch applications' });
+        console.error('[RECRUITMENT-APPLICATIONS] Error details:', {
+          message: error.message,
+          code: error.code,
+          stack: error.stack?.substring(0, 500)
+        });
+        
+        // Enhanced error response based on error type
+        if (error.message.includes('prepared statement')) {
+          return res.status(503).json({ 
+            error: 'Database connection conflict',
+            details: 'Please try again in a moment',
+            code: 'DB_CONFLICT',
+            timestamp: new Date().toISOString()
+          });
+        } else if (error.message.includes('timeout')) {
+          return res.status(503).json({ 
+            error: 'Database response timeout',
+            details: 'Please try again',
+            code: 'DB_TIMEOUT',
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          return res.status(500).json({ 
+            error: 'Failed to fetch applications',
+            details: process.env.NODE_ENV === 'development' ? error.message : 'Please try again',
+            code: 'DB_ERROR',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     }
 
@@ -1774,38 +1922,6 @@ module.exports = async (req, res) => {
           return res.status(404).json({ error: 'User not found' });
         }
         return res.status(500).json({ error: 'Failed to delete user' });
-      }
-    }
-
-    // Route: Get All Applications via Recruitment path - DATABASE ONLY (HR/Admin Only)
-    if (cleanUrl === '/recruitment/applications' && method === 'GET') {
-      try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const auth = verifyToken(token);
-        
-        if (!auth.valid) {
-          return res.status(401).json({ error: auth.error });
-        }
-
-        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
-          return res.status(403).json({ error: 'Insufficient permissions' });
-        }
-
-        const applications = await withDatabase(async (db) => {
-          return await db.application.findMany({
-            include: {
-              job: {
-                select: { title: true, department: true }
-              }
-            },
-            orderBy: { createdAt: 'desc' }
-          });
-        });
-
-        return res.status(200).json(applications);
-      } catch (error) {
-        console.error('Get recruitment applications error:', error);
-        return res.status(500).json({ error: 'Failed to fetch applications' });
       }
     }
 

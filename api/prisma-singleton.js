@@ -66,17 +66,20 @@ async function checkDatabaseHealth() {
   try {
     const client = getPrismaClient();
     
-    // Use a simple query that doesn't create prepared statements
-    const result = await client.$queryRaw`SELECT 1 as health_check`;
+    // Use a simple database operation that doesn't create prepared statements
+    // Instead of $queryRaw, use a regular Prisma operation
+    const userCount = await client.user.count();
     
-    if (result && result.length > 0) {
+    // If we can count users, database is healthy
+    if (typeof userCount === 'number') {
       return { 
         healthy: true, 
         message: 'Database connection is healthy',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        userCount
       };
     } else {
-      throw new Error('Health check query returned no results');
+      throw new Error('Health check query returned invalid result');
     }
   } catch (error) {
     console.error('Database health check failed:', error);
@@ -89,7 +92,11 @@ async function checkDatabaseHealth() {
 
     if (isPreparedStatementError) {
       console.log('Detected prepared statement conflict, triggering reset...');
-      await resetPrisma();
+      try {
+        await resetPrisma();
+      } catch (resetError) {
+        console.error('Reset failed during health check:', resetError);
+      }
     }
 
     return { 
