@@ -199,9 +199,21 @@ module.exports = async (req, res) => {
         }
 
         console.log('[DEBUG] Attempting to find user by email');
-        const user = await withDatabase(async (db) => {
-          return await db.user.findUnique({ where: { email } });
-        });
+        let user;
+        try {
+          user = await withDatabase(async (db) => {
+            console.log('[DEBUG] Executing findUnique query for email:', email);
+            const foundUser = await db.user.findUnique({ where: { email } });
+            console.log('[DEBUG] Query result:', foundUser ? 'User found' : 'User not found');
+            return foundUser;
+          });
+        } catch (dbError) {
+          console.error('[DEBUG] Database query error:', dbError);
+          return res.status(500).json({ 
+            error: 'Database query failed',
+            details: dbError.message 
+          });
+        }
 
         console.log('[DEBUG] User found:', !!user);
         
@@ -210,9 +222,25 @@ module.exports = async (req, res) => {
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        console.log('[DEBUG] User details:', {
+          id: user.id,
+          email: user.email,
+          hasPassword: !!user.password,
+          role: user.role
+        });
+
         console.log('[DEBUG] Comparing password');  
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        console.log('[DEBUG] Password match:', passwordMatch);
+        let passwordMatch;
+        try {
+          passwordMatch = await bcrypt.compare(password, user.password);
+          console.log('[DEBUG] Password match:', passwordMatch);
+        } catch (bcryptError) {
+          console.error('[DEBUG] Password comparison error:', bcryptError);
+          return res.status(500).json({ 
+            error: 'Password comparison failed',
+            details: bcryptError.message 
+          });
+        }
         
         if (!passwordMatch) {
           console.log('[DEBUG] Password does not match');
