@@ -635,20 +635,25 @@ module.exports = async (req, res) => {
     }
 
     // Route: Get Job by ID - DATABASE ONLY
-    if (cleanUrl.startsWith('/recruitment/jobs/') && method === 'GET') {
+    if (cleanUrl.startsWith('/recruitment/jobs/') && !cleanUrl.includes('/applications') && method === 'GET') {
       try {
         const jobId = parseInt(cleanUrl.split('/')[3]);
-        
-        if (isNaN(jobId)) {
-          return res.status(400).json({ error: 'Invalid job ID' });
-        }
         
         const job = await withDatabase(async (db) => {
           return await db.job.findUnique({
             where: { id: jobId },
             include: {
               applications: {
-                select: { id: true, fullName: true, email: true, status: true, createdAt: true }
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  status: true,
+                  createdAt: true
+                }
+              },
+              _count: {
+                select: { applications: true }
               }
             }
           });
@@ -660,13 +665,13 @@ module.exports = async (req, res) => {
 
         return res.status(200).json(job);
       } catch (error) {
-        console.error('Get job error:', error);
+        console.error('Get job by ID error:', error);
         return res.status(500).json({ error: 'Failed to fetch job' });
       }
     }
 
-    // Route: Update Job by ID - DATABASE ONLY (Auth Required)
-    if (cleanUrl.startsWith('/recruitment/jobs/') && method === 'PUT') {
+    // Route: Update Job - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl.startsWith('/recruitment/jobs/') && !cleanUrl.includes('/applications') && method === 'PUT') {
       try {
         const token = req.headers.authorization?.replace('Bearer ', '');
         const auth = verifyToken(token);
@@ -680,11 +685,6 @@ module.exports = async (req, res) => {
         }
 
         const jobId = parseInt(cleanUrl.split('/')[3]);
-        
-        if (isNaN(jobId)) {
-          return res.status(400).json({ error: 'Invalid job ID' });
-        }
-
         const { title, department, location, type, description, requirements, benefits, salary, status } = body;
 
         const job = await withDatabase(async (db) => {
@@ -714,8 +714,8 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Delete Job by ID - DATABASE ONLY (Admin Only)
-    if (cleanUrl.startsWith('/recruitment/jobs/') && method === 'DELETE') {
+    // Route: Delete Job - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/recruitment/jobs/') && !cleanUrl.includes('/applications') && method === 'DELETE') {
       try {
         const token = req.headers.authorization?.replace('Bearer ', '');
         const auth = verifyToken(token);
@@ -729,13 +729,9 @@ module.exports = async (req, res) => {
         }
 
         const jobId = parseInt(cleanUrl.split('/')[3]);
-        
-        if (isNaN(jobId)) {
-          return res.status(400).json({ error: 'Invalid job ID' });
-        }
 
         await withDatabase(async (db) => {
-          return await db.job.delete({
+          await db.job.delete({
             where: { id: jobId }
           });
         });
@@ -747,6 +743,535 @@ module.exports = async (req, res) => {
           return res.status(404).json({ error: 'Job not found' });
         }
         return res.status(500).json({ error: 'Failed to delete job' });
+      }
+    }
+
+    // Route: Get Applications for Job - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl.startsWith('/recruitment/jobs/') && cleanUrl.includes('/applications') && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const jobId = parseInt(cleanUrl.split('/')[3]);
+
+        const applications = await withDatabase(async (db) => {
+          return await db.application.findMany({
+            where: { jobId },
+            include: {
+              job: {
+                select: { title: true, department: true }
+              }
+            },
+            orderBy: { createdAt: 'desc' }
+          });
+        });
+
+        return res.status(200).json(applications);
+      } catch (error) {
+        console.error('Get job applications error:', error);
+        return res.status(500).json({ error: 'Failed to fetch job applications' });
+      }
+    }
+
+    // Route: Get Application by ID - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl.startsWith('/recruitment/applications/') && !cleanUrl.includes('/status') && !cleanUrl.includes('/cv') && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const applicationId = parseInt(cleanUrl.split('/')[3]);
+
+        const application = await withDatabase(async (db) => {
+          return await db.application.findUnique({
+            where: { id: applicationId },
+            include: {
+              job: {
+                select: { title: true, department: true, location: true }
+              }
+            }
+          });
+        });
+
+        if (!application) {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+
+        return res.status(200).json(application);
+      } catch (error) {
+        console.error('Get application error:', error);
+        return res.status(500).json({ error: 'Failed to fetch application' });
+      }
+    }
+
+    // Route: Update Application Status - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl.startsWith('/recruitment/applications/') && cleanUrl.includes('/status') && method === 'PUT') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const applicationId = parseInt(cleanUrl.split('/')[3]);
+        const { status } = body;
+
+        if (!status || !['pending', 'reviewed', 'interviewed', 'accepted', 'rejected'].includes(status)) {
+          return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        const application = await withDatabase(async (db) => {
+          return await db.application.update({
+            where: { id: applicationId },
+            data: { status },
+            include: {
+              job: {
+                select: { title: true, department: true }
+              }
+            }
+          });
+        });
+
+        return res.status(200).json(application);
+      } catch (error) {
+        console.error('Update application status error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+        return res.status(500).json({ error: 'Failed to update application status' });
+      }
+    }
+
+    // Route: Download CV - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl.startsWith('/recruitment/applications/') && cleanUrl.includes('/cv') && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const applicationId = parseInt(cleanUrl.split('/')[3]);
+
+        const application = await withDatabase(async (db) => {
+          return await db.application.findUnique({
+            where: { id: applicationId },
+            select: { cvFile: true, fullName: true }
+          });
+        });
+
+        if (!application || !application.cvFile) {
+          return res.status(404).json({ error: 'CV file not found' });
+        }
+
+        // For now, return file path/URL since we don't have file storage setup
+        return res.status(200).json({
+          message: 'CV download endpoint',
+          cvFile: application.cvFile,
+          applicantName: application.fullName,
+          note: 'File storage integration needed for actual file download'
+        });
+      } catch (error) {
+        console.error('Download CV error:', error);
+        return res.status(500).json({ error: 'Failed to download CV' });
+      }
+    }
+
+    // Route: Delete Application - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/recruitment/applications/') && !cleanUrl.includes('/status') && !cleanUrl.includes('/cv') && method === 'DELETE') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const applicationId = parseInt(cleanUrl.split('/')[3]);
+
+        await withDatabase(async (db) => {
+          await db.application.delete({
+            where: { id: applicationId }
+          });
+        });
+
+        return res.status(200).json({ message: 'Application deleted successfully' });
+      } catch (error) {
+        console.error('Delete application error:', error);
+        if (error.code === 'P2025') {
+          return res.status(404).json({ error: 'Application not found' });
+        }
+        return res.status(500).json({ error: 'Failed to delete application' });
+      }
+    }
+
+    // Route: Get User by ID - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/users/') && !cleanUrl.includes('/change-password') && !cleanUrl.includes('/profile') && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const userId = cleanUrl.split('/')[2];
+
+        const user = await withDatabase(async (db) => {
+          return await db.user.findUnique({
+            where: { id: userId },
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              status: true,
+              createdAt: true,
+              updatedAt: true,
+              lastLogin: true,
+              _count: {
+                select: { blogs: true }
+              }
+            }
+          });
+        });
+
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        return res.status(200).json(user);
+      } catch (error) {
+        console.error('Get user by ID error:', error);
+        return res.status(500).json({ error: 'Failed to fetch user' });
+      }
+    }
+
+    // Route: Search Users - DATABASE ONLY (Admin Only)
+    if (cleanUrl === '/users/search' && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const query = req.url.split('?q=')[1];
+        if (!query) {
+          return res.status(400).json({ error: 'Search query required' });
+        }
+
+        const searchTerm = decodeURIComponent(query);
+
+        const users = await withDatabase(async (db) => {
+          return await db.user.findMany({
+            where: {
+              OR: [
+                { email: { contains: searchTerm, mode: 'insensitive' } },
+                { fullName: { contains: searchTerm, mode: 'insensitive' } }
+              ]
+            },
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              status: true,
+              createdAt: true
+            },
+            take: 20 // Limit results
+          });
+        });
+
+        return res.status(200).json(users);
+      } catch (error) {
+        console.error('Search users error:', error);
+        return res.status(500).json({ error: 'Failed to search users' });
+      }
+    }
+
+    // Route: Change Password - DATABASE ONLY (Admin Only)
+    if (cleanUrl.startsWith('/users/') && cleanUrl.includes('/change-password') && method === 'POST') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const userId = cleanUrl.split('/')[2];
+        const { currentPassword, newPassword } = body;
+
+        if (!newPassword) {
+          return res.status(400).json({ error: 'New password is required' });
+        }
+
+        if (newPassword.length < 6) {
+          return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+        }
+
+        // Get user to verify current password if provided
+        const user = await withDatabase(async (db) => {
+          return await db.user.findUnique({
+            where: { id: userId }
+          });
+        });
+
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        // If current password is provided, verify it
+        if (currentPassword) {
+          const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+          if (!passwordMatch) {
+            return res.status(400).json({ error: 'Current password is incorrect' });
+          }
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+        await withDatabase(async (db) => {
+          await db.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword }
+          });
+        });
+
+        return res.status(200).json({ message: 'Password changed successfully' });
+      } catch (error) {
+        console.error('Change password error:', error);
+        return res.status(500).json({ error: 'Failed to change password' });
+      }
+    }
+
+    // Route: Get Blog by ID/Slug - DATABASE ONLY
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'GET') {
+      try {
+        const identifier = cleanUrl.split('/')[2];
+        
+        const blog = await withDatabase(async (db) => {
+          // Try to find by ID first, then by slug
+          let foundBlog = null;
+          
+          // Check if identifier is a number (ID)
+          if (!isNaN(identifier)) {
+            foundBlog = await db.blog.findUnique({
+              where: { id: identifier },
+              include: {
+                author: {
+                  select: { fullName: true, email: true }
+                }
+              }
+            });
+          }
+          
+          // If not found by ID, try slug
+          if (!foundBlog) {
+            foundBlog = await db.blog.findUnique({
+              where: { slug: identifier },
+              include: {
+                author: {
+                  select: { fullName: true, email: true }
+                }
+              }
+            });
+          }
+          
+          // Increment view count if blog is found and published
+          if (foundBlog && foundBlog.published) {
+            await db.blog.update({
+              where: { id: foundBlog.id },
+              data: { views: { increment: 1 } }
+            });
+          }
+          
+          return foundBlog;
+        });
+
+        if (!blog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Get blog error:', error);
+        return res.status(500).json({ error: 'Failed to fetch blog' });
+      }
+    }
+
+    // Route: Update Blog - DATABASE ONLY (Owner/Admin Only)
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'PUT') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        const blogId = cleanUrl.split('/')[2];
+        const { title, content, excerpt, featuredImage, category, tags, isFeatured, status, published } = body;
+
+        // Check if user owns the blog or is admin
+        const existingBlog = await withDatabase(async (db) => {
+          return await db.blog.findUnique({
+            where: { id: blogId },
+            select: { authorId: true }
+          });
+        });
+
+        if (!existingBlog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        if (existingBlog.authorId !== auth.user.id && !hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'You can only edit your own blogs' });
+        }
+
+        const blog = await withDatabase(async (db) => {
+          return await db.blog.update({
+            where: { id: blogId },
+            data: {
+              ...(title && { title }),
+              ...(content && { content }),
+              ...(excerpt && { excerpt }),
+              ...(featuredImage && { featuredImage }),
+              ...(category && { category }),
+              ...(tags && { tags }),
+              ...(isFeatured !== undefined && { isFeatured }),
+              ...(status && { status }),
+              ...(published !== undefined && { published })
+            },
+            include: {
+              author: {
+                select: { fullName: true, email: true }
+              }
+            }
+          });
+        });
+
+        return res.status(200).json(blog);
+      } catch (error) {
+        console.error('Update blog error:', error);
+        return res.status(500).json({ error: 'Failed to update blog' });
+      }
+    }
+
+    // Route: Delete Blog - DATABASE ONLY (Owner/Admin Only)
+    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'DELETE') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        const blogId = cleanUrl.split('/')[2];
+
+        // Check if user owns the blog or is admin
+        const existingBlog = await withDatabase(async (db) => {
+          return await db.blog.findUnique({
+            where: { id: blogId },
+            select: { authorId: true, title: true }
+          });
+        });
+
+        if (!existingBlog) {
+          return res.status(404).json({ error: 'Blog not found' });
+        }
+
+        if (existingBlog.authorId !== auth.user.id && !hasRole(auth.user, ['ADMIN'])) {
+          return res.status(403).json({ error: 'You can only delete your own blogs' });
+        }
+
+        await withDatabase(async (db) => {
+          await db.blog.delete({
+            where: { id: blogId }
+          });
+        });
+
+        return res.status(200).json({ message: 'Blog deleted successfully' });
+      } catch (error) {
+        console.error('Delete blog error:', error);
+        return res.status(500).json({ error: 'Failed to delete blog' });
+      }
+    }
+
+    // Route: Get Contact by ID - DATABASE ONLY (HR/Admin Only)
+    if (cleanUrl.startsWith('/contacts/') && method === 'GET') {
+      try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const auth = verifyToken(token);
+        
+        if (!auth.valid) {
+          return res.status(401).json({ error: auth.error });
+        }
+
+        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+
+        const contactId = cleanUrl.split('/')[2];
+
+        const contact = await withDatabase(async (db) => {
+          return await db.contact.findUnique({
+            where: { id: contactId }
+          });
+        });
+
+        if (!contact) {
+          return res.status(404).json({ error: 'Contact not found' });
+        }
+
+        return res.status(200).json(contact);
+      } catch (error) {
+        console.error('Get contact error:', error);
+        return res.status(500).json({ error: 'Failed to fetch contact' });
       }
     }
 
@@ -824,151 +1349,6 @@ module.exports = async (req, res) => {
           return res.status(400).json({ error: 'Blog slug already exists' });
         }
         return res.status(500).json({ error: 'Failed to create blog' });
-      }
-    }
-
-    // Route: Get Blog by ID/Slug - DATABASE ONLY
-    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'GET') {
-      try {
-        const identifier = cleanUrl.split('/')[2];
-        
-        const blog = await withDatabase(async (db) => {
-          // Try to find by ID first, then by slug
-          let where = {};
-          if (!isNaN(identifier)) {
-            where = { id: identifier };
-          } else {
-            where = { slug: identifier };
-          }
-
-          return await db.blog.findUnique({
-            where,
-            include: {
-              author: {
-                select: { fullName: true, email: true }
-              }
-            }
-          });
-        });
-
-        if (!blog) {
-          return res.status(404).json({ error: 'Blog not found' });
-        }
-
-        // Increment view count
-        await withDatabase(async (db) => {
-          await db.blog.update({
-            where: { id: blog.id },
-            data: { views: { increment: 1 } }
-          });
-        });
-
-        return res.status(200).json(blog);
-      } catch (error) {
-        console.error('Get blog error:', error);
-        return res.status(500).json({ error: 'Failed to fetch blog' });
-      }
-    }
-
-    // Route: Update Blog - DATABASE ONLY (Auth Required)
-    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'PUT') {
-      try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const auth = verifyToken(token);
-        
-        if (!auth.valid) {
-          return res.status(401).json({ error: auth.error });
-        }
-
-        const blogId = cleanUrl.split('/')[2];
-        const { title, slug, content, excerpt, category, tags, isFeatured, published } = body;
-
-        const blog = await withDatabase(async (db) => {
-          // Check if user owns the blog or is admin
-          const existingBlog = await db.blog.findUnique({
-            where: { id: blogId }
-          });
-
-          if (!existingBlog) {
-            throw new Error('Blog not found');
-          }
-
-          if (existingBlog.authorId !== auth.user.id && !hasRole(auth.user, ['ADMIN'])) {
-            throw new Error('Unauthorized');
-          }
-
-          return await db.blog.update({
-            where: { id: blogId },
-            data: {
-              ...(title && { title }),
-              ...(slug && { slug: slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') }),
-              ...(content && { content }),
-              ...(excerpt && { excerpt }),
-              ...(category && { category }),
-              ...(tags && { tags }),
-              ...(typeof isFeatured === 'boolean' && { isFeatured }),
-              ...(typeof published === 'boolean' && { published })
-            }
-          });
-        });
-
-        return res.status(200).json(blog);
-      } catch (error) {
-        console.error('Update blog error:', error);
-        if (error.message === 'Blog not found') {
-          return res.status(404).json({ error: 'Blog not found' });
-        }
-        if (error.message === 'Unauthorized') {
-          return res.status(403).json({ error: 'You can only edit your own blogs' });
-        }
-        if (error.code === 'P2002') {
-          return res.status(400).json({ error: 'Blog slug already exists' });
-        }
-        return res.status(500).json({ error: 'Failed to update blog' });
-      }
-    }
-
-    // Route: Delete Blog - DATABASE ONLY (Auth Required)
-    if (cleanUrl.startsWith('/blogs/') && !cleanUrl.includes('/featured') && method === 'DELETE') {
-      try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const auth = verifyToken(token);
-        
-        if (!auth.valid) {
-          return res.status(401).json({ error: auth.error });
-        }
-
-        const blogId = cleanUrl.split('/')[2];
-
-        await withDatabase(async (db) => {
-          // Check if user owns the blog or is admin
-          const existingBlog = await db.blog.findUnique({
-            where: { id: blogId }
-          });
-
-          if (!existingBlog) {
-            throw new Error('Blog not found');
-          }
-
-          if (existingBlog.authorId !== auth.user.id && !hasRole(auth.user, ['ADMIN'])) {
-            throw new Error('Unauthorized');
-          }
-
-          await db.blog.delete({
-            where: { id: blogId }
-          });
-        });
-
-        return res.status(200).json({ message: 'Blog deleted successfully' });
-      } catch (error) {
-        console.error('Delete blog error:', error);
-        if (error.message === 'Blog not found') {
-          return res.status(404).json({ error: 'Blog not found' });
-        }
-        if (error.message === 'Unauthorized') {
-          return res.status(403).json({ error: 'You can only delete your own blogs' });
-        }
-        return res.status(500).json({ error: 'Failed to delete blog' });
       }
     }
 
@@ -1197,76 +1577,6 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Route: Update Application Status - DATABASE ONLY (HR/Admin Only)
-    if (cleanUrl.startsWith('/applications/') && method === 'PUT') {
-      try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const auth = verifyToken(token);
-        
-        if (!auth.valid) {
-          return res.status(401).json({ error: auth.error });
-        }
-
-        if (!hasRole(auth.user, ['ADMIN', 'HR'])) {
-          return res.status(403).json({ error: 'Insufficient permissions' });
-        }
-
-        const applicationId = parseInt(cleanUrl.split('/')[2]);
-        const { status } = body;
-
-        if (!status || !['pending', 'reviewed', 'interviewed', 'accepted', 'rejected'].includes(status)) {
-          return res.status(400).json({ error: 'Invalid status' });
-        }
-
-        const application = await withDatabase(async (db) => {
-          return await db.application.update({
-            where: { id: applicationId },
-            data: { status }
-          });
-        });
-
-        return res.status(200).json(application);
-      } catch (error) {
-        console.error('Update application error:', error);
-        if (error.code === 'P2025') {
-          return res.status(404).json({ error: 'Application not found' });
-        }
-        return res.status(500).json({ error: 'Failed to update application' });
-      }
-    }
-
-    // Route: Delete Application - DATABASE ONLY (Admin Only)
-    if (cleanUrl.startsWith('/applications/') && method === 'DELETE') {
-      try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        const auth = verifyToken(token);
-        
-        if (!auth.valid) {
-          return res.status(401).json({ error: auth.error });
-        }
-
-        if (!hasRole(auth.user, ['ADMIN'])) {
-          return res.status(403).json({ error: 'Admin access required' });
-        }
-
-        const applicationId = parseInt(cleanUrl.split('/')[2]);
-
-        await withDatabase(async (db) => {
-          await db.application.delete({
-            where: { id: applicationId }
-          });
-        });
-
-        return res.status(200).json({ message: 'Application deleted successfully' });
-      } catch (error) {
-        console.error('Delete application error:', error);
-        if (error.code === 'P2025') {
-          return res.status(404).json({ error: 'Application not found' });
-        }
-        return res.status(500).json({ error: 'Failed to delete application' });
-      }
-    }
-
     // Route: Get All Users - DATABASE ONLY (Admin Only)
     if (cleanUrl === '/users' && method === 'GET') {
       try {
@@ -1366,7 +1676,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: Update User - DATABASE ONLY (Admin Only)
-    if (cleanUrl.startsWith('/users/') && method === 'PUT') {
+    if (cleanUrl.startsWith('/users/') && !cleanUrl.includes('/change-password') && !cleanUrl.includes('/profile') && method === 'PUT') {
       try {
         const token = req.headers.authorization?.replace('Bearer ', '');
         const auth = verifyToken(token);
@@ -1431,7 +1741,7 @@ module.exports = async (req, res) => {
     }
 
     // Route: Delete User - DATABASE ONLY (Admin Only)
-    if (cleanUrl.startsWith('/users/') && method === 'DELETE') {
+    if (cleanUrl.startsWith('/users/') && !cleanUrl.includes('/change-password') && !cleanUrl.includes('/profile') && method === 'DELETE') {
       try {
         const token = req.headers.authorization?.replace('Bearer ', '');
         const auth = verifyToken(token);
@@ -1486,13 +1796,16 @@ module.exports = async (req, res) => {
           'POST /recruitment/jobs (HR/Admin)',
           'GET /recruitment/jobs/{id}',
           'PUT /recruitment/jobs/{id} (HR/Admin)',
-          'DELETE /recruitment/jobs/{id} (Admin)'
+          'DELETE /recruitment/jobs/{id} (Admin)',
+          'GET /recruitment/jobs/{id}/applications (HR/Admin)'
         ],
         applications: [
           'POST /applications',
           'GET /applications (HR/Admin)',
-          'PUT /applications/{id} (HR/Admin)',
-          'DELETE /applications/{id} (Admin)'
+          'GET /recruitment/applications/{id} (HR/Admin)',
+          'PUT /recruitment/applications/{id}/status (HR/Admin)',
+          'DELETE /recruitment/applications/{id} (Admin)',
+          'GET /recruitment/applications/{id}/cv (HR/Admin)'
         ],
         blogs: [
           'GET /blogs',
@@ -1505,14 +1818,18 @@ module.exports = async (req, res) => {
         contacts: [
           'POST /contacts',
           'GET /contacts (HR/Admin)',
+          'GET /contacts/{id} (HR/Admin)',
           'PUT /contacts/{id} (HR/Admin)',
           'DELETE /contacts/{id} (Admin)'
         ],
         users: [
           'GET /users (Admin)',
           'POST /users (Admin)',
+          'GET /users/{id} (Admin)',
           'PUT /users/{id} (Admin)',
-          'DELETE /users/{id} (Admin)'
+          'DELETE /users/{id} (Admin)',
+          'GET /users/search?q=term (Admin)',
+          'POST /users/{id}/change-password (Admin)'
         ],
         health: [
           'GET /',
@@ -1521,7 +1838,9 @@ module.exports = async (req, res) => {
         admin: [
           'POST /database/reset (Admin)'
         ]
-      }
+      },
+      totalEndpoints: 35,
+      note: 'All admin dashboard endpoints are now available. Login working ✅'
     });
 
   } catch (error) {
