@@ -14,18 +14,23 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 3000,
-      allowedHosts: [
-        'localhost',
-        '127.0.0.1',
-        'phgcorporation.com',
-        '.phgcorporation.com'
-      ],
+      allowedHosts: true,
       proxy: {
         '/api': {
-          target: process.env.VITE_PROXY_TARGET || 'http://localhost:3002',
+          target: process.env.VITE_PROXY_TARGET || 'http://app:3002',
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, '/api')
+          configure: (proxy, options) => {
+            proxy.on('error', (err, req, res) => {
+              console.log('proxy error', err);
+            });
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              console.log('Sending Request to the Target:', req.method, req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+            });
+          },
         }
       },
       watch: {
