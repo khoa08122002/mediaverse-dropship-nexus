@@ -26,10 +26,10 @@ export const getEnvironment = () => {
 export const getAPIBaseURL = () => {
   const env = getEnvironment();
   
-  // USE CLEANED BACKEND API (NO MOCK DATA)
-  // The cleaned api/backend.js only uses database, no fallback to mock data
+  // USE PRODUCTION API ENDPOINT  
+  // Backend API is available at /api/* routes via nginx proxy
   if (env.isProduction || env.isVercelDomain) {
-    return `${window.location.origin}/api/backend`;
+    return `${window.location.origin}/api`;
   }
   
   return 'http://localhost:3000/api';

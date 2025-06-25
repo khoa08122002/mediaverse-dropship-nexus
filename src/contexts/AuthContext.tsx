@@ -38,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (!accessToken || !refreshToken) {
-        // If trying to access admin without auth, redirect to login
         if (location.pathname === '/admin') {
           navigate('/login');
         }
@@ -46,23 +45,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Try to get user profile with current token
       try {
         const response = await axios.get('/users/profile');
         const userData = response.data;
         setUser(userData);
         
-        // Check if user is trying to access admin page
         if (location.pathname === '/admin') {
           if (userData.role !== 'ADMIN' && userData.role !== 'HR') {
-            // Unauthorized for admin, redirect to login
             navigate('/login');
             toast.error('Bạn không có quyền truy cập trang quản trị');
             return;
           }
         }
       } catch (profileError) {
-        // If profile fetch fails, try to refresh token
         try {
           const refreshResponse = await axios.post('/auth/refresh', { refreshToken });
           const { accessToken: newAccessToken, user: userData } = refreshResponse.data;
@@ -70,7 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('accessToken', newAccessToken);
           setUser(userData);
           
-          // Check admin access after token refresh
           if (location.pathname === '/admin') {
             if (userData.role !== 'ADMIN' && userData.role !== 'HR') {
               navigate('/login');
@@ -80,12 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch (refreshError) {
           console.error('Token refresh failed:', refreshError);
-          // If refresh fails, clear everything
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           setUser(null);
           
-          // Redirect to login if trying to access admin
           if (location.pathname === '/admin') {
             navigate('/login');
           }
@@ -93,7 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      // On error, redirect to login if trying to access admin
       if (location.pathname === '/admin') {
         navigate('/login');
       }
@@ -103,10 +94,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Validate and clear inconsistent cache first
     validateDataConsistency();
     checkAuthStatus();
-  }, [location.pathname]); // Re-run when route changes
+  }, [location.pathname]);
 
   const login = async (email: string, password: string) => {
     let retryCount = 0;
@@ -122,24 +112,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const response = await axios.post('/auth/login', { email, password });
         const { accessToken, refreshToken, user: userData } = response.data;
 
-        console.log('Login successful:', { 
-          userData: { ...userData, email: userData.email },
-          accessToken: accessToken.substring(0, 20) + '...',
-          loginTime: response.data.loginTime
-        });
+        console.log('=== LOGIN DEBUG ===');
+        console.log('User role:', userData.role);
+        console.log('Is ADMIN?', userData.role === 'ADMIN');
+        console.log('Is HR?', userData.role === 'HR');
 
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
         setUser(userData);
 
-        // Proper role-based routing
+        // Enhanced role-based routing with timeout
         if (userData.role === 'ADMIN' || userData.role === 'HR') {
-          navigate('/admin');
+          console.log('Navigating to /admin...');
+          setTimeout(() => {
+            navigate('/admin', { replace: true });
+          }, 100);
         } else {
-          navigate('/');
+          console.log('Navigating to home...');
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 100);
         }
 
         toast.success('Đăng nhập thành công');
+
+        // Fallback: Force redirect if navigation doesn't work
+        setTimeout(() => {
+          if (userData.role === 'ADMIN' || userData.role === 'HR') {
+            if (window.location.pathname !== '/admin') {
+              console.log('Navigation failed, forcing redirect...');
+              window.location.href = '/admin';
+            }
+          }
+        }, 1000);
+
       } catch (error: any) {
         console.error(`Login attempt ${retryCount + 1} failed:`, {
           status: error.response?.status,
@@ -147,9 +153,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           message: error.message
         });
 
-        // Check if this is a retriable error
         const isRetriableError = 
-          error.response?.status === 503 || // Service unavailable
+          error.response?.status === 503 ||
           error.response?.data?.code === 'DB_TIMEOUT' ||
           error.response?.data?.code === 'DB_CONFLICT' ||
           error.response?.data?.code === 'DB_ERROR' ||
@@ -159,27 +164,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (isRetriableError && retryCount < maxRetries) {
           retryCount++;
           console.log(`Retrying login (attempt ${retryCount + 1}/${maxRetries + 1}) in ${retryCount * 1000}ms...`);
-          
-          // Show user-friendly retry message
           toast.info(`Đang thử lại... (${retryCount}/${maxRetries})`);
-          
-          // Wait before retry with exponential backoff
           await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
-          
           return attemptLogin();
         }
 
-        // Handle specific error cases
         let message = 'Đăng nhập thất bại. Vui lòng thử lại.';
-        
         if (error.response?.status === 401) {
           message = 'Email hoặc mật khẩu không đúng';
         } else if (error.response?.status === 503) {
           message = 'Hệ thống đang bận, vui lòng thử lại sau';
-        } else if (error.response?.data?.code === 'DB_TIMEOUT') {
-          message = 'Kết nối chậm, vui lòng thử lại';
-        } else if (error.response?.data?.code === 'DB_CONFLICT') {
-          message = 'Lỗi kết nối, vui lòng thử lại ngay';
         } else if (error.response?.data?.message) {
           message = error.response.data.message;
         }
