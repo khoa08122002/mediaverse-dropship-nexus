@@ -12,7 +12,14 @@ export default defineConfig(({ mode }) => {
       react()
     ],
     server: {
+      host: '0.0.0.0',
       port: 3000,
+      allowedHosts: [
+        'localhost',
+        '127.0.0.1',
+        'phgcorporation.com',
+        '.phgcorporation.com'
+      ],
       proxy: {
         '/api': {
           target: process.env.VITE_PROXY_TARGET || 'http://localhost:3002',
