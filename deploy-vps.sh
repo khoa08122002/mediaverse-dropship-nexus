@@ -38,29 +38,24 @@ check_requirements() {
     print_status "Checking requirements..."
     
     if ! command -v docker &> /dev/null; then
-        print_error "Docker is not installed. Installing Docker..."
-        curl -fsSL https://get.docker.com -o get-docker.sh
-        sudo sh get-docker.sh
-        sudo usermod -aG docker $USER
-        print_warning "Please log out and log back in for Docker permissions to take effect"
+        print_error "Docker không được tìm thấy!"
+        print_warning "Chạy script setup VPS trước: sudo bash vps-setup.sh"
         exit 1
     fi
     
     if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-        print_error "Docker Compose is not installed"
+        print_error "Docker Compose không được tìm thấy!"
+        print_warning "Chạy script setup VPS trước: sudo bash vps-setup.sh"
         exit 1
     fi
     
-    if ! command -v nginx &> /dev/null; then
-        print_status "Installing Nginx..."
-        sudo apt update
-        sudo apt install -y nginx
+    if ! command -v git &> /dev/null; then
+        print_error "Git không được tìm thấy!"
+        print_warning "Chạy script setup VPS trước: sudo bash vps-setup.sh"
+        exit 1
     fi
     
-    if ! command -v certbot &> /dev/null; then
-        print_status "Installing Certbot for SSL..."
-        sudo apt install -y certbot python3-certbot-nginx
-    fi
+    print_status "Tất cả dependencies đã sẵn sàng"
 }
 
 # Setup environment
@@ -115,19 +110,29 @@ update_nginx_config() {
 setup_ssl() {
     print_status "Setting up SSL certificates..."
     
-    # Stop nginx if running
+    # Stop nginx if running (nginx managed by system, not docker)
     sudo systemctl stop nginx 2>/dev/null || true
     
     # Generate SSL certificates
     if [ ! -f nginx/ssl/fullchain.pem ]; then
         print_status "Generating SSL certificates with Let's Encrypt..."
-        sudo certbot certonly --standalone -d $DOMAIN -d www.$DOMAIN --email $SSL_EMAIL --agree-tos --non-interactive
+        
+        # Use certbot to generate certificates
+        sudo certbot certonly --standalone \
+            -d $DOMAIN \
+            -d www.$DOMAIN \
+            --email $SSL_EMAIL \
+            --agree-tos \
+            --non-interactive \
+            --preferred-challenges http
         
         # Copy certificates to nginx ssl directory
         sudo mkdir -p nginx/ssl
         sudo cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem nginx/ssl/
         sudo cp /etc/letsencrypt/live/$DOMAIN/privkey.pem nginx/ssl/
         sudo chown -R $USER:$USER nginx/ssl/
+        
+        print_status "SSL certificates generated successfully"
     else
         print_status "SSL certificates already exist"
     fi
