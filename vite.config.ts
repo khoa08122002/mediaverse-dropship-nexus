@@ -15,10 +15,10 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: 'http://localhost:3002',
+          target: process.env.VITE_PROXY_TARGET || 'http://localhost:3002',
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, '')
+          rewrite: (path) => path.replace(/^\/api/, '/api')
         }
       },
       watch: {
@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => {
       }, {})
     },
     build: {
-      outDir: 'dist',
+      outDir: 'dist/frontend',
       assetsDir: 'assets',
       sourcemap: !isProduction,
       minify: isProduction ? 'esbuild' : false,
@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => {
       },
       target: 'esnext',
       assetsInlineLimit: 4096,
-      emptyOutDir: true,
+      emptyOutDir: false,
       commonjsOptions: {
         include: [/node_modules/],
         extensions: ['.js', '.cjs', '.ts', '.tsx'],

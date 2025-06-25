@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Delete Blog</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin: 5px; 
+        }
+        .button:hover { background: #0056b3; }
+        .button:disabled { background: #ccc; cursor: not-allowed; }
+        .delete-btn { background: #dc3545; }
+        .delete-btn:hover { background: #c82333; }
+        .log { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+            font-family: monospace; 
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .blog-item { 
+            border: 1px solid #ddd; 
+            padding: 10px; 
+            margin: 5px 0; 
+            border-radius: 4px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Debug Delete Blog Function</h1>
+        
+        <div>
+            <button class="button" onclick="login()">1. Login</button>
+            <button class="button" onclick="loadBlogs()">2. Load Blogs</button>
+            <button class="button" onclick="testDelete()">3. Test Delete First Blog</button>
+            <button class="button" onclick="clearLogs()">Clear Logs</button>
+        </div>
+
+        <div id="status"></div>
+        
+        <div id="blogs-container">
+            <h3>Blogs:</h3>
+            <div id="blogs-list"></div>
+        </div>
+
+        <div id="logs-container">
+            <h3>Logs:</h3>
+            <div id="logs" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let currentBlogs = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = type === 'error' ? 'error' : (type === 'success' ? 'success' : '');
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="log ${type}">${message}</div>`;
+        }
+
+        async function login() {
+            try {
+                log('🔐 Attempting login...');
+                updateStatus('Logging in...', 'info');
+
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@phg.com',
+                        password: 'admin123'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Login failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                authToken = data.accessToken;
+                
+                log('✅ Login successful', 'success');
+                log(`Token: ${authToken.substring(0, 30)}...`);
+                updateStatus('Login successful', 'success');
+
+                // Store token in localStorage for other parts to use
+                localStorage.setItem('accessToken', authToken);
+
+            } catch (error) {
+                log(`❌ Login failed: ${error.message}`, 'error');
+                updateStatus(`Login failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadBlogs() {
+            if (!authToken) {
+                log('❌ No auth token. Please login first.', 'error');
+                return;
+            }
+
+            try {
+                log('📋 Loading blogs...');
+                updateStatus('Loading blogs...', 'info');
+
+                const response = await fetch('/api/blogs', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load blogs: ${response.status}`);
+                }
+
+                currentBlogs = await response.json();
+                log(`✅ Loaded ${currentBlogs.length} blogs`, 'success');
+                displayBlogs();
+                updateStatus(`Loaded ${currentBlogs.length} blogs`, 'success');
+
+            } catch (error) {
+                log(`❌ Failed to load blogs: ${error.message}`, 'error');
+                updateStatus(`Failed to load blogs: ${error.message}`, 'error');
+            }
+        }
+
+        function displayBlogs() {
+            const blogsList = document.getElementById('blogs-list');
+            blogsList.innerHTML = '';
+
+            if (currentBlogs.length === 0) {
+                blogsList.innerHTML = '<p>No blogs found</p>';
+                return;
+            }
+
+            currentBlogs.forEach((blog, index) => {
+                const blogDiv = document.createElement('div');
+                blogDiv.className = 'blog-item';
+                blogDiv.innerHTML = `
+                    <div>
+                        <strong>${blog.title}</strong><br>
+                        <small>ID: ${blog.id} | Author: ${blog.authorId}</small>
+                    </div>
+                    <button class="button delete-btn" onclick="deleteBlog('${blog.id}', ${index})">
+                        Delete
+                    </button>
+                `;
+                blogsList.appendChild(blogDiv);
+            });
+        }
+
+        async function testDelete() {
+            if (currentBlogs.length === 0) {
+                log('❌ No blogs loaded. Please load blogs first.', 'error');
+                return;
+            }
+
+            const firstBlog = currentBlogs[0];
+            await deleteBlog(firstBlog.id, 0);
+        }
+
+        async function deleteBlog(blogId, index) {
+            if (!authToken) {
+                log('❌ No auth token. Please login first.', 'error');
+                return;
+            }
+
+            try {
+                log(`🗑️ Attempting to delete blog: ${blogId}`);
+                updateStatus(`Deleting blog ${blogId}...`, 'info');
+
+                // Show request details
+                const requestDetails = {
+                    url: `/api/blogs/${blogId}`,
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                };
+                log(`Request details: ${JSON.stringify(requestDetails, null, 2)}`);
+
+                const response = await fetch(`/api/blogs/${blogId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                log(`Response status: ${response.status}`);
+                log(`Response statusText: ${response.statusText}`);
+
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    log(`Response body: ${errorData}`);
+                    throw new Error(`Delete failed: ${response.status} - ${errorData}`);
+                }
+
+                const responseData = await response.text();
+                log(`Response body: ${responseData}`);
+                log('✅ Delete successful!', 'success');
+                updateStatus('Delete successful!', 'success');
+
+                // Remove from current list and redisplay
+                currentBlogs.splice(index, 1);
+                displayBlogs();
+
+                // Reload blogs to verify
+                await loadBlogs();
+
+            } catch (error) {
+                log(`❌ Delete failed: ${error.message}`, 'error');
+                updateStatus(`Delete failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-load on page load if token exists
+        window.addEventListener('load', () => {
+            const existingToken = localStorage.getItem('accessToken');
+            if (existingToken) {
+                authToken = existingToken;
+                log('📄 Found existing token from localStorage');
+                loadBlogs();
+            }
+        });
+    </script>
+</body>
+</html> 

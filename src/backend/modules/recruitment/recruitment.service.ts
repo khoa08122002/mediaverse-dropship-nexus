@@ -107,7 +107,12 @@ export class RecruitmentService {
 
   async createJob(createJobDto: CreateJobDto): Promise<Job> {
     try {
-      console.log('Creating job with data:', createJobDto);
+      console.log('🔍 CREATE JOB DEBUG:');
+      console.log('📄 Received DTO:', JSON.stringify(createJobDto, null, 2));
+      console.log('📝 Title:', createJobDto.title, 'Type:', typeof createJobDto.title);
+      console.log('🏢 Department:', createJobDto.department, 'Type:', typeof createJobDto.department);
+      console.log('💼 Type:', createJobDto.type, 'Type:', typeof createJobDto.type);
+      console.log('📊 Status:', createJobDto.status, 'Type:', typeof createJobDto.status);
 
       // Validate and prepare job data
       const jobData: Prisma.JobCreateInput = {
@@ -122,7 +127,7 @@ export class RecruitmentService {
         status: createJobDto.status as JobStatus
     };
 
-      console.log('Transformed job data:', jobData);
+      console.log('💾 Final Prisma data:', JSON.stringify(jobData, null, 2));
 
     const job = await this.prisma.job.create({
         data: jobData

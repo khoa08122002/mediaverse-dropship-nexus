@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Applicant Profile Routing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .test-url {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Applicant Profile Routing</h1>
+    
+    <div class="test-section">
+        <h2>1. Direct URL Navigation Test</h2>
+        <p>Click the buttons below to test different routing scenarios:</p>
+        
+        <div class="test-url">
+            Frontend URL: http://localhost:3000/admin/applicants/6
+        </div>
+        <button onclick="testDirectNavigation()">🔗 Test Direct Navigation</button>
+        <button onclick="testTabNavigation()">📋 Test Tab Navigation</button>
+        <button onclick="testInvalidId()">❌ Test Invalid ID</button>
+        
+        <div id="navigationResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. ApplicantManager Integration Test</h2>
+        <p>Test navigation from ApplicantManager list:</p>
+        
+        <div class="test-url">
+            Admin URL: http://localhost:3000/admin?tab=applicants
+        </div>
+        <button onclick="openApplicantManager()">👥 Open Applicant Manager</button>
+        <button onclick="simulateViewClick()">👁️ Simulate "View" Click</button>
+        
+        <div id="managerResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. API Integration Test</h2>
+        <p>Test if frontend can fetch application data:</p>
+        
+        <button onclick="testFrontendAPI()">🔗 Test Frontend API Call</button>
+        <button onclick="testAuth()">🔐 Test Authentication</button>
+        
+        <div id="apiResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Browser Console Logs</h2>
+        <p>Check browser console for any errors or warnings.</p>
+        <button onclick="checkConsole()">📊 Check Console</button>
+        
+        <div id="consoleResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.innerHTML = message;
+        }
+
+        function testDirectNavigation() {
+            const url = 'http://localhost:3000/admin/applicants/6';
+            showResult('navigationResult', `🚀 Opening: ${url}<br>Check if ApplicantProfile component loads properly.`);
+            window.open(url, '_blank');
+        }
+
+        function testTabNavigation() {
+            const url = 'http://localhost:3000/admin?tab=applicants';
+            showResult('navigationResult', `📋 Opening: ${url}<br>This should show ApplicantManager.`);
+            window.open(url, '_blank');
+        }
+
+        function testInvalidId() {
+            const url = 'http://localhost:3000/admin/applicants/99999';
+            showResult('navigationResult', `❌ Testing invalid ID: ${url}<br>Should show "Not Found" or redirect.`);
+            window.open(url, '_blank');
+        }
+
+        function openApplicantManager() {
+            const url = 'http://localhost:3000/admin?tab=applicants';
+            showResult('managerResult', `👥 Opening ApplicantManager: ${url}<br>Look for "View" buttons in the table.`);
+            window.open(url, '_blank');
+        }
+
+        function simulateViewClick() {
+            showResult('managerResult', `
+                👁️ To simulate View click:
+                <br>1. Open ApplicantManager
+                <br>2. Find the row with "Lê Trần Đăng Khoa"
+                <br>3. Click the "View" button (eye icon)
+                <br>4. Should navigate to /admin/applicants/6
+            `);
+        }
+
+        async function testFrontendAPI() {
+            try {
+                // This will test if the frontend can make API calls
+                const response = await fetch('http://localhost:3000/api/recruitment/applications/6', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('apiResult', `✅ API Call Success:<br>Application ID: ${data.id}<br>Name: ${data.fullName}`);
+                } else {
+                    showResult('apiResult', `❌ API Call Failed: ${response.status} ${response.statusText}`, false);
+                }
+            } catch (error) {
+                showResult('apiResult', `❌ API Error: ${error.message}`, false);
+            }
+        }
+
+        async function testAuth() {
+            try {
+                const response = await fetch('http://localhost:3000/api/auth/me', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('apiResult', `✅ Auth Check Success:<br>User: ${data.email || 'Unknown'}`);
+                } else {
+                    showResult('apiResult', `❌ Not authenticated: ${response.status}`, false);
+                }
+            } catch (error) {
+                showResult('apiResult', `❌ Auth Error: ${error.message}`, false);
+            }
+        }
+
+        function checkConsole() {
+            showResult('consoleResult', `
+                📊 Console Check Instructions:
+                <br>1. Open Browser DevTools (F12)
+                <br>2. Go to Console tab
+                <br>3. Navigate to /admin/applicants/6
+                <br>4. Look for errors like:
+                <br>• Router errors
+                <br>• Component mounting errors
+                <br>• API call errors
+                <br>• Authentication errors
+            `);
+        }
+
+        // Auto-run basic checks on page load
+        window.onload = function() {
+            console.log('🔍 Testing Environment Ready');
+            console.log('Backend API: http://localhost:3002/api/recruitment/applications/6');
+            console.log('Frontend URL: http://localhost:3000/admin/applicants/6');
+        }
+    </script>
+</body>
+</html> 

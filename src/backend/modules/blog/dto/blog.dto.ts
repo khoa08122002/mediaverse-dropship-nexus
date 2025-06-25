@@ -37,7 +37,8 @@ export class CreateBlogDto {
 
   @ApiProperty()
   @IsArray()
-  tags: string[];
+  @IsOptional()
+  tags?: string[];
 
   @ApiProperty()
   @IsString()

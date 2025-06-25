@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Delete Test</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .blog { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+        .delete-btn { background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; white-space: pre; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Simple Delete Test</h1>
+    <button onclick="init()">Initialize</button>
+    <button onclick="refreshList()">Refresh List</button>
+    
+    <div id="status"></div>
+    <div id="blogs"></div>
+    <div id="logs" class="log"></div>
+
+    <script>
+        let token = null;
+        
+        function log(msg) {
+            const timestamp = new Date().toLocaleTimeString();
+            document.getElementById('logs').innerHTML += `[${timestamp}] ${msg}\n`;
+            console.log(`[${timestamp}] ${msg}`);
+        }
+        
+        async function init() {
+            try {
+                log('🔐 Logging in...');
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({email: 'test@phg.com', password: 'admin123'})
+                });
+                
+                const data = await response.json();
+                token = data.accessToken;
+                log('✅ Login OK, token: ' + token.substring(0, 30) + '...');
+                
+                await refreshList();
+            } catch (e) {
+                log('❌ Login failed: ' + e.message);
+            }
+        }
+        
+        async function refreshList() {
+            try {
+                log('📋 Getting blogs...');
+                const response = await fetch('/api/blogs', {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                
+                const blogs = await response.json();
+                log(`📄 Got ${blogs.length} blogs`);
+                
+                const container = document.getElementById('blogs');
+                container.innerHTML = '';
+                
+                blogs.forEach((blog, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'blog';
+                    div.innerHTML = `
+                        <strong>${blog.title}</strong> (ID: ${blog.id})<br>
+                        <small>Author: ${blog.authorId}</small><br>
+                        <button class="delete-btn" onclick="deleteBlog('${blog.id}', ${index})">Delete</button>
+                    `;
+                    container.appendChild(div);
+                });
+                
+                document.getElementById('status').innerHTML = `Found ${blogs.length} blogs`;
+            } catch (e) {
+                log('❌ Get blogs failed: ' + e.message);
+            }
+        }
+        
+        async function deleteBlog(id, index) {
+            try {
+                log(`🗑️ Deleting blog ${id}...`);
+                
+                const response = await fetch(`/api/blogs/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                log(`Delete response: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const responseText = await response.text();
+                    log(`Delete response body: ${responseText}`);
+                    log('✅ Delete successful!');
+                    
+                    // Wait a bit then refresh
+                    setTimeout(refreshList, 500);
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ Delete failed: ${response.status} - ${errorText}`);
+                }
+                
+            } catch (e) {
+                log('❌ Delete error: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html> 

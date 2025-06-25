@@ -56,9 +56,7 @@ if (!root) {
 console.log('main.tsx: Root element found');
 
 const app = (
-  <StrictMode>
-    <App />
-  </StrictMode>
+  <App />
 );
 
 console.log('main.tsx: App component wrapped in StrictMode');

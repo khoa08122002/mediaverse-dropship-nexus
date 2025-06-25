@@ -31,8 +31,8 @@ export class CreateJobDto {
   @IsString()
   location: string;
 
-  @ApiProperty({ enum: JobTypeValues, description: 'Type of employment', example: JobTypeValues.fulltime })
-  @IsEnum(JobTypeValues)
+  @ApiProperty({ enum: Object.values(JobTypeValues), description: 'Type of employment', example: JobTypeValues.fulltime })
+  @IsEnum(Object.values(JobTypeValues))
   type: JobTypeLowercase;
 
   @ApiProperty()
@@ -53,8 +53,8 @@ export class CreateJobDto {
   @IsOptional()
   salary?: string;
 
-  @ApiProperty({ enum: JobStatusValues, description: 'Job posting status', example: JobStatusValues.active })
-  @IsEnum(JobStatusValues)
+  @ApiProperty({ enum: Object.values(JobStatusValues), description: 'Job posting status', example: JobStatusValues.active })
+  @IsEnum(Object.values(JobStatusValues))
   status: JobStatusLowercase;
 }
 

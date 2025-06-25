@@ -2,7 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import * as cookieParser from 'cookie-parser';
+import { join } from 'path';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -20,8 +22,13 @@ async function bootstrap() {
 
     // Create NestJS application
     logger.log('Creating NestJS application...');
-    const app = await NestFactory.create(AppModule, {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: ['error', 'warn', 'log'],
+    });
+
+    // Serve static files for frontend
+    app.useStaticAssets(join(__dirname, '../../frontend'), {
+      prefix: '/',
     });
 
     // Configure CORS
@@ -44,7 +51,7 @@ async function bootstrap() {
     }));
 
     app.use(cookieParser());
-    app.setGlobalPrefix('api');
+    app.setGlobalPrefix('api', { exclude: ['/'] });
 
     // Configure Swagger only in development
     if (process.env.NODE_ENV !== 'production') {

@@ -31,11 +31,14 @@ const Contact = () => {
     try {
       setLoading(true);
       await contactService.createContact({
-        fullName: formData.name,
+        name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        message: formData.message,
-        subject: formData.service || 'Yêu cầu tư vấn'
+        company: formData.company,
+        service: formData.service,
+        budget: formData.budget,
+        subject: formData.service ? `Tư vấn về ${formData.service}` : 'Yêu cầu tư vấn',
+        message: formData.message
       });
       
       toast({

@@ -43,29 +43,67 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const ApplicantProfile = () => {
   const navigate = useNavigate();
-  const { id: applicantId } = useParams();
+  const params = useParams();
   const [loading, setLoading] = useState(true);
   const [application, setApplication] = useState<Application | null>(null);
   const { user: currentUser } = useAuth();
 
+  // DEBUG: Log để check URL params
+  console.log('🔍 DEBUG ApplicantProfile:');
+  console.log('- URL params:', params);
+  console.log('- window.location.pathname:', window.location.pathname);
+
+  // Extract applicantId from wildcard parameter or direct id parameter
+  const getApplicantId = () => {
+    // If we have direct id parameter (from nested routing)
+    if (params.id) {
+      return params.id;
+    }
+    
+    // If we have wildcard parameter (from /admin/* route)
+    if (params['*']) {
+      const wildcardPath = params['*'];
+      console.log('- wildcard path:', wildcardPath);
+      
+      // Extract ID from path like "applicants/6"
+      const match = wildcardPath.match(/^applicants\/(\d+)$/);
+      if (match) {
+        const extractedId = match[1];
+        console.log('- extracted ID:', extractedId);
+        return extractedId;
+      }
+    }
+    
+    return null;
+  };
+
+  const applicantId = getApplicantId();
+  console.log('- final applicantId:', applicantId);
+
   useEffect(() => {
+    console.log('🔍 DEBUG useEffect triggered with applicantId:', applicantId);
+    
     if (!applicantId) {
+      console.log('❌ DEBUG: applicantId is falsy:', applicantId);
       toast.error('ID ứng viên không hợp lệ');
-      navigate('/admin/applicants');
+      navigate('/admin?tab=applicants');
       return;
     }
+    
+    console.log('✅ DEBUG: applicantId is valid, calling fetchApplication');
     fetchApplication();
   }, [applicantId]);
 
   const fetchApplication = async () => {
     try {
       setLoading(true);
-      if (!applicantId) return;
+      const currentApplicantId = getApplicantId();
+      if (!currentApplicantId) return;
       
       // Log for debugging
-      console.log('Fetching application with ID:', applicantId);
+      console.log('Fetching application with ID:', currentApplicantId);
       
-      const data = await recruitmentService.getApplication(parseInt(applicantId));
+      const data = await recruitmentService.getApplication(parseInt(currentApplicantId));
       
       // Log the response
       console.log('Application data received:', data);
@@ -78,7 +116,7 @@ const ApplicantProfile = () => {
     } catch (error: any) {
       console.error('Error fetching application:', error);
       toast.error(error.message || 'Không thể tải thông tin ứng viên');
-      navigate('/admin/applicants');
+      navigate('/admin?tab=applicants');
     } finally {
       setLoading(false);
     }

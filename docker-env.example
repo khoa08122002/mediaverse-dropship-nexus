@@ -1,0 +1,35 @@
+# Application Configuration
+NODE_ENV=production
+PORT=3002
+HOST=0.0.0.0
+
+# Database Configuration
+# For PostgreSQL (production ready)
+DATABASE_URL=postgresql://phg_user:your-strong-password@postgres:5432/phg_corporation
+POSTGRES_DB=phg_corporation
+POSTGRES_USER=phg_user
+POSTGRES_PASSWORD=your-strong-password
+
+# For SQLite (comment out for PostgreSQL)
+# DATABASE_URL=file:./dev.db
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-minimum-32-characters
+JWT_EXPIRES_IN=7d
+
+# CORS Configuration
+CORS_ORIGIN=http://localhost:3000
+
+# Optional: Email Configuration (if you have email features)
+# MAIL_HOST=smtp.gmail.com
+# MAIL_PORT=587
+# MAIL_USER=your-email@gmail.com
+# MAIL_PASS=your-app-password
+# MAIL_FROM=noreply@yourdomain.com
+
+# Optional: File Upload Configuration
+# MAX_FILE_SIZE=10MB
+# UPLOAD_PATH=./uploads
+
+# Optional: Redis Configuration (if using Redis)
+# REDIS_URL=redis://redis:6379 

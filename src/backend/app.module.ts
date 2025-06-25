@@ -15,6 +15,26 @@ export class AppController {
   private readonly logger = new Logger(AppController.name);
 
   @Public()
+  @Get()
+  root() {
+    this.logger.log('Root endpoint requested');
+    return {
+      message: 'PHG Corporation API',
+      version: '1.0.0',
+      endpoints: {
+        health: '/api/health',
+        docs: '/api/docs',
+        auth: '/api/auth',
+        users: '/api/user',
+        blogs: '/api/blog',
+        jobs: '/api/jobs',
+        contacts: '/api/contact'
+      },
+      status: 'running'
+    };
+  }
+
+  @Public()
   @Get('health')
   health() {
     this.logger.log('Simple health check requested');

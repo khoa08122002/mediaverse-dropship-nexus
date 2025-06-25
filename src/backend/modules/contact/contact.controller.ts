@@ -60,9 +60,9 @@ export class ContactController {
   @Public()
   @Post()
   @ApiOperation({ summary: 'Create a new contact' })
-  async create(@Body() data: Omit<Contact, 'id' | 'createdAt' | 'updatedAt'>): Promise<Contact> {
+  async create(@Body() createContactDto: CreateContactDto): Promise<Contact> {
     try {
-      return await this.contactService.create(data);
+      return await this.contactService.create(createContactDto);
     } catch (error) {
       this.logger.error('Error creating contact:', error);
       const err = error as ErrorResponse;
@@ -77,9 +77,9 @@ export class ContactController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update a contact' })
   @ApiBearerAuth()
-  async update(@Param('id') id: string, @Body() data: Partial<Contact>): Promise<Contact> {
+  async update(@Param('id') id: string, @Body() updateContactDto: UpdateContactDto): Promise<Contact> {
     try {
-      return await this.contactService.update(id, data);
+      return await this.contactService.update(id, updateContactDto);
     } catch (error) {
       this.logger.error(`Error updating contact with id ${id}:`, error);
       const err = error as ErrorResponse;

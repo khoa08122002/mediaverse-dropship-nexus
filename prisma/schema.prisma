@@ -2,16 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// For local development (SQLite)
+// For production (PostgreSQL)
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// For production (Supabase/PostgreSQL) - uncomment for production
+// For local development (SQLite) - comment out for PostgreSQL
 // datasource db {
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")
+//   provider = "sqlite"
+//   url      = "file:./dev.db"
 // }
 
 model User {
@@ -37,7 +37,7 @@ model Blog {
   excerpt       String
   featuredImage String?
   category      String
-  tags          String   // Comma-separated tags for SQLite
+  tags          String   // Comma-separated tags
   readTime      String?
   isFeatured    Boolean  @default(false)
   status        String   @default("draft")

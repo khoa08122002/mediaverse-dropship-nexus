@@ -10,9 +10,28 @@ export class BlogService {
 
   private parseBlogFeaturedImage(blog: any) {
     if (!blog) return null;
+    
+    let featuredImage = null;
+    if (blog.featuredImage) {
+      try {
+        // Try to parse as JSON first
+        featuredImage = JSON.parse(blog.featuredImage);
+      } catch (error) {
+        // If JSON parsing fails, treat as URL string
+        if (typeof blog.featuredImage === 'string') {
+          featuredImage = {
+            url: blog.featuredImage,
+            alt: blog.title || 'Blog image'
+          };
+        } else {
+          featuredImage = null;
+        }
+      }
+    }
+    
     return {
       ...blog,
-      featuredImage: blog.featuredImage ? JSON.parse(blog.featuredImage) : null
+      featuredImage
     };
   }
 
@@ -131,17 +150,37 @@ export class BlogService {
   }
 
   async create(createBlogDto: CreateBlogDto, authorId: string) {
+    console.log('🔍 CREATE BLOG DEBUG:');
+    console.log('📄 Original DTO:', JSON.stringify(createBlogDto, null, 2));
+    
     const slug = slugify(createBlogDto.title);
-    const { featuredImage, ...blogData } = createBlogDto;
+    const { featuredImage, tags, ...blogData } = createBlogDto;
+
+    console.log('🏷️ Tags extracted:', tags, 'Type:', typeof tags, 'IsArray:', Array.isArray(tags));
+
+    // Convert tags array to comma-separated string if needed
+    const tagsString = Array.isArray(tags) ? tags.join(',') : (tags || '');
+    console.log('🔗 Tags string:', tagsString, 'Type:', typeof tagsString);
+
+    const createData = {
+      title: createBlogDto.title,
+      content: createBlogDto.content,
+      excerpt: createBlogDto.excerpt,
+      category: createBlogDto.category,
+      readTime: createBlogDto.readTime,
+      isFeatured: createBlogDto.isFeatured,
+      status: createBlogDto.status,
+      slug,
+      authorId,
+      tags: tagsString as any,
+      published: createBlogDto.status === 'published',
+      featuredImage: featuredImage ? JSON.stringify(featuredImage) : null,
+    };
+    
+    console.log('💾 Final create data:', JSON.stringify(createData, null, 2));
 
     const blog = await this.prisma.blog.create({
-      data: {
-        ...blogData,
-        slug,
-        authorId,
-        published: createBlogDto.status === 'published',
-        featuredImage: featuredImage ? JSON.stringify(featuredImage) : null,
-      },
+      data: createData,
       include: {
         author: {
           select: {
@@ -173,7 +212,12 @@ export class BlogService {
       slug = slugify(updateBlogDto.title);
     }
 
-    const { featuredImage, ...blogData } = updateBlogDto;
+    const { featuredImage, tags, ...blogData } = updateBlogDto;
+
+    // Convert tags array to comma-separated string if needed
+    const tagsString = tags !== undefined 
+      ? (Array.isArray(tags) ? tags.join(',') : (tags || ''))
+      : undefined;
 
     // Chỉ lấy các trường được phép cập nhật
     const allowedFields = {
@@ -181,7 +225,7 @@ export class BlogService {
       content: blogData.content,
       excerpt: blogData.excerpt,
       category: blogData.category,
-      tags: blogData.tags,
+      tags: tagsString,
       readTime: blogData.readTime,
       isFeatured: blogData.isFeatured,
       status: blogData.status,
@@ -199,7 +243,7 @@ export class BlogService {
 
     const updatedBlog = await this.prisma.blog.update({
       where: { id },
-      data,
+      data: data as any,
       include: {
         author: {
           select: {
