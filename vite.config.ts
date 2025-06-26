@@ -14,7 +14,16 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0',
       port: 3000,
-      allowedHosts: true,
+      allowedHosts: [
+        'localhost',
+        '127.0.0.1',
+        '0.0.0.0',
+        'phgcorporation.com',
+        'www.phgcorporation.com',
+        '198.38.91.102',
+        'frontend',
+        '.localhost'
+      ],
       proxy: {
         '/api': {
           target: process.env.VITE_PROXY_TARGET || 'http://app:3002',

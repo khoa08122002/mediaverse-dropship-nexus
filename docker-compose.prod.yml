@@ -28,8 +28,9 @@ services:
       - "3000"
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=https://${DOMAIN:-localhost}/api
+      - VITE_API_URL=https://phgcorporation.com/api
       - VITE_PROXY_TARGET=http://app:3002
+      - VITE_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,phgcorporation.com,www.phgcorporation.com,198.38.91.102,frontend,.localhost
     volumes:
       - .:/app
       - /app/node_modules
@@ -51,7 +52,7 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-phg_user}:${POSTGRES_PASSWORD:-your-strong-password}@postgres:5432/${POSTGRES_DB:-phg_corporation}
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
-      - CORS_ORIGIN=${CORS_ORIGIN:-https://yourdomain.com}
+      - CORS_ORIGIN=https://phgcorporation.com
     volumes:
       - uploads_data:/app/uploads
       - ./logs:/app/logs
