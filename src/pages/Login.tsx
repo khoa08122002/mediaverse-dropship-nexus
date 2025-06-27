@@ -35,14 +35,9 @@ const Login = () => {
       console.log('Attempting login with:', formData.email);
       await login(formData.email, formData.password);
       
-      toast.success("Đăng nhập thành công", {
-        description: "Chào mừng bạn quay trở lại!"
-      });
-
-      // Get the redirect path from location state or default to admin
-      const from = location.state?.from?.pathname || '/admin';
-      console.log('Redirecting to:', from);
-      navigate(from, { replace: true });
+      // Don't navigate here - let AuthContext handle the redirect
+      // The AuthContext login function already handles navigation based on user role
+      
     } catch (error: any) {
       console.error('Login failed:', error);
       toast.error("Đăng nhập thất bại", {

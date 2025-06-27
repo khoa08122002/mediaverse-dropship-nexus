@@ -121,30 +121,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('refreshToken', refreshToken);
         setUser(userData);
 
-        // Enhanced role-based routing with timeout
+        // Direct navigation based on role - no setTimeout needed
         if (userData.role === 'ADMIN' || userData.role === 'HR') {
           console.log('Navigating to /admin...');
-          setTimeout(() => {
-            navigate('/admin', { replace: true });
-          }, 100);
+          navigate('/admin', { replace: true });
         } else {
           console.log('Navigating to home...');
-          setTimeout(() => {
-            navigate('/', { replace: true });
-          }, 100);
+          navigate('/', { replace: true });
         }
 
         toast.success('Đăng nhập thành công');
-
-        // Fallback: Force redirect if navigation doesn't work
-        setTimeout(() => {
-          if (userData.role === 'ADMIN' || userData.role === 'HR') {
-            if (window.location.pathname !== '/admin') {
-              console.log('Navigation failed, forcing redirect...');
-              window.location.href = '/admin';
-            }
-          }
-        }, 1000);
 
       } catch (error: any) {
         console.error(`Login attempt ${retryCount + 1} failed:`, {
