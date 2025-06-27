@@ -33,7 +33,7 @@ async function bootstrap() {
 
     // Configure CORS
     const corsOrigins = process.env.NODE_ENV === 'production'
-      ? ['https://phg2.vercel.app']
+      ? ['https://phgcorporation.com', 'https://www.phgcorporation.com']
       : ['http://localhost:3000', 'http://localhost:5173'];
     
     logger.log(`Configuring CORS with origins: ${corsOrigins}`);
