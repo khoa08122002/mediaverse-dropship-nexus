@@ -35,7 +35,8 @@ services:
       - .:/app
       - /app/node_modules
     depends_on:
-      - app
+      app:
+        condition: service_started
     restart: unless-stopped
     networks:
       - app-network
@@ -52,15 +53,24 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-phg_user}:${POSTGRES_PASSWORD:-your-strong-password}@postgres:5432/${POSTGRES_DB:-phg_corporation}
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
-      - CORS_ORIGIN=https://phgcorporation.com
+      - CORS_ORIGIN=https://phgcorporation.com,http://frontend:3000,http://localhost:3000
     volumes:
       - uploads_data:/app/uploads
       - ./logs:/app/logs
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
     restart: unless-stopped
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # PostgreSQL database
   postgres:
@@ -75,6 +85,11 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-phg_user}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Redis cache
   redis:
@@ -87,6 +102,11 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   uploads_data:
