@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Route } from "react-router-dom";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 import AppLayout from './components/AppLayout';
 import ErrorBoundary from './components/ErrorBoundary';
 import Preloader from './components/Preloader';
@@ -45,6 +44,16 @@ const router = createBrowserRouter(
         element={
           <Suspense fallback={<Preloader />}>
             <Login />
+          </Suspense>
+        }
+      />
+      
+      {/* Admin Routes (Standalone - has own Header) */}
+      <Route
+        path="admin/*"
+        element={
+          <Suspense fallback={<Preloader />}>
+            <Admin />
           </Suspense>
         }
       />
@@ -120,14 +129,6 @@ const router = createBrowserRouter(
           }
         />
         <Route
-          path="admin/*"
-          element={
-            <Suspense fallback={<Preloader />}>
-              <Admin />
-            </Suspense>
-          }
-        />
-        <Route
           path="*"
           element={
             <Suspense fallback={<Preloader />}>
@@ -144,7 +145,6 @@ function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <SpeedInsights />
     </>
   );
 }
